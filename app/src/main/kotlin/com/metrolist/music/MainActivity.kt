@@ -1030,7 +1030,7 @@ class MainActivity : FragmentActivity() {
                         !(pauseListenHistory && eventCount == 0)
                     }
 
-                val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
+                val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
                 val artistNameAliases by ArtistNameAliases.aliases.collectAsStateWithLifecycle()
 
                 CompositionLocalProvider(

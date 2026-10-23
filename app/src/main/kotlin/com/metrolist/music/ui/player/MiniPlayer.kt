@@ -122,6 +122,7 @@ import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.metrolist.music.ui.theme.PlayerColorExtractor
+import com.metrolist.music.ui.theme.baajaOutline
 
 /**
  * Stable wrapper for progress state - reads values only during draw phase
@@ -379,9 +380,9 @@ private fun NewMiniPlayer(
                     .then(if (isTabletLandscape) Modifier.width(500.dp).align(Alignment.Center) else Modifier.fillMaxWidth())
                     .height(64.dp)
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
-                    .clip(RoundedCornerShape(32.dp))
+                    .baajaOutline(color = outlineColor, shape = RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(color = backgroundColor)
-                    .border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
                     .clickable(
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
@@ -560,7 +561,7 @@ private fun NewMiniPlayerPlayButton(
                 Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
+                    .border(2.dp, outlineColor, CircleShape)
                     .clickable {
                         if (isListenTogetherGuest) {
                             playerConnection.toggleMute()

@@ -1,17 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:height="108dp"
     android:width="108dp"
-    android:viewportWidth="30.0"
-    android:viewportHeight="32.0">
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
     <group
-        android:scaleX="0.47"
-        android:scaleY="0.5"
-        android:translateX="7.8"
-        android:translateY="8.0">
+        android:scaleX="0.62"
+        android:scaleY="0.62"
+        android:translateX="23"
+        android:translateY="23">
         <path
-            android:fillColor="#00000000"
-            android:pathData="M9.5,15.5L3.707,21.293C3.317,21.684 3.317,22.317 3.707,22.707L9.293,28.293C9.683,28.684 10.317,28.684 10.707,28.293L16.707,22.293C16.895,22.105 17,21.851 17,21.586V4.468C17,3.578 18.074,3.132 18.705,3.759L28,13"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeWidth="5.0" />
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M32.8,66V20.5C32.8,17 35.5,15.6 38.5,15.8C43.5,16.5 48.7,21 48.7,27V66Z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M18.2,74.7a10.8,10.8 0,1 0,21.6 0a10.8,10.8 0,1 0,-21.6 0Z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M38.4,60.8a22,22 0,1 0,44 0a22,22 0,1 0,-44 0ZM53.5,53.3L53.5,69.2L69.5,61.3Z" />
     </group>
 </vector>
