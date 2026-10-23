@@ -26,6 +26,9 @@ import androidx.navigation.navArgument
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.ui.screens.artist.ArtistAlbumsScreen
+import com.metrolist.music.ui.screens.assistant.assistantRoutes
+import com.metrolist.music.ui.screens.features.featureRoutes
+import com.metrolist.music.ui.screens.onboarding.onboardingRoutes
 import com.metrolist.music.ui.screens.artist.ArtistItemsScreen
 import com.metrolist.music.ui.screens.artist.ArtistScreen
 import com.metrolist.music.ui.screens.artist.ArtistSongsScreen
@@ -452,4 +455,8 @@ fun NavGraphBuilder.navigationBuilder(
     composable("settings/android_auto") {
         AndroidAutoSettings(navController)
     }
+
+    onboardingRoutes(navController)
+    assistantRoutes(navController)
+    featureRoutes(navController)
 }
