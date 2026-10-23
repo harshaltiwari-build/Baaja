@@ -192,7 +192,6 @@
     <string name="shuffle_playlist_first_desc">Kur përzieni këngët, luani të gjitha këngët nga lista aktuale e këngëve ose albumi përpara se të kaloni në përmbajtje të ngjashme</string>
     <string name="prevent_duplicate_tracks_in_queue">Parandalo këngët e dyfishta në radhë</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">Kur shtohet një këngë që është gja në radhë, ajo do të zhvendoset nga pozicioni i saj i mëparshëm në vend që të shtohet përsëri</string>
-    <string name="show_wrapped_card">Shfaq kartën Wrapped</string>
     <string name="skip_silence_desc">Anashkalo pjesët të heshtura të këngëve</string>
     <string name="skip_silence_instant">Kapërceje menjëherë heshtjen</string>
     <string name="app_language">Gjuha e aplikacionit</string>
@@ -211,11 +210,8 @@
     <string name="token_adv_login_description">Kjo është një metodë e AVANCUAR hyrjeje. Në vend që të përdorni portalin në internet, mund të futni ose përditësoni direkt tokenin tuaj të hyrjes. Kjo mund të jetë e dobishme për t\'u identifikuar shpejt në shumë pajisje. Tokenët në një format të panjohur do të refuzohen</string>
     <string name="yt_sync">Sinkronizim automatik me llogarinë</string>
     <string name="more_content">Më shumë përmbajtje</string>
-    <string name="integrations">Integrimet</string>
     <string name="username">Emri i përdoruesit</string>
     <string name="password">Fjalëkalimi</string>
-    <string name="lastfm_integration">Integrimi i Last.fm</string>
-    <string name="enable_scrobbling">Aktivizo scrobbling</string>
     <string name="add_to_library_desc">Ruaj në bibliotekën tënd</string>
     <string name="download_desc">Shkarko për riprodhim jashtë linje</string>
     <string name="play_pause">Luaj/Ndalo</string>
@@ -229,7 +225,6 @@
     <string name="connected_users">Përdorues të lidhur</string>
     <string name="enter_username">Fut një emër përdoruesi</string>
     <string name="enter_room_code">Fut një kod dhome</string>
-    <string name="metrolist">METROLIST</string>
     <string name="android_auto">Android Auto</string>
     <string name="sort_ascending">Rendit në rend rritës</string>
     <string name="sort_descending">Rendit në rend zbritës</string>

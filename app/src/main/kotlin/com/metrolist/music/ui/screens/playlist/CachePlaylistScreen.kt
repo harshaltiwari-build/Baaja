@@ -71,6 +71,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
+import com.metrolist.music.ui.component.BaajaCollectionHeader
+import com.metrolist.music.ui.component.BaajaHeroArtwork
+import com.metrolist.music.ui.component.BaajaHeroPlayButton
+import com.metrolist.music.ui.component.BaajaRoundAction
 import coil3.compose.AsyncImage
 import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerAwareWindowInsets
@@ -89,6 +93,7 @@ import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.SongListItem
 import com.metrolist.music.ui.component.SortHeader
+import com.metrolist.music.utils.makeTimeString
 import com.metrolist.music.ui.menu.CachePlaylistMenu
 import com.metrolist.music.ui.menu.SelectionSongMenu
 import com.metrolist.music.ui.menu.SongMenu
@@ -226,12 +231,7 @@ fun CachePlaylistScreen(
 
                 if (filteredSongs.isNotEmpty()) {
                     item(key = "sort_header") {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(start = 16.dp)
-                                .animateItem(),
-                        ) {
+                        BaajaSortRow(modifier = Modifier.animateItem()) {
                             SortHeader(
                                 sortType = sortType,
                                 sortDescending = sortDescending,
@@ -245,7 +245,6 @@ fun CachePlaylistScreen(
                                         SongSortType.PLAY_TIME -> R.string.sort_by_play_time
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
                             )
                         }
                     }
@@ -477,152 +476,69 @@ private fun CachePlaylistHeader(
     val playerConnection = LocalPlayerConnection.current ?: return
     val downloadUtil = LocalDownloadUtil.current
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    val totalDuration = songs.sumOf { it.song.duration.coerceAtLeast(0) }
+    val onDownloadAll = { songs.forEach { downloadUtil.download(it) } }
+    BaajaCollectionHeader(
+        title = stringResource(R.string.cached_playlist),
+        meta =
+            baajaMeta(
+                stringResource(R.string.baaja_library_playlist_kind),
+                pluralStringResource(R.plurals.n_song, songs.size, songs.size),
+                if (totalDuration > 0) makeTimeString(totalDuration * 1000L) else null,
+            ),
+        modifier = modifier,
+        artwork = {
+            BaajaHeroArtwork(
+                model = songs.firstOrNull()?.thumbnailUrl,
+                tilt = -2f,
+                placeholder = R.drawable.cached,
+            )
+        },
     ) {
-        // Playlist Thumbnail - Large centered with shadow
-        Box(
-            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp)
-        ) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier
-                    .size(240.dp)
-                    .shadow(
-                        elevation = 24.dp,
-                        shape = RoundedCornerShape(3.dp),
-                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                    ),
-                shape = RoundedCornerShape(3.dp)
-            ) {
-                AsyncImage(
-                    model = songs.first().thumbnailUrl,
-                    contentDescription = null,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+        BaajaRoundAction(
+            icon = R.drawable.download,
+            contentDescription = stringResource(R.string.baaja_library_download_all),
+            onClick = onDownloadAll,
+        )
+        BaajaHeroPlayButton(
+            onClick = {
+                playerConnection.playQueue(
+                    ListQueue(
+                        title = "Cache Songs",
+                        items = songs.map { it.toMediaItem() },
+                    )
                 )
-            }
-        }
-
-        // Playlist Name
-        Text(
-            text = stringResource(R.string.cached_playlist),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            },
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Metadata - Song Count
-        Text(
-            text = pluralStringResource(R.plurals.n_song, songs.size, songs.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        BaajaRoundAction(
+            icon = R.drawable.shuffle,
+            contentDescription = stringResource(R.string.shuffle),
+            onClick = {
+                playerConnection.playQueue(
+                    ListQueue(
+                        title = "Cache Songs",
+                        items = songs.shuffled().map { it.toMediaItem() },
+                    )
+                )
+            },
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Action Buttons Row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Shuffle Button - Smaller secondary button
-            androidx.compose.material3.Surface(
-                onClick = {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = "Cache Songs",
-                            items = songs.shuffled().map { it.toMediaItem() },
-                        )
-                    )
-                },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.shuffle),
-                        contentDescription = stringResource(R.string.shuffle),
-                        modifier = Modifier.size(24.dp)
+        BaajaRoundAction(
+            icon = R.drawable.more_vert,
+            contentDescription = stringResource(R.string.more_options),
+            onClick = {
+                menuState.show {
+                    CachePlaylistMenu(
+                        downloadState = Download.STATE_STOPPED,
+                        onQueue = {
+                            playerConnection.addToQueue(
+                                songs.map { it.toMediaItem() }
+                            )
+                        },
+                        onDownload = onDownloadAll,
+                        onDismiss = { menuState.dismiss() }
                     )
                 }
-            }
-
-            // Play Button - Larger primary circular button
-            Surface(
-                onClick = {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = "Cache Songs",
-                            items = songs.map { it.toMediaItem() },
-                        )
-                    )
-                },
-                color = MaterialTheme.colorScheme.primary,
-                shape = androidx.compose.foundation.shape.CircleShape,
-                modifier = Modifier.size(72.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.play),
-                        contentDescription = stringResource(R.string.play),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
-
-            // Menu Button - Smaller secondary button
-            Surface(
-                onClick = {
-                    menuState.show {
-                        CachePlaylistMenu(
-                            downloadState = Download.STATE_STOPPED,
-                            onQueue = {
-                                playerConnection.addToQueue(
-                                    songs.map { it.toMediaItem() }
-                                )
-                            },
-                            onDownload = {
-                                // Download all cached songs
-                                songs.forEach { downloadUtil.download(it) }
-                            },
-                            onDismiss = { menuState.dismiss() }
-                        )
-                    }
-                },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        }
+            },
+        )
     }
 }

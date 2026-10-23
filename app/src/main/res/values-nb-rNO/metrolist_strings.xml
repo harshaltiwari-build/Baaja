@@ -111,7 +111,6 @@
     <string name="show_uploaded_playlist">Vis \"Opplastet\" spilleliste</string>
     <string name="shuffle_playlist_first">Shuffle spilleliste/album først</string>
     <string name="shuffle_playlist_first_desc">Når du shuffler, spill alle sanger fra den originale spillelisten/albumet først, så lignende innhold</string>
-    <string name="show_wrapped_card">Vis Wrapped-kort</string>
     <string name="skip_silence_desc">Hopp forbi stille deler av sanger</string>
     <string name="skip_silence_instant">Hopp over stillhet øyeblikkelig</string>
     <string name="monthly_most_playlist_name">Månedlig mest</string>

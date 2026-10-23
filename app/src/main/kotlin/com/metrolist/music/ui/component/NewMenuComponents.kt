@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
 
 @Composable
 private fun NewActionButton(
@@ -43,8 +45,8 @@ private fun NewActionButton(
     onClick: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
-    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     val animatedBackground by animateColorAsState(
         targetValue = if (enabled) backgroundColor else backgroundColor.copy(alpha = 0.5f),
@@ -67,17 +69,12 @@ private fun NewActionButton(
         }
     }
 
-    Card(
+    Box(
         modifier =
             modifier
-                .clickable(enabled = enabled) { performAction = true },
-        colors =
-            CardDefaults.cardColors(
-                containerColor = animatedBackground,
-            ),
-        shape = RoundedCornerShape(16.dp),
-        elevation =
-            CardDefaults.cardElevation(),
+                .padding(end = 3.dp, bottom = 3.dp)
+                .baajaSurface(baajaInk, animatedBackground, RoundedCornerShape(18.dp), shadowOffset = 2.dp)
+                .clickable(enabled = enabled, role = Role.Button) { performAction = true },
     ) {
         Column(
             modifier =
@@ -98,7 +95,7 @@ private fun NewActionButton(
 
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = animatedContent,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
@@ -138,7 +135,7 @@ fun NewActionGrid(
                             ) {
                                 action.backgroundColor
                             } else {
-                                MaterialTheme.colorScheme.surfaceVariant
+                                MaterialTheme.colorScheme.surface
                             },
                         contentColor =
                             if (action.contentColor !=
@@ -146,7 +143,7 @@ fun NewActionGrid(
                             ) {
                                 action.contentColor
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                                MaterialTheme.colorScheme.onSurface
                             },
                     )
                 }

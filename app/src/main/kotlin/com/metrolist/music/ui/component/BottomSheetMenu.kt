@@ -69,8 +69,8 @@ fun AnimatedBottomSheet(
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden),
     sheetMaxWidth: Dp = BottomSheetDefaults.SheetMaxWidth,
-    shape: Shape = BottomSheetDefaults.ExpandedShape,
-    containerColor: Color = BottomSheetDefaults.ContainerColor,
+    shape: Shape = BaajaSheetShape,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = contentColorFor(containerColor),
     tonalElevation: Dp = 0.dp,
     scrimColor: Color = BottomSheetDefaults.ScrimColor,
@@ -109,11 +109,15 @@ fun AnimatedBottomSheet(
         contentColor = contentColor,
         tonalElevation = tonalElevation,
         scrimColor = scrimColor,
-        dragHandle = dragHandle,
+        dragHandle = null,
         contentWindowInsets = contentWindowInsets,
         properties = properties,
-        content = lastContent,
-    )
+    ) {
+        Column(Modifier.fillMaxWidth().baajaSheetOutline()) {
+            if (dragHandle != null) BaajaSheetHandle()
+            lastContent(this)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

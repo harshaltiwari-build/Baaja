@@ -146,10 +146,18 @@ internal fun LyricsLine(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    
+    val baajaStyle = LocalBaajaLyricsStyle.current
+    val showCard = baajaStyle != null && isSynced && isActiveLine && !item.isBackground
+    val cardVisibility by animateFloatAsState(if (showCard) 1f else 0f, tween(250), label = "lyricsCardAlpha")
+
     val itemModifier = modifier
         .fillMaxWidth()
         .onSizeChanged { onSizeChanged(it.height) }
+        .baajaLyricCard(
+            style = baajaStyle,
+            horizontalInset = if (lyricsTextPosition == LyricsPosition.CENTER) 10.dp else 2.dp,
+            visibility = { cardVisibility },
+        )
         .clip(RoundedCornerShape(8.dp))
         .combinedClickable(
             onClick = onClick,
@@ -201,15 +209,24 @@ internal fun LyricsLine(
         @Composable
         fun LyricContent() {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = agentAlignment) {
-                val inactiveAlpha = if (item.isBackground) 0.08f else 0.2f
+                // On Baaja's cream lyrics screen the other lines stay readable but muted.
+                val muted = baajaStyle != null
+                val inactiveAlpha = if (item.isBackground) 0.08f else if (muted) 0.4f else 0.2f
                 val activeAlpha = 1f
-                val focusedAlpha = if (item.isBackground) 0.5f else 0.3f
+                val focusedAlpha = if (item.isBackground) 0.5f else if (muted) 0.55f else 0.3f
                 val targetAlpha = if (!isSynced || item.isBackground || isActiveLine) {
                     activeAlpha
                 } else if (isAutoScrollEnabled && displayedCurrentLineIndex >= 0) {
-                    when (abs(index - displayedCurrentLineIndex)) {
-                        0 -> focusedAlpha
-                        1 -> 0.2f; 2 -> 0.2f; 3 -> 0.15f; 4 -> 0.1f; else -> 0.08f
+                    if (muted) {
+                        when (abs(index - displayedCurrentLineIndex)) {
+                            0 -> focusedAlpha
+                            1, 2 -> 0.45f; 3 -> 0.38f; 4 -> 0.32f; else -> 0.26f
+                        }
+                    } else {
+                        when (abs(index - displayedCurrentLineIndex)) {
+                            0 -> focusedAlpha
+                            1 -> 0.2f; 2 -> 0.2f; 3 -> 0.15f; 4 -> 0.1f; else -> 0.08f
+                        }
                     }
                 } else inactiveAlpha
                 

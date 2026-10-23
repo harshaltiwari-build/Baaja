@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -33,7 +34,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -151,6 +152,7 @@ fun YouTubePlaylistMenu(
         onDismiss = { showChoosePlaylistDialog = false },
     )
 
+    BaajaMenuHeader {
     YouTubeListItem(
         item = playlist,
         trailingContent = {
@@ -246,7 +248,8 @@ fun YouTubePlaylistMenu(
             }
         },
     )
-    HorizontalDivider()
+    }
+    Spacer(modifier = Modifier.height(4.dp))
 
     var downloadState by remember {
         mutableIntStateOf(Download.STATE_STOPPED)

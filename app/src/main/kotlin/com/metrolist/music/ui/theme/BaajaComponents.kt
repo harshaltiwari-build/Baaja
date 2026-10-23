@@ -7,7 +7,11 @@ package com.metrolist.music.ui.theme
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,10 +60,20 @@ fun Modifier.baajaSurface(
     shape: Shape,
     shadowOffset: Dp = 3.dp,
     borderWidth: Dp = 2.dp,
+    interactionSource: InteractionSource? = null,
 ): Modifier =
-    baajaOutline(ink, shape, borderWidth = borderWidth, shadowOffset = shadowOffset)
-        .clip(shape)
-        .background(color)
+    if (interactionSource == null) {
+        baajaOutline(ink, shape, borderWidth = borderWidth, shadowOffset = shadowOffset)
+            .clip(shape)
+            .background(color)
+    } else {
+        // The shadow stays put; the surface springs down and slides onto it while pressed.
+        baajaShadow(ink, shape, shadowOffset)
+            .baajaPressScale(interactionSource, shadowOffset)
+            .border(borderWidth, ink, shape)
+            .clip(shape)
+            .background(color)
+    }
 
 @Composable
 fun BaajaCard(
@@ -69,10 +84,17 @@ fun BaajaCard(
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
+    val source = remember { MutableInteractionSource() }
     Box(
         modifier
-            .baajaSurface(baajaInk, color, shape, shadowOffset)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            .baajaSurface(baajaInk, color, shape, shadowOffset, interactionSource = if (onClick != null) source else null)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(interactionSource = source, indication = LocalIndication.current, role = Role.Button, onClick = onClick)
+                } else {
+                    Modifier
+                },
+            ),
     ) { content() }
 }
 
@@ -89,11 +111,17 @@ fun BaajaPillButton(
 ) {
     val container = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val content = if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val source = remember { MutableInteractionSource() }
     Row(
         modifier
             .heightIn(min = height)
-            .baajaSurface(baajaInk, container.copy(alpha = if (enabled) 1f else 0.5f), CircleShape, if (enabled) 4.dp else 0.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .baajaSurface(
+                baajaInk,
+                container.copy(alpha = if (enabled) 1f else 0.5f),
+                CircleShape,
+                if (enabled) 4.dp else 0.dp,
+                interactionSource = source,
+            ).clickable(interactionSource = source, indication = LocalIndication.current, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 22.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -126,11 +154,12 @@ fun BaajaChip(
             selected -> MaterialTheme.colorScheme.surface
             else -> MaterialTheme.colorScheme.onSurface
         }
+    val source = remember { MutableInteractionSource() }
     Row(
         modifier
             .defaultMinSize(minHeight = 40.dp)
-            .baajaSurface(ink, container, CircleShape, if (selected) 0.dp else 2.dp)
-            .clickable(role = Role.Tab, onClick = onClick)
+            .baajaSurface(ink, container, CircleShape, if (selected) 0.dp else 2.dp, interactionSource = source)
+            .clickable(interactionSource = source, indication = LocalIndication.current, role = Role.Tab, onClick = onClick)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -152,11 +181,12 @@ fun BaajaIconButton(
 ) {
     val container = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val content = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val source = remember { MutableInteractionSource() }
     Box(
         modifier
             .size(size)
-            .baajaSurface(baajaInk, container, CircleShape, if (filled) 2.dp else 0.dp)
-            .clickable(role = Role.Button, onClick = onClick),
+            .baajaSurface(baajaInk, container, CircleShape, if (filled) 2.dp else 0.dp, interactionSource = source)
+            .clickable(interactionSource = source, indication = LocalIndication.current, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(painterResource(icon), contentDescription, tint = content, modifier = Modifier.size(size * 0.48f))

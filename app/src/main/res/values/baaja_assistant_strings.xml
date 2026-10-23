@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baaja: Behind the Song, Identify music and Listen Together. -->
+<resources>
+    <!-- Behind the Song -->
+    <string name="baaja_bts_title">Behind the song</string>
+    <string name="baaja_bts_album">Album</string>
+    <string name="baaja_bts_year">Year</string>
+    <string name="baaja_bts_length">Length</string>
+    <string name="baaja_bts_plays">Plays</string>
+    <string name="baaja_bts_audio">Audio</string>
+    <string name="baaja_bts_first_played">First played</string>
+    <string name="baaja_bts_last_played">Last played</string>
+    <string name="baaja_bts_listened">Time listened</string>
+    <string name="baaja_bts_your_listening">Your listening</string>
+    <string name="baaja_bts_never_played">You haven\'t played this song yet.</string>
+    <string name="baaja_bts_not_found">Couldn\'t load this song.</string>
+
+    <!-- Identify music -->
+    <string name="baaja_ai_rec_title">Identify song</string>
+    <string name="baaja_ai_rec_ready">Tap to identify</string>
+    <string name="baaja_ai_rec_ready_sub">Hum, sing or play the song near your phone</string>
+    <string name="baaja_ai_rec_listening_sub">Keep the music close to the microphone</string>
+    <string name="baaja_ai_rec_processing">Almost there…</string>
+    <string name="baaja_ai_rec_processing_sub">Matching what we heard</string>
+    <string name="baaja_ai_rec_found">We found it!</string>
+    <string name="baaja_ai_rec_found_sub">Tap the mic to try another song</string>
+    <string name="baaja_ai_rec_found_label">Found it</string>
+    <string name="baaja_ai_rec_recent">Recently identified</string>
+    <string name="baaja_ai_rec_start">Start listening</string>
+    <string name="baaja_ai_rec_stop">Stop listening</string>
+    <string name="baaja_ai_rec_again">Identify another song</string>
+    <string name="baaja_ai_rec_history_empty">No recognition history yet</string>
+    <string name="baaja_ai_rec_see_all">See all</string>
+
+    <!-- Listen Together -->
+    <string name="baaja_ai_together_title">Listen together</string>
+    <string name="baaja_ai_together_tagline">Same song, same second, wherever your friends are.</string>
+    <string name="baaja_ai_together_start">Start a room</string>
+    <string name="baaja_ai_together_have_code">Have a code?</string>
+    <string name="baaja_ai_together_your_name">Your name</string>
+    <string name="baaja_ai_together_how">How it works</string>
+    <string name="baaja_ai_together_step1">Start a room and share the code</string>
+    <string name="baaja_ai_together_step2">Friends join from their own phones</string>
+    <string name="baaja_ai_together_step3">Everyone hears the same song in sync</string>
+    <string name="baaja_ai_together_share_hint">Share it with friends so they can join.</string>
+    <string name="baaja_ai_together_playing">Playing in room</string>
+    <string name="baaja_ai_together_in_room">In this room · %d</string>
+    <string name="baaja_ai_together_reconnect">Reconnect</string>
+    <string name="baaja_ai_together_in_sync">In sync</string>
+</resources>

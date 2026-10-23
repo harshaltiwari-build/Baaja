@@ -197,6 +197,11 @@ fun LibraryPlaylistsScreen(
     val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
     val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
     val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
+    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+    val isLoggedIn = remember(innerTubeCookie) {
+        "SAPISID" in parseCookieString(innerTubeCookie)
+    }
+
     val (showUploaded) = rememberPreference(ShowUploadedPlaylistKey, true)
     val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
     val showLikedPlaylist = showLiked && matchesNormalizedQuery(normalizedQuery, likedPlaylist.playlist.name)
@@ -205,7 +210,7 @@ fun LibraryPlaylistsScreen(
     val showCachedPlaylists = showCached && matchesNormalizedQuery(normalizedQuery, cachedPlaylist.playlist.name)
     val showTopPlaylists = showTop && matchesNormalizedQuery(normalizedQuery, topPlaylist.playlist.name)
     val showUploadedPlaylists =
-        showUploaded && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
+        showUploaded && isLoggedIn && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
 
     val visibleResults = remember(
         filteredPlaylists,
@@ -289,11 +294,6 @@ fun LibraryPlaylistsScreen(
     val scrollToTop =
         backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsStateWithLifecycle()
 
-    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
-    val isLoggedIn = remember(innerTubeCookie) {
-        "SAPISID" in parseCookieString(innerTubeCookie)
-    }
-
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
 
     LaunchedEffect(Unit) {
@@ -338,68 +338,49 @@ fun LibraryPlaylistsScreen(
                 viewModel.updateSearchQuery("")
             },
             keyboardController = keyboardController,
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.padding(horizontal = if (isSearchActive) 16.dp else 0.dp),
         ) {
-            SortHeader(
-                sortType = sortType,
-                sortDescending = sortDescending,
-                onSortTypeChange = onSortTypeChange,
-                onSortDescendingChange = onSortDescendingChange,
-                sortTypeText = { sortType ->
-                    when (sortType) {
-                        PlaylistSortType.CREATE_DATE -> R.string.sort_by_create_date
-                        PlaylistSortType.NAME -> R.string.sort_by_name
-                        PlaylistSortType.SONG_COUNT -> R.string.sort_by_song_count
-                        PlaylistSortType.LAST_UPDATED -> R.string.sort_by_last_updated
-                    }
-                },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Text(
-                text = pluralStringResource(
-                    R.plurals.n_playlist,
-                    visibleResults.count { !it.autoPlaylist },
-                    visibleResults.count { !it.autoPlaylist },
-                ),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
-            )
-
-            IconButton(
-                onClick = { isSearchActive = true },
-                modifier = Modifier.padding(start = 8.dp).size(40.dp),
+            val playlistCount = visibleResults.count { !it.autoPlaylist }
+            BaajaLibraryToolbar(
+                onSearch = { isSearchActive = true },
+                countText = pluralStringResource(R.plurals.n_playlist, playlistCount, playlistCount),
+                viewType = viewType,
+                onToggleViewType = { onViewTypeChange(viewType.toggle()) },
+                onCreatePlaylist = { showCreatePlaylistDialog = true },
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.search),
-                    contentDescription = stringResource(R.string.search),
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    onViewTypeChange(viewType.toggle())
-                },
-                modifier = Modifier.padding(end = 8.dp).size(40.dp),
-            ) {
-                Icon(
-                    painter =
-                    painterResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.drawable.list
-                            LibraryViewType.GRID -> R.drawable.grid_view
-                        },
-                    ),
-                    contentDescription = stringResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.string.switch_to_grid_view
-                            LibraryViewType.GRID -> R.string.switch_to_list_view
-                        },
-                    ),
+                SortHeader(
+                    sortType = sortType,
+                    sortDescending = sortDescending,
+                    onSortTypeChange = onSortTypeChange,
+                    onSortDescendingChange = onSortDescendingChange,
+                    sortTypeText = { sortType ->
+                        when (sortType) {
+                            PlaylistSortType.CREATE_DATE -> R.string.sort_by_create_date
+                            PlaylistSortType.NAME -> R.string.sort_by_name
+                            PlaylistSortType.SONG_COUNT -> R.string.sort_by_song_count
+                            PlaylistSortType.LAST_UPDATED -> R.string.sort_by_last_updated
+                        }
+                    },
                 )
             }
         }
+    }
+
+    val playlistResults = remember(visibleResults) { visibleResults.filterNot { it.autoPlaylist } }
+
+    val collectionsContent = @Composable { itemModifier: Modifier ->
+        BaajaLibraryCollections(
+            showLiked = showLikedPlaylist,
+            showDownloaded = showDownloadedPlaylist,
+            showCached = showCachedPlaylists,
+            showTop = showTopPlaylists,
+            showUploaded = showUploadedPlaylists,
+            topLabel = topPlaylist.playlist.name,
+            topSize = topSize.toString().toIntOrNull() ?: 50,
+            showEntryPoints = normalizedQuery.isBlank(),
+            onNavigate = { navController.navigate(it) },
+            modifier = itemModifier,
+        )
     }
 
     Box(
@@ -416,6 +397,10 @@ fun LibraryPlaylistsScreen(
                         contentType = CONTENT_TYPE_HEADER,
                     ) {
                         filterContent()
+                    }
+
+                    item(key = "collections", contentType = CONTENT_TYPE_HEADER) {
+                        collectionsContent(Modifier.animateItem())
                     }
 
                     item(
@@ -440,7 +425,7 @@ fun LibraryPlaylistsScreen(
                     }
 
                     items(
-                        items = visibleResults,
+                        items = playlistResults,
                         key = { it.key },
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) { item ->
@@ -486,6 +471,14 @@ fun LibraryPlaylistsScreen(
                     }
 
                     item(
+                        key = "collections",
+                        span = { GridItemSpan(maxLineSpan) },
+                        contentType = CONTENT_TYPE_HEADER,
+                    ) {
+                        collectionsContent(Modifier.animateItem())
+                    }
+
+                    item(
                         key = "header",
                         span = { GridItemSpan(maxLineSpan) },
                         contentType = CONTENT_TYPE_HEADER,
@@ -508,7 +501,7 @@ fun LibraryPlaylistsScreen(
                     }
 
                     items(
-                        items = visibleResults,
+                        items = playlistResults,
                         key = { it.key },
                         contentType = { CONTENT_TYPE_PLAYLIST },
                     ) { item ->
@@ -538,23 +531,6 @@ fun LibraryPlaylistsScreen(
                     }
                 }
             }
-        }
-
-        // Always visible + button (no scroll hiding)
-        FloatingActionButton(
-            onClick = { showCreatePlaylistDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current
-                        .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
-                )
-                .padding(16.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.add),
-                contentDescription = stringResource(R.string.create_playlist),
-            )
         }
     }
 }

@@ -13,6 +13,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Local music files (Baaja "On this device" screen) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <!-- Microphone feature for music recognition (not required) -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -58,6 +63,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Metrolist"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -74,18 +80,6 @@
             <intent-filter>
                 <action android:name="com.metrolist.music.action.RECOGNITION" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <!-- Listen Together invite link -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="https" />
-                <data android:host="metrolist.cc" />
-                <data android:pathPrefix="/listen" />
             </intent-filter>
 
             <!-- Youtube filter -->
@@ -189,23 +183,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity-alias>
-
-        <activity
-            android:name=".discord.DiscordOAuthActivity"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.AppCompat.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="metrolistdiscord" />
-                <data android:host="oauth2" />
-                <data android:pathPrefix="/callback" />
-            </intent-filter>
-        </activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -36,6 +36,7 @@ data class SoundShaperSettings(
 class SoundShaperAudioProcessor : BaseAudioProcessor() {
     private var sampleRate = 0
     private var channelCount = 0
+    private var isFloat = false
     private var settings = SoundShaperSettings()
     private var bass: BiquadFilter? = null
     private var treble: BiquadFilter? = null
@@ -58,10 +59,12 @@ class SoundShaperAudioProcessor : BaseAudioProcessor() {
     }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
-        if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT || inputAudioFormat.channelCount > 2) {
+        val encoding = inputAudioFormat.encoding
+        if ((encoding != C.ENCODING_PCM_16BIT && encoding != C.ENCODING_PCM_FLOAT) || inputAudioFormat.channelCount > 2) {
             throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
         }
         synchronized(this) {
+            isFloat = encoding == C.ENCODING_PCM_FLOAT
             sampleRate = inputAudioFormat.sampleRate
             channelCount = inputAudioFormat.channelCount
             rebuildShelves()
@@ -91,27 +94,27 @@ class SoundShaperAudioProcessor : BaseAudioProcessor() {
         val bassFilter = bass
         val trebleFilter = treble
 
-        repeat(input.remaining() / 4) {
-            var left = input.getShort() / 32768.0
-            var right = input.getShort() / 32768.0
+        repeat(input.remaining() / (bytesPerSample * 2)) {
+            var left = readSample(input)
+            var right = readSample(input)
             bassFilter?.processStereo(left, right)?.let { (l, r) -> left = l; right = r }
             trebleFilter?.processStereo(left, right)?.let { (l, r) -> left = l; right = r }
 
             val mid = (left + right) * 0.5
             val side = (left - right) * 0.5 * width
-            output.putShort(toPcm((mid + side) * leftGain))
-            output.putShort(toPcm((mid - side) * rightGain))
+            writeSample(output, (mid + side) * leftGain)
+            writeSample(output, (mid - side) * rightGain)
         }
     }
 
     private fun processMono(input: ByteBuffer, output: ByteBuffer) {
         val bassFilter = bass
         val trebleFilter = treble
-        repeat(input.remaining() / 2) {
-            var sample = input.getShort() / 32768.0
+        repeat(input.remaining() / bytesPerSample) {
+            var sample = readSample(input)
             bassFilter?.let { sample = it.processSample(sample) }
             trebleFilter?.let { sample = it.processSample(sample) }
-            output.putShort(toPcm(sample))
+            writeSample(output, sample)
         }
     }
 
@@ -126,9 +129,20 @@ class SoundShaperAudioProcessor : BaseAudioProcessor() {
         synchronized(this) {
             sampleRate = 0
             channelCount = 0
+            isFloat = false
             bass = null
             treble = null
         }
+    }
+
+    private val bytesPerSample: Int get() = if (isFloat) 4 else 2
+
+    private fun readSample(buffer: ByteBuffer): Double =
+        if (isFloat) buffer.getFloat().toDouble() else buffer.getShort() / 32768.0
+
+    // In float mode peaks above full scale pass through; Android clamps them only at the mixer output.
+    private fun writeSample(buffer: ByteBuffer, value: Double) {
+        if (isFloat) buffer.putFloat(value.toFloat()) else buffer.putShort(toPcm(value))
     }
 
     private fun toPcm(value: Double): Short = (value * 32768.0).coerceIn(-32768.0, 32767.0).toInt().toShort()

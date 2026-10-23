@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baaja: album and artist detail screens -->
+<resources>
+    <string name="baaja_library_artist_see_all">See all</string>
+    <string name="baaja_library_artist_play_all">Play all</string>
+    <string name="baaja_library_artist_share_link">Copy artist link</string>
+    <string name="baaja_library_artist_avatar">Artist picture</string>
+    <string name="baaja_library_artist_show_library">Show songs in your library</string>
+    <string name="baaja_library_artist_show_online">Show artist page</string>
+</resources>

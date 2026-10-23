@@ -166,7 +166,6 @@
     <string name="playlist_position_beginning_desc">Newly added songs appear before existing songs</string>
     <string name="playlist_position_end">End of playlist</string>
     <string name="playlist_position_end_desc">Newly added songs appear after existing songs</string>
-    <string name="show_wrapped_card">Show Wrapped card</string>
     <string name="skip_silence_desc">Fast-forward through silent parts of songs</string>
     <string name="show_audio_format_on_player">Show audio format on player</string>
     <string name="sound_shaping">Sound shaping</string>
@@ -181,11 +180,6 @@
     <string name="auto_backup_folder">Backup folder</string>
     <string name="auto_backup_folder_not_set">Not set</string>
     <string name="auto_backup_desc">Automatic backups run in the background when your battery isn\'t low. The %1$d newest are kept in the folder you choose; older automatic backups are deleted.</string>
-    <string name="listenbrainz_integration">ListenBrainz</string>
-    <string name="listenbrainz_connected">Scrobbling with your ListenBrainz token</string>
-    <string name="listenbrainz_not_connected">Tap to add your ListenBrainz user token</string>
-    <string name="listenbrainz_token">ListenBrainz user token</string>
-    <string name="listenbrainz_token_hint">Copy it from listenbrainz.org/settings</string>
     <string name="sponsorblock">Skip non-music segments</string>
     <string name="sponsorblock_desc">Use SponsorBlock to skip sponsors, self-promotion, reminders to subscribe and non-music parts of music videos. Only a short hash of each song ID is sent.</string>
     <string name="sponsorblock_skipped">Skipped a non-music segment</string>
@@ -413,10 +407,6 @@
     <string name="update_action">Update</string>
     <string name="update_channel_name">App updates</string>
     <string name="update_channel_desc">Notifications about new app versions</string>
-    <string name="kmp_upgrade_title">Metrolist KMP %s is available</string>
-    <string name="kmp_upgrade_warning">Metrolist KMP is still in development. You may encounter bugs or incomplete features.</string>
-    <string name="kmp_upgrade_action">Try KMP</string>
-    <string name="kmp_upgrade_later">Not now</string>
 
     <!-- Offload -->
     <string name="audio_offload">Enable audio offload</string>
@@ -438,22 +428,12 @@
 
     <string name="lyrics_romanize_as_main">Show romanized lyrics as main</string>
 
-    <string name="integrations">Integrations</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
 
     <!-- Last.fm -->
-    <string name="lastfm_integration">Last.fm integration</string>
-    <string name="enable_scrobbling">Enable scrobbling</string>
-    <string name="lastfm_now_playing">Send Now Playing status</string>
-    <string name="last_fm_send_likes">Sync Loved and Unloved</string>
-    <string name="last_fm_send_likes_description">Love or unlove songs in Last.fm when you like or unlike them in Baaja</string>
     <string name="logging_in">Logging in…</string>
 
-    <string name="scrobbling_configuration">Scrobbling configuration</string>
-    <string name="scrobble_min_track_duration">Scrobble songs longer than (seconds)</string>
-    <string name="scrobble_delay_percent">Scrobble delay (percentage)</string>
-    <string name="scrobble_delay_minutes">Scrobble delay (minutes)</string>
     <string name="hide_video_songs">Hide video songs</string>
     <string name="hide_youtube_shorts">Hide YouTube Shorts</string>
 
@@ -481,40 +461,6 @@
     <string name="lyrics_animation_style_title">Word-by-word animation style</string>
     <string name="none">None</string>
     <string name="album_art_for">Album art for %s</string>
-    <string name="wrapped_total_albums_title">You\'ve listened to</string>
-    <string name="wrapped_total_albums_subtitle">unique albums!</string>
-    <string name="wrapped_top_album_title">Your top album is</string>
-    <string name="wrapped_playlist_ready">Your personal playlist is ready!</string>
-    <string name="wrapped_top_5_albums_title">Your top 5 albums</string>
-    <string name="wrapped_album_listening_time">You\'ve listened to this album for %d minutes!</string>
-    <string name="wrapped_album_listening_time_minutes">%d minutes</string>
-    <string name="wrapped_no_data">No data available</string>
-    <string name="wrapped_top_5_artists_title">Your top artists of the year</string>
-    <string name="wrapped_artist_listening_time">%d minutes</string>
-    <string name="wrapped_top_5_songs_title">Your top songs of the year</string>
-    <string name="wrapped_top_song_album_art_content_description">Album art</string>
-    <string name="wrapped_top_artist_title">Your top artist of the year is</string>
-    <string name="wrapped_top_artist_image_content_description">Top artist image</string>
-    <string name="wrapped_top_artist_listening_time">You\'ve listened to them for %d minutes!</string>
-    <string name="wrapped_top_song_title">Your most played song is</string>
-    <string name="wrapped_top_song_listening_time">You\'ve listened for %d minutes!</string>
-    <string name="wrapped_total_artists_title">You\'ve listened to</string>
-    <string name="wrapped_total_artists_subtitle">unique artists!</string>
-    <string name="wrapped_total_songs_title">You\'ve listened to</string>
-    <string name="wrapped_total_songs_subtitle">unique songs!</string>
-    <string name="wrapped_intro_title">BAAJA</string>
-    <string name="wrapped_intro_subtitle">it\'s time to see what you\'ve been listening to all this year…</string>
-    <string name="wrapped_intro_button">let\'s go!</string>
-    <string name="wrapped_logo_content_description">Baaja Logo</string>
-    <string name="wrapped_year">2025</string>
-    <string name="wrapped_ready_title">YOUR WRAPPED IS READY!</string>
-    <string name="wrapped_ready_subtitle">Time to see what you loved all this year…</string>
-    <string name="wrapped_thank_you">Thank you for listening!</string>
-    <string name="wrapped_special_thanks">Special thanks to MO Agamy for creating Metrolist</string>
-    <string name="wrapped_close">Close Wrapped</string>
-    <string name="wrapped_playlist_title">Your %s Wrapped</string>
-    <string name="wrapped_create_playlist">Create playlist</string>
-    <string name="wrapped_playlist_saved">Playlist saved</string>
 
     <!-- Equalizer UI -->
     <string name="equalizer_header">Equalizer</string>
@@ -703,46 +649,6 @@
     <string name="unblock">Unblock</string>
     <string name="user_blocked_by_host">Blocked by host</string>
 
-    <!-- AI Lyrics Translation -->
-    <string name="ai_lyrics_translation">AI lyrics translation</string>
-    <string name="ai_translating_lyrics">Translating lyrics…</string>
-    <string name="ai_lyrics_translated">Lyrics translated</string>
-    <string name="ai_provider">Provider</string>
-    <string name="ai_base_url">Base URL</string>
-    <string name="ai_api_key">API key</string>
-    <string name="ai_model">Model</string>
-    <string name="ai_translation_mode">Translation mode</string>
-    <string name="ai_target_language">Target language</string>
-    <string name="ai_setup_guide">API credentials</string>
-    <string name="ai_translation_literal">Translation</string>
-    <string name="ai_translation_literal_desc">Translates the meaning into the target language</string>
-    <string name="ai_translation_transcribed">Transcription</string>
-    <string name="ai_translation_transcribed_desc">Converts pronunciation into the target script</string>
-    <string name="ai_api_key_required">API key required</string>
-    <string name="ai_error_api_key_required">An API key is required</string>
-    <string name="ai_error_no_lyrics">No lyrics to translate</string>
-    <string name="ai_error_lyrics_empty">Lyrics are empty</string>
-    <string name="ai_error_language_required">A target language is required</string>
-    <string name="ai_error_unknown">An unknown error occurred</string>
-    <string name="ai_error_translation_failed">Translation failed</string>
-    <string name="ai_provider_help">Get API keys</string>
-    <string name="ai_provider_openrouter_help">Visit https://openrouter.ai for free and paid models</string>
-    <string name="ai_provider_openai_help">Visit https://platform.openai.com/api-keys</string>
-    <string name="ai_provider_claude_help">Visit https://console.anthropic.com/settings/keys</string>
-    <string name="ai_provider_gemini_help">Visit https://aistudio.google.com/apikey</string>
-    <string name="ai_provider_perplexity_help">Visit https://perplexity.ai/settings/api</string>
-    <string name="ai_provider_xai_help">Visit https://console.x.ai</string>
-    <string name="ai_provider_deepl_help">Visit https://deepl.com/pro-api for free and paid keys</string>
-    <string name="ai_provider_mistral_help">Visit https://console.mistral.ai/api-keys</string>
-    <string name="ai_provider_inception_help">Visit https://platform.inceptionlabs.ai for API keys</string>
-    <string name="ai_deepl_formality">Formality</string>
-    <string name="ai_deepl_formality_default">Default</string>
-    <string name="ai_deepl_formality_more">More formal</string>
-    <string name="ai_deepl_formality_less">Less formal</string>
-    <string name="ai_system_prompt">System prompt</string>
-    <string name="ai_system_prompt_default">Default</string>
-    <string name="ai_system_prompt_reset">Reset to default</string>
-
     <!-- Crash Handler -->
     <string name="crash_title">App crashed</string>
     <string name="crash_description">An unexpected error occurred. Please share the crash report to help us fix the issue</string>
@@ -823,43 +729,6 @@
     <string name="recently_converted">Recently converted</string>
     <string name="column_label">Column %d</string>
 
-    <string name="discord_connect_description">Sign in with Discord to share what you\'re listening to</string>
-    <string name="discord_information_warning">Baaja uses Discord\'s public OAuth2 and Gateway APIs to share what you\'re listening to. Authorization happens through a local browser session that closes itself after capturing the code — nothing is sent to third-party servers. Your token is stored on this device in encrypted preferences and is never shared. Baaja connects directly to wss://gateway.discord.gg to publish your activity, and only requests the minimum scope required (sdk.social_layer_presence).</string>
-    <string name="discord_status_connected">Connected</string>
-    <string name="discord_status_authorizing">Authorizing…</string>
-    <string name="discord_status_authorized">Authorized</string>
-    <string name="discord_status_not_initialized">Not initialized</string>
-    <string name="discord_error_loopback_timeout">Discord didn\'t respond in time. Please try again.</string>
-    <string name="discord_error_loopback_unbound">Couldn\'t open a local callback port. Please free one and try again.</string>
-    <string name="discord_error_no_browser">No browser was found to complete Discord authorization.</string>
-    <string name="discord_error_token_refresh_failed">Discord session expired. Please reconnect.</string>
-    <string name="discord_error_invalid_scope">Discord rejected the connection. Please reconnect and grant the required permission.</string>
-    <string name="discord_error_banner_title">Discord error</string>
-    <string name="discord_rpc_preview">Rich Presence preview</string>
-    <string name="discord_integration">Discord Integration</string>
-    <string name="enable_discord_rpc">Enable Rich Presence</string>
-    <string name="discord_advanced_mode">Advanced mode</string>
-    <string name="discord_advanced_mode_description">Customize every field of your Rich Presence with placeholders</string>
-    <string name="discord_presence">Presence</string>
-    <string name="discord_activity_type">Activity type</string>
-    <string name="discord_activity_playing">Playing</string>
-    <string name="discord_activity_listening">Listening</string>
-    <string name="discord_activity_watching">Watching</string>
-    <string name="discord_activity_competing">Competing</string>
-    <string name="discord_activity_name">Activity name</string>
-    <string name="discord_state">State</string>
-    <string name="discord_details">Details</string>
-    <string name="discord_buttons">Buttons</string>
-    <string name="discord_button_1">Button 1</string>
-    <string name="discord_button_2">Button 2</string>
-    <string name="discord_enable_button_1">Show button 1</string>
-    <string name="discord_enable_button_2">Show button 2</string>
-    <string name="discord_button_label">Label</string>
-    <string name="discord_button_url">URL</string>
-    <string name="discord_status">Status</string>
-    <string name="discord_status_online">Online</string>
-    <string name="discord_status_idle">Idle</string>
-    <string name="discord_status_dnd">Do Not Disturb</string>
     <string name="speed_dial">Speed dial</string>
     <string name="pin_to_speed_dial">Pin to speed dial</string>
     <string name="unpin_from_speed_dial">Unpin from speed dial</string>
@@ -883,20 +752,7 @@
     <string name="logout_clear">Clear</string>
 
     <!-- Credits / About Screen -->
-    <string name="credits_lead_developer">Lead developer</string>
-    <string name="credits_collaborator">Collaborator</string>
-    <string name="credits_collaborators_section">Collaborators</string>
-    <string name="credits_license_name">GNU General Public License v3.0</string>
-    <string name="credits_license_desc">Free, open-source software. You may use, study, share, and improve it</string>
-    <string name="credits_discord">Discord server</string>
-    <string name="credits_telegram">Telegram channel</string>
-    <string name="credits_view_repo">View repository</string>
-    <string name="buy_mo_a_coffee">Buy me a coffee!</string>
     <string name="community_and_info">Community &amp; Info</string>
-    <string name="metrolist">METROLIST</string>
-    <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
-    <string name="yeah">Yeah!</string>
-    <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
 
     <!-- Podcasts -->
     <string name="filter_podcasts">Podcasts</string>

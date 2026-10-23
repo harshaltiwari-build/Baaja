@@ -5,6 +5,8 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -295,7 +297,7 @@ fun SleepTimerDialog(
                     ),
                 ) + fadeOut(),
             ) {
-                ElevatedCard(
+                BaajaOutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -326,7 +328,7 @@ fun SleepTimerDialog(
                     ),
                 ) + fadeOut(),
             ) {
-                ElevatedCard(
+                BaajaOutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -459,7 +461,7 @@ fun SleepTimerDialog(
                     ),
                 ) + fadeOut(),
             ) {
-                ElevatedCard(
+                BaajaOutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -554,8 +556,9 @@ fun SleepTimerDialog(
                 ) {
                     Text(stringResource(android.R.string.cancel))
                 }
-                androidx.compose.material3.Button(
-                    shapes = ButtonDefaults.shapes(),
+                Spacer(Modifier.width(10.dp))
+                BaajaDialogButton(
+                    primary = true,
                     onClick = {
                             val (finalRepeat, finalDayTimes) =
                                 when (selectedRepeat) {
@@ -605,13 +608,13 @@ private fun TimeRangeRow(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FilledTonalButton(onClick = onStartClick, modifier = Modifier.weight(1f)) {
+        BaajaDialogButton(onClick = onStartClick, modifier = Modifier.weight(1f)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.sleep_timer_start_time), style = MaterialTheme.typography.labelSmall)
                 Text(startTime, style = MaterialTheme.typography.bodyLarge)
             }
         }
-        FilledTonalButton(onClick = onEndClick, modifier = Modifier.weight(1f)) {
+        BaajaDialogButton(onClick = onEndClick, modifier = Modifier.weight(1f)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.sleep_timer_end_time), style = MaterialTheme.typography.labelSmall)
                 Text(endTime, style = MaterialTheme.typography.bodyLarge)
@@ -646,7 +649,7 @@ fun SleepTimerTimePickerDialog(
         onDismiss = onDismiss,
         buttons = {
             TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            Button(onClick = {
+            BaajaDialogButton(primary = true, onClick = {
                 val hour = timePickerState.hour.toString().padStart(2, '0')
                 val minute = timePickerState.minute.toString().padStart(2, '0')
                 onConfirm("$hour:$minute")

@@ -53,6 +53,7 @@ fun <T> EnumDialog(
                 ) {
                     Text(
                         text = valueText(value),
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     )
                     if (valueDescription != null) {
                         Text(

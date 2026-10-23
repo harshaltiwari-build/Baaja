@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="baaja_about_app_name">Baaja</string>
+    <string name="baaja_about_based_on_title">Based on Metrolist and InnerTune (GPL-3.0)</string>
+    <string name="baaja_about_based_on_desc">Baaja is free software built on open-source work by the Metrolist and InnerTune authors.</string>
+    <string name="baaja_about_metrolist_repo">Metrolist on GitHub</string>
+    <string name="baaja_about_innertune_repo">InnerTune on GitHub</string>
+    <string name="baaja_about_baaja_repo">Baaja on GitHub</string>
+    <string name="baaja_about_license">Licence: GPL-3.0</string>
+</resources>

@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenuItem
+import com.metrolist.music.ui.component.AlertDialog
+import com.metrolist.music.ui.component.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -33,7 +33,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -86,7 +86,6 @@ import com.metrolist.music.constants.ShowArtistDescriptionKey
 import com.metrolist.music.constants.ShowMostStatsPlaylistsKey
 import com.metrolist.music.constants.ShowArtistSubscriberCountKey
 import com.metrolist.music.constants.ShowMonthlyListenersKey
-import com.metrolist.music.constants.ShowWrappedCardKey
 import com.metrolist.music.constants.TopSize
 import com.metrolist.music.ui.component.EnumDialog
 import com.metrolist.music.ui.component.IconButton
@@ -135,7 +134,6 @@ fun ContentSettings(
     )
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
-    val (showWrappedCard, onShowWrappedCardChange) = rememberPreference(key = ShowWrappedCardKey, defaultValue = false)
     val (showMostStatsPlaylists, onShowMostStatsPlaylistsChange) =
         rememberPreference(key = ShowMostStatsPlaylistsKey, defaultValue = true)
     val (randomizeHomeOrder, onRandomizeHomeOrderChange) = rememberPreference(
@@ -224,7 +222,11 @@ fun ContentSettings(
                         )
                         ExposedDropdownMenu(
                             expanded = expandedDropdown,
-                            onDismissRequest = { expandedDropdown = false }
+                            onDismissRequest = { expandedDropdown = false },
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 0.dp,
+                            border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline),
                         ) {
                             listOf(Proxy.Type.HTTP, Proxy.Type.SOCKS).forEach { type ->
                                 DropdownMenuItem(
@@ -1018,7 +1020,7 @@ fun ContentSettings(
         Spacer(modifier = Modifier.height(27.dp))
 
         Material3SettingsGroup(
-            title = "Wrapped",
+            title = stringResource(R.string.stats),
             items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.stats),
@@ -1040,26 +1042,6 @@ fun ContentSettings(
                         )
                     },
                     onClick = { onShowMostStatsPlaylistsChange(!showMostStatsPlaylists) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.trending_up),
-                    title = { Text(stringResource(R.string.show_wrapped_card)) },
-                    trailingContent = {
-                        Switch(
-                            checked = showWrappedCard,
-                            onCheckedChange = onShowWrappedCardChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (showWrappedCard) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onShowWrappedCardChange(!showWrappedCard) }
                 )
             )
         )

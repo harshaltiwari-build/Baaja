@@ -33,7 +33,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +47,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,8 +59,6 @@ import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DensityScale
 import com.metrolist.music.constants.DensityScaleKey
-import com.metrolist.music.constants.DynamicThemeKey
-import com.metrolist.music.constants.EnableDynamicIconKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
@@ -71,7 +68,6 @@ import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.HidePlayerThumbnailKey
 import com.metrolist.music.constants.HideStatusBarOnFullscreenKey
 import com.metrolist.music.constants.LibraryFilter
-import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.LyricsAnimationStyle
 import com.metrolist.music.constants.LyricsAnimationStyleKey
 import com.metrolist.music.constants.LyricsClickKey
@@ -88,7 +84,6 @@ import com.metrolist.music.constants.PlayerButtonsStyle
 import com.metrolist.music.constants.PlayerButtonsStyleKey
 import com.metrolist.music.constants.PureBlackMiniPlayerKey
 import com.metrolist.music.constants.RespectAgentPositioningKey
-import com.metrolist.music.constants.SelectedThemeColorKey
 import com.metrolist.music.constants.ShowCachedPlaylistKey
 import com.metrolist.music.constants.ShowDownloadedPlaylistKey
 import com.metrolist.music.constants.ShowLikedPlaylistKey
@@ -112,10 +107,8 @@ import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
-import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.PlayerSliderColors
 import com.metrolist.music.ui.utils.backToMain
-import com.metrolist.music.utils.IconUtils
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.launch
@@ -128,21 +121,6 @@ fun AppearanceSettings(
     navController: NavController,
     snackbarHostState: SnackbarHostState,
 ) {
-    val (dynamicTheme, onDynamicThemeChange) =
-        rememberPreference(
-            DynamicThemeKey,
-            defaultValue = true,
-        )
-    val (enableDynamicIcon, onEnableDynamicIconPrefChange) =
-        rememberPreference(
-            EnableDynamicIconKey,
-            defaultValue = true,
-        )
-    val iconContext = LocalContext.current
-    val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
-        onEnableDynamicIconPrefChange(newValue)
-        IconUtils.setIcon(iconContext, newValue)
-    }
     val (enableHighRefreshRate, onEnableHighRefreshRateChange) =
         rememberPreference(
             EnableHighRefreshRateKey,
@@ -153,14 +131,6 @@ fun AppearanceSettings(
             EnableLandscapeScalingKey,
             defaultValue = false,
         )
-    val (selectedThemeColorInt) =
-        rememberPreference(
-            SelectedThemeColorKey,
-            defaultValue = DefaultThemeColor.toArgb(),
-        )
-    // Check if user has selected a custom color (not the default/dynamic color)
-    val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
-
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
         rememberPreference(
             UseNewPlayerDesignKey,
@@ -284,12 +254,6 @@ fun AppearanceSettings(
 
     val (densityScale, onDensityScaleChange) = rememberPreference(DensityScaleKey, defaultValue = 1f)
     var showDensityScaleDialog by rememberSaveable { mutableStateOf(false) }
-
-    val (listenTogetherInTopBar, onListenTogetherInTopBarChange) =
-        rememberPreference(
-            ListenTogetherInTopBarKey,
-            defaultValue = true,
-        )
 
     val (swipeToSong, onSwipeToSongChange) =
         rememberPreference(
@@ -959,65 +923,6 @@ fun AppearanceSettings(
                                 )
                             },
                             onClick = { onEnableLandscapeScalingChange(!enableLandscapeScaling) },
-                        ),
-                    )
-                    // Only show dynamic theme option when using the default/dynamic color
-                    // When a custom color is selected, dynamic theme is automatically disabled
-                    if (!isUsingCustomColor) {
-                        add(
-                            Material3SettingsItem(
-                                icon = painterResource(R.drawable.palette),
-                                title = { Text(stringResource(R.string.enable_dynamic_theme)) },
-                                trailingContent = {
-                                    Switch(
-                                        checked = dynamicTheme,
-                                        onCheckedChange = onDynamicThemeChange,
-                                        thumbContent = {
-                                            Icon(
-                                                painter =
-                                                    painterResource(
-                                                        id = if (dynamicTheme) R.drawable.check else R.drawable.close,
-                                                    ),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(SwitchDefaults.IconSize),
-                                            )
-                                        },
-                                    )
-                                },
-                                onClick = { onDynamicThemeChange(!dynamicTheme) },
-                            ),
-                        )
-                    }
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.palette),
-                            title = { Text(stringResource(R.string.enable_dynamic_icon)) },
-                            description = { Text(stringResource(R.string.enable_dynamic_icon_desc)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = enableDynamicIcon,
-                                    onCheckedChange = onEnableDynamicIconChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter =
-                                                painterResource(
-                                                    id = if (enableDynamicIcon) R.drawable.check else R.drawable.close,
-                                                ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize),
-                                        )
-                                    },
-                                )
-                            },
-                            onClick = { onEnableDynamicIconChange(!enableDynamicIcon) },
-                        ),
-                    )
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.palette),
-                            title = { Text(stringResource(R.string.theme)) },
-                            description = { Text(stringResource(R.string.theme_desc)) },
-                            onClick = { navController.navigate("settings/appearance/theme") },
                         ),
                     )
                 },
@@ -1718,28 +1623,6 @@ fun AppearanceSettings(
                             )
                         },
                         onClick = { onSlimNavChange(!slimNav) },
-                    ),
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.group_outlined),
-                        title = { Text(stringResource(R.string.listen_together_in_top_bar)) },
-                        description = { Text(stringResource(R.string.listen_together_in_top_bar_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = listenTogetherInTopBar,
-                                onCheckedChange = onListenTogetherInTopBarChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter =
-                                            painterResource(
-                                                id = if (listenTogetherInTopBar) R.drawable.check else R.drawable.close,
-                                            ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    )
-                                },
-                            )
-                        },
-                        onClick = { onListenTogetherInTopBarChange(!listenTogetherInTopBar) },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.grid_view),

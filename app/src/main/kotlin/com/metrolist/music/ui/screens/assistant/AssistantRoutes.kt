@@ -5,9 +5,22 @@
 
 package com.metrolist.music.ui.screens.assistant
 
+import android.net.Uri
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 
-/** Routes for the AI music assistant and Behind the Song. */
+/** Route for Behind the Song / Music DNA of [videoId]. */
+fun behindTheSongRoute(videoId: String): String = "behind_the_song/${Uri.encode(videoId)}"
+
+/** Route for the Behind the Song screen. */
 fun NavGraphBuilder.assistantRoutes(navController: NavHostController) {
+    composable(
+        route = "behind_the_song/{videoId}",
+        arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+    ) {
+        BehindTheSongScreen(navController)
+    }
 }

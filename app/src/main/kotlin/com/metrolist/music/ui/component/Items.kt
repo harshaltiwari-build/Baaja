@@ -46,6 +46,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -80,6 +81,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.media3.common.MediaItem
@@ -107,11 +109,8 @@ import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
-import com.metrolist.music.constants.ListItemHeight
-import com.metrolist.music.constants.ListThumbnailSize
 import com.metrolist.music.constants.SmallGridThumbnailHeight
 import com.metrolist.music.constants.SwipeToSongKey
-import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.db.entities.Album
 import com.metrolist.music.db.entities.Artist
 import com.metrolist.music.db.entities.ArtistEntity
@@ -120,6 +119,8 @@ import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.playback.queues.LocalAlbumRadio
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaOutline
 import com.metrolist.music.ui.utils.resize
 import com.metrolist.music.utils.joinByBullet
 import com.metrolist.music.utils.joinToArtistString
@@ -127,6 +128,7 @@ import com.metrolist.music.utils.makeTimeString
 import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.utils.rememberSharedBooleanPreference
 import com.metrolist.music.utils.reportException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -138,6 +140,14 @@ import kotlin.math.roundToInt
 import kotlin.jvm.JvmName
 
 const val ActiveBoxAlpha = 0.6f
+
+/** Baaja list/grid item metrics: outlined artwork with a small hard shadow. */
+val BaajaListItemHeight = 72.dp
+val BaajaListThumbnailSize = 52.dp
+val BaajaListThumbnailShape = RoundedCornerShape(14.dp)
+val BaajaGridThumbnailShape = RoundedCornerShape(22.dp)
+val BaajaListShadowOffset = 2.dp
+val BaajaGridShadowOffset = 3.dp
 
 @Composable
 fun currentGridThumbnailHeight(): Dp {
@@ -259,51 +269,46 @@ inline fun ListItem(
     isActive: Boolean = false,
     isAvailable: Boolean = true,
 ) {
+    val rowShape = RoundedCornerShape(18.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = if (isActive) {
-            modifier // playing highlight
-                .height(ListItemHeight)
-                .padding(horizontal = 8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    color = // selected active
-                        if (isSelected == true) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-                        else MaterialTheme.colorScheme.secondaryContainer
-                )
-        } else if (isSelected == true) {
-            modifier // inactive selected
-                .height(ListItemHeight)
-                .padding(horizontal = 8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(color = MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f))
-        } else {
-            modifier // default
-                .height(ListItemHeight)
-                .padding(horizontal = 8.dp)
-        }
+        modifier = modifier
+            .height(BaajaListItemHeight)
+            .padding(horizontal = 10.dp, vertical = 2.dp)
+            .then(
+                when {
+                    isSelected == true ->
+                        Modifier
+                            .baajaOutline(baajaInk, rowShape, borderWidth = 2.dp, shadowOffset = 0.dp)
+                            .clip(rowShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
+                    isActive ->
+                        Modifier
+                            .clip(rowShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                    else -> Modifier
+                }
+            )
     ) {
         Box(
-            modifier = Modifier.padding(6.dp),
+            modifier = Modifier.padding(start = 8.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             thumbnailContent()
             if (!isAvailable) {
                 Box(
                     modifier = Modifier
-                        .size(ListThumbnailSize)
+                        .matchParentSize()
                         .align(Alignment.Center)
-                        .background(
-                            Color.Black.copy(alpha = 0.25f),
-                            RoundedCornerShape(ThumbnailCornerRadius)
-                        )
+                        .clip(BaajaListThumbnailShape)
+                        .background(Color.Black.copy(alpha = 0.35f))
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.offline),
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier
-                            .size(ListThumbnailSize / 2)
+                            .size(BaajaListThumbnailSize / 2)
                             .align(Alignment.Center)
                             .graphicsLayer { alpha = 1f }
                     )
@@ -313,19 +318,23 @@ inline fun ListItem(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 6.dp)
+                .padding(horizontal = 8.dp)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
+                color = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
             if (subtitle != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    subtitle()
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                        subtitle()
+                    }
                 }
             }
         }
@@ -352,7 +361,7 @@ fun ListItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -383,7 +392,7 @@ fun ListItem(
         if (!subtitle.isNullOrEmpty()) {
             Text(
                 text = subtitle,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -431,7 +440,7 @@ fun GridItem(
             thumbnailContent()
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         title()
 
@@ -469,7 +478,7 @@ fun GridItem(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -511,7 +520,7 @@ fun SongListItem(
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val artistNameAliases = LocalArtistNameAliases.current
-    val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = false)
+    val swipeEnabled by rememberSharedBooleanPreference(SwipeToSongKey, defaultValue = false)
 
     val content: @Composable () -> Unit = {
          ListItem(
@@ -527,7 +536,7 @@ fun SongListItem(
                               makeTimeString(song.song.duration * 1000L)
                           ),
                           style = MaterialTheme.typography.bodySmall,
-                          color = MaterialTheme.colorScheme.secondary,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
                           maxLines = 1,
                           overflow = TextOverflow.Ellipsis,
                       )
@@ -535,7 +544,7 @@ fun SongListItem(
                      Text(
                          text = subtitleOverride,
                          style = MaterialTheme.typography.bodySmall,
-                         color = MaterialTheme.colorScheme.secondary,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                          maxLines = 1,
                          overflow = TextOverflow.Ellipsis,
                      )
@@ -551,8 +560,8 @@ fun SongListItem(
                      isSelected = isSelected,
                      isActive = isActive,
                      isPlaying = isPlaying,
-                     shape = RoundedCornerShape(ThumbnailCornerRadius),
-                     modifier = Modifier.size(ListThumbnailSize)
+                     shape = BaajaListThumbnailShape,
+                     modifier = Modifier.size(BaajaListThumbnailSize)
                  )
              },
              trailingContent = trailingContent,
@@ -617,7 +626,7 @@ fun SongGridItem(
                 makeTimeString(song.song.duration * 1000L)
             ),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -629,7 +638,8 @@ fun SongGridItem(
             thumbnailUrl = song.song.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            shape = BaajaGridThumbnailShape,
+            shadowOffset = BaajaGridShadowOffset,
             modifier = Modifier.size(gridHeight)
         )
         if (!isActive) {
@@ -672,9 +682,12 @@ fun ArtistListItem(
                 .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .build(),
             contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(ListThumbnailSize)
-                .clip(CircleShape),
+                .size(BaajaListThumbnailSize)
+                .baajaOutline(baajaInk, CircleShape, borderWidth = 2.dp, shadowOffset = BaajaListShadowOffset)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
         )
     },
     trailingContent = trailingContent,
@@ -707,7 +720,9 @@ fun ArtistGridItem(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
+                .baajaOutline(baajaInk, CircleShape, borderWidth = 2.5.dp, shadowOffset = BaajaGridShadowOffset)
                 .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         )
     },
     fillMaxWidth = fillMaxWidth,
@@ -767,7 +782,7 @@ fun AlbumListItem(
                 album.album.year?.toString()
             ),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -777,8 +792,8 @@ fun AlbumListItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = Modifier.size(ListThumbnailSize)
+            shape = BaajaListThumbnailShape,
+            modifier = Modifier.size(BaajaListThumbnailSize)
         )
     },
     trailingContent = trailingContent,
@@ -842,7 +857,7 @@ fun AlbumGridItem(
          Text(
              text = album.artists.joinToArtistString(" ${stringResource(R.string.and)} ") { it.name },
              style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -857,7 +872,8 @@ fun AlbumGridItem(
             thumbnailUrl = album.album.thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            shape = BaajaGridThumbnailShape,
+            shadowOffset = BaajaGridShadowOffset,
         )
 
         AlbumPlayButton(
@@ -935,7 +951,7 @@ fun PlaylistListItem(
     thumbnailContent = {
         PlaylistThumbnail(
             thumbnails = playlist.thumbnails,
-            size = ListThumbnailSize,
+            size = BaajaListThumbnailSize,
             placeHolder = {
                 val painter = when (playlist.playlist.name) {
                     stringResource(R.string.liked) -> R.drawable.favorite_border
@@ -949,10 +965,10 @@ fun PlaylistListItem(
                     painter = painterResource(painter),
                     contentDescription = null,
                     tint = LocalContentColor.current.copy(alpha = 0.8f),
-                    modifier = Modifier.size(ListThumbnailSize / 2)
+                    modifier = Modifier.size(BaajaListThumbnailSize / 2)
                 )
             },
-            shape = RoundedCornerShape(ThumbnailCornerRadius)
+            shape = BaajaListThumbnailShape
         )
     },
     trailingContent = trailingContent,
@@ -1025,7 +1041,7 @@ fun PlaylistGridItem(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -1057,7 +1073,8 @@ fun PlaylistGridItem(
                     )
                 }
             },
-            shape = RoundedCornerShape(ThumbnailCornerRadius)
+            shape = BaajaGridThumbnailShape,
+            shadowOffset = BaajaGridShadowOffset,
         )
     },
     fillMaxWidth = fillMaxWidth,
@@ -1094,7 +1111,7 @@ fun MediaMetadataListItem(
                         }
                     }
                 },
-                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.secondary),
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1106,8 +1123,8 @@ fun MediaMetadataListItem(
                 isSelected = isSelected,
                 isActive = isActive,
                 isPlaying = isPlaying,
-                shape = RoundedCornerShape(ThumbnailCornerRadius),
-                modifier = Modifier.size(ListThumbnailSize)
+                shape = BaajaListThumbnailShape,
+                modifier = Modifier.size(BaajaListThumbnailSize)
             )
         },
         trailingContent = trailingContent,
@@ -1151,7 +1168,7 @@ fun YouTubeListItem(
         }
     },
 ) {
-    val swipeEnabled by rememberPreference(SwipeToSongKey, defaultValue = false)
+    val swipeEnabled by rememberSharedBooleanPreference(SwipeToSongKey, defaultValue = false)
     val artistNameAliases = LocalArtistNameAliases.current
     val artistSeparator = " ${stringResource(R.string.and)} "
 
@@ -1207,8 +1224,8 @@ fun YouTubeListItem(
                     isSelected = isSelected,
                     isActive = isActive,
                     isPlaying = isPlaying,
-                    shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
-                    modifier = Modifier.size(ListThumbnailSize)
+                    shape = if (item is ArtistItem) CircleShape else BaajaListThumbnailShape,
+                    modifier = Modifier.size(BaajaListThumbnailSize)
                 )
             },
             trailingContent = trailingContent,
@@ -1290,7 +1307,7 @@ fun YouTubeGridItem(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1306,7 +1323,8 @@ fun YouTubeGridItem(
             thumbnailUrl = item.thumbnail,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
+            shape = if (item is ArtistItem) CircleShape else BaajaGridThumbnailShape,
+            shadowOffset = BaajaGridShadowOffset,
         )
 
         if (item is SongItem && !isActive) {
@@ -1356,7 +1374,7 @@ fun LocalSongsGrid(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.basicMarquee(
@@ -1372,7 +1390,7 @@ fun LocalSongsGrid(
             thumbnailUrl = thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            shape = BaajaGridThumbnailShape,
             modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
             showCenterPlay = true,
             playButtonVisible = false
@@ -1398,7 +1416,7 @@ fun LocalArtistsGrid(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.basicMarquee(
@@ -1440,7 +1458,7 @@ fun LocalAlbumsGrid(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.basicMarquee(
@@ -1456,7 +1474,7 @@ fun LocalAlbumsGrid(
             thumbnailUrl = thumbnailUrl,
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = RoundedCornerShape(ThumbnailCornerRadius),
+            shape = BaajaGridThumbnailShape,
             modifier = if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier,
             showCenterPlay = false,
             playButtonVisible = true
@@ -1475,16 +1493,27 @@ fun ItemThumbnail(
     modifier: Modifier = Modifier,
     albumIndex: Int? = null,
     isSelected: Boolean = false,
-    thumbnailRatio: Float = 1f
+    thumbnailRatio: Float = 1f,
+    shadowOffset: Dp = BaajaListShadowOffset,
 ) {
-    val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    
+    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
+    val outlined = albumIndex == null
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxSize()
             .aspectRatio(thumbnailRatio)
-            .clip(shape)
+            .then(
+                if (outlined) {
+                    Modifier
+                        .baajaOutline(baajaInk, shape, borderWidth = 2.dp, shadowOffset = shadowOffset)
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                } else {
+                    Modifier.clip(shape)
+                }
+            )
     ) {
         if (albumIndex == null) {
             AsyncImage(
@@ -1510,7 +1539,9 @@ fun ItemThumbnail(
             ) {
                 Text(
                     text = albumIndex.toString(),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -1522,11 +1553,12 @@ fun ItemThumbnail(
                     .fillMaxSize()
                     .zIndex(1f)
                     .clip(shape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
             ) {
                 Icon(
                     painter = painterResource(R.drawable.done),
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }
@@ -1534,14 +1566,14 @@ fun ItemThumbnail(
         PlayingIndicatorBox(
             isActive = isActive,
             playWhenReady = isPlaying,
-            color = if (albumIndex != null) MaterialTheme.colorScheme.onBackground else Color.White,
+            color = if (albumIndex != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     color = if (albumIndex != null)
                         Color.Transparent
                     else
-                        Color.Black.copy(alpha = ActiveBoxAlpha),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
                     shape = shape
                 )
         )
@@ -1559,13 +1591,15 @@ fun LocalThumbnail(
     playButtonVisible: Boolean = false,
     thumbnailRatio: Float = 1f
 ) {
-    val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    
+    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .aspectRatio(thumbnailRatio)
+            .baajaOutline(baajaInk, shape, borderWidth = 2.dp, shadowOffset = BaajaGridShadowOffset)
             .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -1588,18 +1622,18 @@ fun LocalThumbnail(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f), shape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.72f), shape)
             ) {
                 if (isPlaying) {
                     PlayingIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.height(24.dp)
                     )
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -1614,19 +1648,7 @@ fun LocalThumbnail(
                     .align(Alignment.Center)
                     .padding(8.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.6f))
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.play),
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                }
+                BaajaOverlayCircle(icon = R.drawable.play)
             }
         }
 
@@ -1639,19 +1661,7 @@ fun LocalThumbnail(
                     .align(Alignment.BottomEnd)
                     .padding(8.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = ActiveBoxAlpha))
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.play),
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-                }
+                BaajaOverlayCircle(icon = R.drawable.play)
             }
         }
     }
@@ -1663,65 +1673,86 @@ fun PlaylistThumbnail(
     size: Dp,
     placeHolder: @Composable () -> Unit,
     shape: Shape,
-    cacheKey: String? = null
+    cacheKey: String? = null,
+    shadowOffset: Dp = BaajaListShadowOffset,
 ) {
-    val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    
-    when (thumbnails.size) {
-        0 -> Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(size)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-        ) {
-            placeHolder()
-        }
-        1 -> AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(thumbnails[0].resize((size.value * 3).toInt()))
-                .apply { /* Removed cache key extensions due to unresolved in env */ }
-                .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
-                .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
-                .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
-                .build(),
-            contentDescription = null,
-            contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-            placeholder = painterResource(R.drawable.queue_music),
-            error = painterResource(R.drawable.queue_music),
-            modifier = Modifier
-                .size(size)
-                .clip(shape)
-        )
-        else -> Box(
-            modifier = Modifier
-                .size(size)
-                .clip(shape)
-        ) {
-            listOf(
-                Alignment.TopStart,
-                Alignment.TopEnd,
-                Alignment.BottomStart,
-                Alignment.BottomEnd
-            ).fastForEachIndexed { index, alignment ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(thumbnails.getOrNull(index)?.resize((size.value * 1.5).toInt()))
-                        .apply { /* Removed cache key extensions due to unresolved in env */ }
-                        .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                    placeholder = painterResource(R.drawable.queue_music),
-                    error = painterResource(R.drawable.queue_music),
-                    modifier = Modifier
-                        .align(alignment)
-                        .size(size / 2)
-                )
+    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(size)
+            .baajaOutline(baajaInk, shape, borderWidth = 2.dp, shadowOffset = shadowOffset)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        when (thumbnails.size) {
+            0 -> placeHolder()
+            1 -> AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(thumbnails[0].resize((size.value * 3).toInt()))
+                    .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
+                    .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
+                    .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = null,
+                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                placeholder = painterResource(R.drawable.queue_music),
+                error = painterResource(R.drawable.queue_music),
+                modifier = Modifier.fillMaxSize()
+            )
+            else -> Box(modifier = Modifier.fillMaxSize()) {
+                listOf(
+                    Alignment.TopStart,
+                    Alignment.TopEnd,
+                    Alignment.BottomStart,
+                    Alignment.BottomEnd
+                ).fastForEachIndexed { index, alignment ->
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(thumbnails.getOrNull(index)?.resize((size.value * 1.5).toInt()))
+                            .memoryCachePolicy(coil3.request.CachePolicy.ENABLED)
+                            .diskCachePolicy(coil3.request.CachePolicy.ENABLED)
+                            .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                        placeholder = painterResource(R.drawable.queue_music),
+                        error = painterResource(R.drawable.queue_music),
+                        modifier = Modifier
+                            .align(alignment)
+                            .size(size / 2)
+                    )
+                }
             }
         }
+    }
+}
+
+/** Small round overlay control drawn on artwork: surface fill, ink outline. */
+@Composable
+fun BaajaOverlayCircle(
+    @androidx.annotation.DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    size: Dp = 38.dp,
+    filled: Boolean = false,
+) {
+    val container = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    val content = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(size)
+            .baajaOutline(baajaInk, CircleShape, borderWidth = 2.dp, shadowOffset = 2.dp)
+            .clip(CircleShape)
+            .background(container)
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = content,
+            modifier = Modifier.size(size * 0.5f)
+        )
     }
 }
 
@@ -1736,20 +1767,7 @@ fun BoxScope.OverlayPlayButton(
         modifier = Modifier
             .align(Alignment.Center)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.play),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        BaajaOverlayCircle(icon = R.drawable.play, filled = true)
     }
 }
 
@@ -1767,22 +1785,13 @@ fun BoxScope.OverlayEditButton(
             .align(alignment)
             .then(if (alignment == Alignment.BottomEnd) Modifier.padding(8.dp) else Modifier)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
+        BaajaOverlayCircle(
+            icon = R.drawable.edit,
+            size = 44.dp,
             modifier = Modifier
-                .size(36.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
-                .padding(0.dp)
                 .clickable(onClick = onClick)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.edit),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        )
     }
 }
 
@@ -1799,20 +1808,14 @@ fun BoxScope.AlbumPlayButton(
             .align(Alignment.BottomEnd)
             .padding(8.dp)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
+        BaajaOverlayCircle(
+            icon = R.drawable.play,
+            size = 44.dp,
+            filled = true,
             modifier = Modifier
-                .size(36.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = ActiveBoxAlpha))
                 .clickable(onClick = onClick)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.play),
-                contentDescription = null,
-                tint = Color.White
-            )
-        }
+        )
     }
 }
 
@@ -1874,9 +1877,9 @@ fun SwipeToSongBox(
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .align(Alignment.Center)
+                    .matchParentSize()
+                    .padding(horizontal = 10.dp, vertical = 2.dp)
+                    .clip(RoundedCornerShape(18.dp))
                     .background(bg),
                 contentAlignment = align
             ) {
@@ -1951,12 +1954,14 @@ object Icon {
             STATE_COMPLETED -> Icon(
                 painter = painterResource(R.drawable.offline),
                 contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier
                     .size(18.dp)
                     .padding(end = 2.dp)
             )
             STATE_QUEUED, STATE_DOWNLOADING -> CircularProgressIndicator(
                 strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .size(16.dp)
                     .padding(end = 2.dp)

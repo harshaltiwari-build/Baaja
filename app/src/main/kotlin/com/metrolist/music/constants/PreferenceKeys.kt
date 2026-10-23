@@ -155,8 +155,6 @@ val CrossfadeEnabledKey = booleanPreferencesKey("crossfadeEnabled")
 val CrossfadeDurationKey = floatPreferencesKey("crossfadeDurationFloat")
 val SoundWidthKey = floatPreferencesKey("soundShaperWidth")
 val SponsorBlockEnabledKey = booleanPreferencesKey("sponsorBlockEnabled")
-val ListenBrainzEnabledKey = booleanPreferencesKey("listenBrainzEnabled")
-val ListenBrainzTokenKey = stringPreferencesKey("listenBrainzToken")
 val AutoBackupFrequencyKey = stringPreferencesKey("autoBackupFrequency")
 val AutoBackupFolderKey = stringPreferencesKey("autoBackupFolder")
 
@@ -176,24 +174,7 @@ val DisableScreenshotKey = booleanPreferencesKey("disableScreenshot")
 
 val EnableDynamicIconKey = booleanPreferencesKey("enableDynamicIcon")
 
-val EnableDiscordRPCKey = booleanPreferencesKey("discordRPCEnable")
-val DiscordInfoDismissedKey = booleanPreferencesKey("discordInfoDismissed")
-val DiscordUsernameKey = stringPreferencesKey("discordUsername")
-val DiscordNameKey = stringPreferencesKey("discordName")
-val DiscordAvatarKey = stringPreferencesKey("discordAvatar")
 
-val DiscordAdvancedModeKey = booleanPreferencesKey("discordAdvancedMode")
-val DiscordActivityTypeKey = stringPreferencesKey("discordActivityType")
-val DiscordActivityNameKey = stringPreferencesKey("discordActivityName")
-val DiscordStateTemplateKey = stringPreferencesKey("discordStateTemplate")
-val DiscordDetailsTemplateKey = stringPreferencesKey("discordDetailsTemplate")
-val DiscordButton1EnabledKey = booleanPreferencesKey("discordButton1Enabled")
-val DiscordButton1LabelKey = stringPreferencesKey("discordButton1Label")
-val DiscordButton1UrlKey = stringPreferencesKey("discordButton1Url")
-val DiscordButton2EnabledKey = booleanPreferencesKey("discordButton2Enabled")
-val DiscordButton2LabelKey = stringPreferencesKey("discordButton2Label")
-val DiscordButton2UrlKey = stringPreferencesKey("discordButton2Url")
-val DiscordUserStatusKey = stringPreferencesKey("discordUserStatus")
 
 // Google Cast
 val EnableGoogleCastKey = booleanPreferencesKey("enableGoogleCast")
@@ -214,16 +195,8 @@ val ListenTogetherUserIdKey = stringPreferencesKey("listenTogetherUserId")
 val ListenTogetherIsHostKey = booleanPreferencesKey("listenTogetherIsHost")
 val ListenTogetherSessionTimestampKey = longPreferencesKey("listenTogetherSessionTimestamp")
 
-val LastFMSessionKey = stringPreferencesKey("lastfmSession")
-val LastFMUsernameKey = stringPreferencesKey("lastfmUsername")
-val EnableLastFMScrobblingKey = booleanPreferencesKey("lastfmScrobblingEnable")
-val LastFMUseNowPlaying = booleanPreferencesKey("lastfmUseNowPlaying")
 
-val LastFMUseSendLikes = booleanPreferencesKey("lastfmUseSendLikes")
 
-val ScrobbleDelayPercentKey = floatPreferencesKey("scrobbleDelayPercent")
-val ScrobbleMinSongDurationKey = intPreferencesKey("scrobbleMinSongDuration")
-val ScrobbleDelaySecondsKey = intPreferencesKey("scrobbleDelaySeconds")
 
 val ChipSortTypeKey = stringPreferencesKey("chipSortType")
 val SongSortTypeKey = stringPreferencesKey("songSortType")
@@ -268,8 +241,6 @@ val LyricsProviderOrderKey = stringPreferencesKey("lyricsProviderOrder")
 val SimpMusicMigrationDoneKey = booleanPreferencesKey("simpMusicMigrationDone")
 val VideoThumbnailMigrationDoneKey = booleanPreferencesKey("videoThumbnailMigrationDone")
 val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
-val ShowWrappedCardKey = booleanPreferencesKey("show_wrapped_card")
-val WrappedSeenKey = booleanPreferencesKey("wrapped_seen")
 val LastSeenVersionKey = stringPreferencesKey("lastSeenVersion")
 val RandomizeHomeOrderKey = booleanPreferencesKey("randomizeHomeOrder")
 
@@ -458,29 +429,7 @@ val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 val HideStatusBarOnFullscreenKey = booleanPreferencesKey("hideStatusBarOnFullscreen")
 val LyricsRomanizeAsMainKey = booleanPreferencesKey("lyricsRomanizeAsMain")
 val LyricsRomanizeCyrillicByLineKey = booleanPreferencesKey("lyricsRomanizeCyrillicByLine")
-val OpenRouterApiKey = stringPreferencesKey("openRouterApiKey")
-val AiProviderKey = stringPreferencesKey("aiProvider")
-val OpenRouterBaseUrlKey = stringPreferencesKey("openRouterBaseUrl")
-val OpenRouterModelKey = stringPreferencesKey("openRouterModel")
 
-const val OpenRouterDefaultBaseUrl = "https://openrouter.ai/api/v1/chat/completions"
-const val OpenRouterDefaultModel = "google/gemini-2.5-flash-lite"
-
-val TranslateModeKey = stringPreferencesKey("translateMode")
-val TranslateLanguageKey = stringPreferencesKey("translateLanguage")
-val DeeplApiKey = stringPreferencesKey("deeplApiKey")
-val DeeplFormalityKey = stringPreferencesKey("deeplFormality")
-val AiSystemPromptKey = stringPreferencesKey("aiSystemPrompt")
-
-const val DEFAULT_AI_SYSTEM_PROMPT = """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON object of the form {"lines": ["line1", "line2", "line3"]}.
-
-CRITICAL RULES:
-1. Output ONLY the JSON object: {"lines": ["line1", "line2", "line3"]}
-2. NO explanations, NO questions, NO additional text
-3. Each input line maps to exactly one entry in the "lines" array
-4. Preserve empty lines as empty strings ""
-5. The "lines" array must contain EXACTLY {lineCount} items
-6. If uncertain, provide best approximation but maintain line count"""
 val LyricsGlowEffectKey = booleanPreferencesKey("lyricsGlowEffect")
 
 val LyricsRomanizeList = stringPreferencesKey("lyricsRomanizeList")

@@ -16,7 +16,9 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +50,12 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaOutline
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -123,17 +131,18 @@ private fun calculateThumbnailDimensions(
     cornerRadius: Dp = ThumbnailCornerRadius,
     isLandscape: Boolean = false
 ): ThumbnailDimensions {
-    // In landscape, use height as the constraining dimension for a square thumbnail
+    // In landscape, use height as the constraining dimension for a square thumbnail. In portrait the
+    // height can also be the limit (e.g. with the lyric preview strip below), so keep it square.
     val effectiveSize = if (isLandscape) {
         minOf(containerWidth, containerHeight) - (horizontalPadding * 2)
     } else {
-        containerWidth - (horizontalPadding * 2)
-    }
+        minOf(containerWidth - (horizontalPadding * 2), containerHeight - 24.dp)
+    }.coerceAtLeast(48.dp)
     return ThumbnailDimensions(
         itemWidth = containerWidth,
         containerSize = containerWidth,
         thumbnailSize = effectiveSize,
-        cornerRadius = cornerRadius * 2
+        cornerRadius = maxOf(cornerRadius * 2, effectiveSize * 0.1f).coerceAtMost(36.dp)
     )
 }
 
@@ -204,6 +213,9 @@ fun Thumbnail(
     isPlayerExpanded: () -> Boolean = { true },
     isLandscape: Boolean = false,
     isListenTogetherGuest: Boolean = false,
+    onClose: (() -> Unit)? = null,
+    onBehindTheSong: (() -> Unit)? = null,
+    onArtworkClick: (() -> Unit)? = null,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -340,7 +352,9 @@ fun Thumbnail(
                     ThumbnailHeader(
                         queueTitle = queueTitle,
                         albumTitle = mediaMetadata?.album?.title,
-                        textColor = textBackgroundColor
+                        textColor = textBackgroundColor,
+                        onClose = onClose,
+                        onBehindTheSong = onBehindTheSong,
                     )
                 }
                 
@@ -405,7 +419,9 @@ fun Thumbnail(
                                 isLandscape = isLandscape,
                                 isListenTogetherGuest = isListenTogetherGuest,
                                 currentMediaId = mediaMetadata?.id,
-                                currentMediaThumbnail = mediaMetadata?.thumbnailUrl
+                                currentMediaThumbnail = mediaMetadata?.thumbnailUrl,
+                                outlineColor = if (playerBackground == PlayerBackgroundStyle.DEFAULT) baajaInk else Color.Black,
+                                onArtworkClick = onArtworkClick,
                             )
                         }
                     }
@@ -433,55 +449,97 @@ fun Thumbnail(
 }
 
 /**
- * Header component showing "Now Playing" and queue/album title.
+ * Header: close (chevron) on the left, "Now playing" and where it plays from in the middle,
+ * and the Behind the song button on the right.
  */
 @Composable
 private fun ThumbnailHeader(
     queueTitle: String?,
     albumTitle: String?,
     textColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClose: (() -> Unit)? = null,
+    onBehindTheSong: (() -> Unit)? = null,
 ) {
     val listenTogetherManager = LocalListenTogetherManager.current
     val listenTogetherRoleState = listenTogetherManager?.role?.collectAsStateWithLifecycle(initialValue = RoomRole.NONE)
-    val isListenTogetherGuest = listenTogetherRoleState?.value == RoomRole.GUEST
-    Box(
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 18.dp, vertical = 6.dp)
     ) {
+        HeaderIconButton(
+            icon = R.drawable.expand_more,
+            contentDescription = stringResource(R.string.baaja_player_close),
+            tint = textColor,
+            onClick = onClose,
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .align(Alignment.Center)
-                .padding(horizontal = 48.dp)
+                .weight(1f)
+                .padding(horizontal = 8.dp)
         ) {
             // Listen Together indicator
-            if (listenTogetherRoleState?.value != RoomRole.NONE) {
-                Text(
-                    text = if (listenTogetherRoleState?.value == RoomRole.HOST) "Hosting Listen Together" else "Listening Together",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
-                )
+            val title = if (listenTogetherRoleState?.value != null && listenTogetherRoleState.value != RoomRole.NONE) {
+                if (listenTogetherRoleState.value == RoomRole.HOST) "Hosting Listen Together" else "Listening Together"
             } else {
-                Text(
-                    text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
-                )
+                stringResource(R.string.now_playing)
             }
+            Text(
+                text = title.uppercase(),
+                color = textColor.copy(alpha = 0.7f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                maxLines = 1,
+            )
             val playingFrom = queueTitle ?: albumTitle
             if (!playingFrom.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = playingFrom,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor.copy(alpha = 0.8f),
+                    color = textColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     modifier = Modifier.basicMarquee()
                 )
             }
         }
+        HeaderIconButton(
+            icon = R.drawable.info,
+            contentDescription = stringResource(R.string.baaja_player_behind_the_song),
+            tint = textColor,
+            onClick = onBehindTheSong,
+        )
+    }
+}
+
+@Composable
+private fun HeaderIconButton(
+    icon: Int,
+    contentDescription: String,
+    tint: Color,
+    onClick: (() -> Unit)?,
+) {
+    if (onClick == null) {
+        Spacer(Modifier.size(44.dp))
+        return
+    }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(26.dp)
+        )
     }
 }
 
@@ -503,8 +561,12 @@ private fun ThumbnailItem(
     isListenTogetherGuest: Boolean = false,
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
+    outlineColor: Color = Color.Black,
+    onArtworkClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val currentOnArtworkClick by rememberUpdatedState(onArtworkClick)
+    val openImmersiveLabel = stringResource(R.string.baaja_player_open_immersive)
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
     val spinningAlbumArt by rememberPreference(SpinningAlbumArtKey, defaultValue = false)
     val isPlaying by playerConnection.isPlaying.collectAsState()
@@ -531,6 +593,7 @@ private fun ThumbnailItem(
             }
             .pointerInput(Unit) {
                 detectTapGestures(
+                    onTap = { currentOnArtworkClick?.invoke() },
                     onDoubleTap = { offset ->
                         if (isListenTogetherGuest) return@detectTapGestures
 
@@ -562,11 +625,21 @@ private fun ThumbnailItem(
             },
         contentAlignment = Alignment.Center
     ) {
+        val artShape = if (spinThis) CircleShape else RoundedCornerShape(dimensions.cornerRadius)
         Box(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
+                // Outline and hard shadow sit outside the rotation so the shadow doesn't spin.
+                .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
+                .then(
+                    if (onArtworkClick != null && item.mediaId == currentMediaId) {
+                        Modifier.semantics { onClick(label = openImmersiveLabel) { currentOnArtworkClick?.invoke(); true } }
+                    } else {
+                        Modifier
+                    }
+                )
                 .graphicsLayer { if (spinThis) rotationZ = vinylRotation.value }
-                .clip(if (spinThis) CircleShape else RoundedCornerShape(dimensions.cornerRadius))
+                .clip(artShape)
         ) {
             if (hidePlayerThumbnail) {
                 HiddenThumbnailPlaceholder(textBackgroundColor = textBackgroundColor)

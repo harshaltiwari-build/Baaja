@@ -34,7 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import com.metrolist.music.ui.component.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,7 +48,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -590,43 +590,10 @@ fun PlayerMenu(
 
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
-        item {
+        if (isListenTogetherGuest) item {
             Material3MenuGroup(
                 items =
                     buildList {
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.listen_together)) },
-                                icon = {
-                                    // Show a small badge when there are pending suggestions
-                                    Box {
-                                        Icon(
-                                            painter = painterResource(R.drawable.group),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                        if (pendingSuggestions.isNotEmpty()) {
-                                            Surface(
-                                                shape = RoundedCornerShape(12.dp),
-                                                color = MaterialTheme.colorScheme.primary,
-                                                modifier =
-                                                    Modifier
-                                                        .offset(x = 8.dp, y = (-6).dp)
-                                                        .align(Alignment.TopEnd),
-                                            ) {
-                                                Text(
-                                                    text = pendingSuggestions.size.toString(),
-                                                    color = MaterialTheme.colorScheme.onPrimary,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                onClick = { showListenTogetherDialog = true },
-                            ),
-                        )
                         if (isListenTogetherGuest) {
                             add(
                                 Material3MenuItemData(
@@ -673,6 +640,27 @@ fun PlayerMenu(
                             ),
                         )
 
+                        add(
+                            Material3MenuItemData(
+                                title = { Text(text = stringResource(R.string.baaja_player_behind_the_song)) },
+                                description = { Text(text = stringResource(R.string.baaja_player_behind_the_song_desc)) },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.info),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                },
+                                onClick = {
+                                    val videoId = java.net.URLEncoder.encode(mediaMetadata.id, "UTF-8")
+                                    // The route belongs to the Behind the Song screen; skip if it isn't registered.
+                                    runCatching { navController.navigate("behind_the_song/$videoId") }
+                                        .onSuccess { playerBottomSheetState.collapseSoft() }
+                                    onDismiss()
+                                },
+                            ),
+                        )
+
                         if (isQueueTrigger != true) {
                             add(
                                 Material3MenuItemData(
@@ -687,33 +675,6 @@ fun PlayerMenu(
                                     },
                                     onClick = {
                                         navController.navigate("equalizer")
-                                        onDismiss()
-                                    },
-                                ),
-                            )
-                            add(
-                                Material3MenuItemData(
-                                    title = { Text(text = stringResource(R.string.system_equalizer)) },
-                                    description = { Text(text = stringResource(R.string.system_equalizer_desc)) },
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.graphic_eq),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp),
-                                        )
-                                    },
-                                    onClick = {
-                                        val audioSessionId = playerConnection.player.audioSessionId
-                                        if (audioSessionId != C.AUDIO_SESSION_ID_UNSET && audioSessionId > 0) {
-                                            val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-                                                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId)
-                                                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
-                                                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-                                            }
-                                            if (intent.resolveActivity(context.packageManager) != null) {
-                                                systemEqLauncher.launch(intent)
-                                            }
-                                        }
                                         onDismiss()
                                     },
                                 ),
@@ -1427,10 +1388,7 @@ fun ListenTogetherDialog(
                             }
                             if (isHost) {
                                 Spacer(modifier = Modifier.height(12.dp))
-                                val inviteLink =
-                                    remember(room.roomCode) {
-                                        "https://metrolist.cc/listen?code=${room.roomCode}"
-                                    }
+                                val inviteText = stringResource(R.string.baaja_fix_share_room, room.roomCode)
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center,
@@ -1441,18 +1399,18 @@ fun ListenTogetherDialog(
                                                 context.getSystemService(
                                                     Context.CLIPBOARD_SERVICE,
                                                 ) as android.content.ClipboardManager
-                                            val clip = android.content.ClipData.newPlainText("Listen Together Link", inviteLink)
+                                            val clip = android.content.ClipData.newPlainText("Listen Together Invite", inviteText)
                                             clipboard.setPrimaryClip(clip)
                                             Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
                                         },
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.link),
-                                            contentDescription = stringResource(R.string.copy_link),
+                                            contentDescription = stringResource(R.string.baaja_fix_copy_invite),
                                             modifier = Modifier.size(18.dp),
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.copy_link))
+                                        Text(stringResource(R.string.baaja_fix_copy_invite))
                                     }
 
                                     Spacer(modifier = Modifier.width(8.dp))

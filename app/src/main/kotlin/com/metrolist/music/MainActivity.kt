@@ -52,7 +52,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import com.metrolist.music.ui.component.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -62,11 +62,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
+import com.metrolist.music.ui.component.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
@@ -121,6 +121,9 @@ import androidx.media3.common.Player
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import com.metrolist.music.ui.theme.baajaNavEnter
+import com.metrolist.music.ui.theme.baajaNavExit
+import com.metrolist.music.ui.theme.isBaajaTabSwitch
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
@@ -138,7 +141,6 @@ import com.metrolist.music.constants.AppLanguageKey
 import com.metrolist.music.constants.CheckForUpdatesKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
-import com.metrolist.music.constants.DismissedKmpUpdateKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DisableScreenshotKey
@@ -148,14 +150,12 @@ import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
-import com.metrolist.music.constants.ListenTogetherInTopBarKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.constants.LyricsProviderOrderKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.constants.NavigationBarAnimationSpec
 import com.metrolist.music.constants.NavigationBarHeight
-import com.metrolist.music.constants.PauseListenHistoryKey
 import com.metrolist.music.constants.PauseSearchHistoryKey
 import com.metrolist.music.constants.PreferredLyricsProvider
 import com.metrolist.music.constants.PreferredLyricsProviderKey
@@ -180,6 +180,7 @@ import com.metrolist.music.playback.MusicService.MusicBinder
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.AccountSettingsDialog
+import com.metrolist.music.ui.component.home.BaajaMainTopBar
 import com.metrolist.music.ui.component.AppNavigationBar
 import com.metrolist.music.ui.component.AppNavigationRail
 import com.metrolist.music.ui.component.BottomSheetMenu
@@ -191,6 +192,7 @@ import com.metrolist.music.ui.component.shimmer.ShimmerTheme
 import com.metrolist.music.ui.menu.YouTubeSongMenu
 import com.metrolist.music.ui.player.BottomSheetPlayer
 import com.metrolist.music.ui.screens.Screens
+import com.metrolist.music.ui.screens.onboarding.BaajaWelcomeGate
 import com.metrolist.music.ui.screens.navigationBuilder
 import com.metrolist.music.ui.screens.settings.ChangelogScreen
 import com.metrolist.music.ui.screens.settings.DarkMode
@@ -231,9 +233,8 @@ import javax.inject.Inject
 private data class AvailableUpdate(
     val release: ReleaseInfo,
     val downloadUrl: String,
-    val isKmp: Boolean,
 ) {
-    val dismissalKey = if (isKmp) DismissedKmpUpdateKey else DismissedStandaloneUpdateKey
+    val dismissalKey = DismissedStandaloneUpdateKey
 }
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
@@ -507,7 +508,7 @@ class MainActivity : FragmentActivity() {
                             ?.takeIf { hasUpdate }
                             ?.let { release ->
                                 Updater.getDownloadUrlForCurrentVariant(release)?.let { downloadUrl ->
-                                    AvailableUpdate(release, downloadUrl, isKmp = false)
+                                    AvailableUpdate(release, downloadUrl)
                                 }
                             }
                     val update = standaloneUpdate
@@ -519,29 +520,13 @@ class MainActivity : FragmentActivity() {
                         val intent = Intent(Intent.ACTION_VIEW, update.downloadUrl.toUri())
                         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         val pending = PendingIntent.getActivity(this@MainActivity, 1001, intent, flags)
-                        val notificationText =
-                            if (update.isKmp) {
-                                getString(R.string.kmp_upgrade_warning)
-                            } else {
-                                update.release.versionName
-                            }
+                        val notificationText = update.release.versionName
                         val notification =
                             NotificationCompat
                                 .Builder(this@MainActivity, "updates")
                                 .setSmallIcon(R.drawable.update)
-                                .setContentTitle(
-                                    if (update.isKmp) {
-                                        getString(R.string.kmp_upgrade_title, update.release.versionName)
-                                    } else {
-                                        getString(R.string.update_available_title)
-                                    },
-                                )
+                                .setContentTitle(getString(R.string.update_available_title))
                                 .setContentText(notificationText)
-                                .apply {
-                                    if (update.isKmp) {
-                                        setStyle(NotificationCompat.BigTextStyle().bigText(notificationText))
-                                    }
-                                }
                                 .setContentIntent(pending)
                                 .setAutoCancel(true)
                                 .build()
@@ -732,15 +717,7 @@ class MainActivity : FragmentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-                val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
-                val navigationItems =
-                    remember(listenTogetherInTopBar) {
-                        if (listenTogetherInTopBar) {
-                            Screens.MainScreens.filter { it != Screens.ListenTogether }
-                        } else {
-                            Screens.MainScreens
-                        }
-                    }
+                val navigationItems = Screens.MainScreens
                 val routeIndexMap = remember(navigationItems) {
                     navigationItems.mapIndexed { i, s -> s.route to i }.toMap()
                 }
@@ -963,14 +940,9 @@ class MainActivity : FragmentActivity() {
 
                 var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(navBackStackEntry, listenTogetherInTopBar) {
+                LaunchedEffect(navBackStackEntry) {
                     val currentRoute = navBackStackEntry?.destination?.route
-                    val isListenTogetherScreen =
-                        currentRoute == Screens.ListenTogether.route ||
-                            currentRoute == "listen_together_from_topbar"
-                    shouldShowTopBar = currentRoute in topLevelScreens &&
-                        currentRoute != "settings" &&
-                        !(isListenTogetherScreen && listenTogetherInTopBar)
+                    shouldShowTopBar = currentRoute in topLevelScreens && currentRoute != "settings"
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -1017,13 +989,6 @@ class MainActivity : FragmentActivity() {
 
                 var showAccountDialog by remember { mutableStateOf(false) }
 
-                val pauseListenHistory by rememberPreference(PauseListenHistoryKey, defaultValue = false)
-                val eventCount by database.eventCount().collectAsStateWithLifecycle(initialValue = 0)
-                val showHistoryButton =
-                    remember(pauseListenHistory, eventCount) {
-                        !(pauseListenHistory && eventCount == 0)
-                    }
-
                 val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
                 val artistNameAliases by ArtistNameAliases.aliases.collectAsStateWithLifecycle()
 
@@ -1040,6 +1005,7 @@ class MainActivity : FragmentActivity() {
                     LocalChangelogState provides showChangelog,
                     LocalArtistNameAliases provides artistNameAliases,
                 ) {
+                    BaajaWelcomeGate(onSignIn = { navController.navigate("login") }) {
                     if (showChangelog.value) {
                         ChangelogScreen(onDismiss = { showChangelog.value = false })
                     }
@@ -1053,70 +1019,15 @@ class MainActivity : FragmentActivity() {
                                 exit = fadeOut(animationSpec = tween(durationMillis = 200)),
                             ) {
                                 Row {
-                                    TopAppBar(
-                                        title = {
-                                            Text(
-                                                text = currentTitleRes?.let { stringResource(it) } ?: "",
-                                                style = MaterialTheme.typography.titleLarge,
-                                            )
-                                        },
-                                        actions = {
-                                            if (showHistoryButton) {
-                                                IconButton(onClick = { navController.navigate("history") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.history),
-                                                        contentDescription = stringResource(R.string.history),
-                                                    )
-                                                }
-                                            }
-                                            IconButton(onClick = { navController.navigate("stats") }) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.stats),
-                                                    contentDescription = stringResource(R.string.stats),
-                                                )
-                                            }
-                                            if (listenTogetherInTopBar) {
-                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.group_outlined),
-                                                        contentDescription = stringResource(R.string.together),
-                                                    )
-                                                }
-                                            }
-                                            IconButton(onClick = { showAccountDialog = true }) {
-                                                BadgedBox(badge = {
-                                                    if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
-                                                        Badge()
-                                                    }
-                                                }) {
-                                                    if (accountImageUrl != null) {
-                                                        AsyncImage(
-                                                            model = accountImageUrl,
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier =
-                                                                Modifier
-                                                                    .size(24.dp)
-                                                                    .clip(CircleShape),
-                                                        )
-                                                    } else {
-                                                        Icon(
-                                                            painter = painterResource(R.drawable.account),
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier = Modifier.size(24.dp),
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        },
+                                    BaajaMainTopBar(
+                                        isHome = navBackStackEntry?.destination?.route == Screens.Home.route,
+                                        title = currentTitleRes?.let { stringResource(it) } ?: "",
+                                        accountImageUrl = accountImageUrl,
+                                        showUpdateBadge = latestVersionName != BuildConfig.BASE_VERSION_NAME,
+                                        onProfileClick = { navController.navigate("profile") },
+                                        onProfileLongClick = { showAccountDialog = true },
                                         scrollBehavior = topAppBarScrollBehavior,
-                                        colors =
-                                            TopAppBarDefaults.topAppBarColors(
-                                                containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
-                                                scrolledContainerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
-                                                titleContentColor = MaterialTheme.colorScheme.onSurface,
-                                                actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            ),
+                                        containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface,
                                         modifier =
                                             Modifier.windowInsetsPadding(
                                                 if (showRail) {
@@ -1195,7 +1106,7 @@ class MainActivity : FragmentActivity() {
                             // Pre-calculate values for graphicsLayer to avoid reading state during composition
                             val navBarTotalHeight = bottomInset + NavigationBarHeight
 
-                            if (!showRail && currentRoute != "wrapped") {
+                            if (!showRail) {
                                 Box {
                                     if (activePlayerConnection != null) {
                                         BottomSheetPlayer(
@@ -1258,7 +1169,7 @@ class MainActivity : FragmentActivity() {
                                     )
                                 }
                             } else {
-                                if (currentRoute != "wrapped") {
+                                run {
                                     if (activePlayerConnection != null) {
                                         BottomSheetPlayer(
                                             state = playerBottomSheetState,
@@ -1322,7 +1233,7 @@ class MainActivity : FragmentActivity() {
                                     }
                                 }
 
-                            if (showRail && currentRoute != "wrapped") {
+                            if (showRail) {
                                 AppNavigationRail(
                                     navigationItems = navigationItems,
                                     currentRoute = currentRoute,
@@ -1343,44 +1254,16 @@ class MainActivity : FragmentActivity() {
                                             NavigationTab.LIBRARY -> Screens.Library
                                         }.route,
                                     enterTransition = {
-                                        val currentRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
-                                        val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
-
-                                        if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
-                                        } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
-                                        }
+                                        baajaNavEnter(this@MainActivity, isBaajaTabSwitch(routeIndexMap), pop = false)
                                     },
                                     exitTransition = {
-                                        val currentRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
-                                        val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
-
-                                        if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
-                                        } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
-                                        }
+                                        baajaNavExit(this@MainActivity, isBaajaTabSwitch(routeIndexMap), pop = false)
                                     },
                                     popEnterTransition = {
-                                        val currentRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
-                                        val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
-
-                                        if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
-                                        } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
-                                        }
+                                        baajaNavEnter(this@MainActivity, isBaajaTabSwitch(routeIndexMap), pop = true)
                                     },
                                     popExitTransition = {
-                                        val currentRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
-                                        val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
-
-                                        if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
-                                        } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
-                                        }
+                                        baajaNavExit(this@MainActivity, isBaajaTabSwitch(routeIndexMap), pop = true)
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
                                 ) {
@@ -1462,25 +1345,9 @@ class MainActivity : FragmentActivity() {
                                                 .verticalScroll(rememberScrollState()),
                                     ) {
                                         Text(
-                                            text =
-                                                stringResource(
-                                                    if (update.isKmp) {
-                                                        R.string.kmp_upgrade_title
-                                                    } else {
-                                                        R.string.update_available_message
-                                                    },
-                                                    update.release.versionName,
-                                                ),
+                                            text = stringResource(R.string.update_available_message, update.release.versionName),
                                             style = MaterialTheme.typography.bodyMedium,
                                         )
-                                        if (update.isKmp) {
-                                            Text(
-                                                text = stringResource(R.string.kmp_upgrade_warning),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.error,
-                                                modifier = Modifier.padding(top = 12.dp),
-                                            )
-                                        }
                                         Text(
                                             text = stringResource(R.string.changelog),
                                             style = MaterialTheme.typography.titleSmall,
@@ -1499,20 +1366,17 @@ class MainActivity : FragmentActivity() {
                                             startActivity(Intent(Intent.ACTION_VIEW, update.downloadUrl.toUri()))
                                         },
                                     ) {
-                                        Text(
-                                            stringResource(
-                                                if (update.isKmp) R.string.kmp_upgrade_action else R.string.update_action,
-                                            ),
-                                        )
+                                        Text(stringResource(R.string.update_action))
                                     }
                                 },
                                 dismissButton = {
                                     TextButton(onClick = dismissUpdate) {
-                                        Text(stringResource(R.string.kmp_upgrade_later))
+                                        Text(stringResource(R.string.baaja_fix_not_now))
                                     }
                                 },
                             )
                         }
+                    }
                     }
                 }
             }

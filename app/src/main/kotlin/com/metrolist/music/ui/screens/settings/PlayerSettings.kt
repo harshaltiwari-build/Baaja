@@ -45,7 +45,9 @@ import com.metrolist.music.constants.SoundBalanceKey
 import com.metrolist.music.constants.SoundBassKey
 import com.metrolist.music.constants.SoundTrebleKey
 import com.metrolist.music.constants.SoundWidthKey
+import com.metrolist.music.constants.ImmersivePlayerKey
 import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
+import com.metrolist.music.constants.ShowLyricPreviewOnPlayerKey
 import com.metrolist.music.constants.AudioNormalizationKey
 import com.metrolist.music.constants.AudioOffload
 import com.metrolist.music.constants.AudioTrackPlaybackParamsKey
@@ -99,6 +101,25 @@ import com.metrolist.music.ui.component.encodeDayTimes
 import com.metrolist.music.constants.SleepTimerFadeOutKey
 import com.metrolist.music.constants.SleepTimerStopAfterCurrentSongKey
 import com.metrolist.music.ui.utils.getLoudnessLevelLabel
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.getSystemService
+import com.metrolist.music.constants.AudioOutputDeviceKey
+import com.metrolist.music.constants.AutomixTransitionsKey
+import com.metrolist.music.constants.FloatOutputKey
+import com.metrolist.music.constants.SmartDownloadsCountKey
+import com.metrolist.music.constants.SmartDownloadsWifiOnlyKey
+import com.metrolist.music.playback.AudioOutputDevice
+import com.metrolist.music.playback.AudioOutputKind
+import com.metrolist.music.playback.SmartDownloads
+import com.metrolist.music.playback.SmartDownloadsCounts
+import com.metrolist.music.playback.audioOutputKeyName
+import com.metrolist.music.playback.connectedAudioOutputs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,6 +163,8 @@ fun PlayerSettings(
         ShowAudioFormatOnPlayerKey,
         defaultValue = true
     )
+    val (showLyricPreview, onShowLyricPreviewChange) = rememberPreference(ShowLyricPreviewOnPlayerKey, defaultValue = true)
+    val (immersivePlayer, onImmersivePlayerChange) = rememberPreference(ImmersivePlayerKey, defaultValue = false)
     val (skipSilence, onSkipSilenceChange) = rememberPreference(
         SkipSilenceKey,
         defaultValue = false
@@ -249,6 +272,56 @@ fun PlayerSettings(
         HistoryDuration,
         defaultValue = 30f
     )
+
+    val (automixEnabled, onAutomixEnabledChange) = rememberPreference(AutomixTransitionsKey, defaultValue = false)
+    val (floatOutput, onFloatOutputChange) = rememberPreference(FloatOutputKey, defaultValue = false)
+    val (audioOutputKey, onAudioOutputKeyChange) = rememberPreference(AudioOutputDeviceKey, defaultValue = "")
+    val (smartDownloadsCount, onSmartDownloadsCountChange) = rememberPreference(SmartDownloadsCountKey, defaultValue = 0)
+    val (smartDownloadsWifiOnly, onSmartDownloadsWifiOnlyChange) = rememberPreference(SmartDownloadsWifiOnlyKey, defaultValue = true)
+    val context = LocalContext.current
+    val outputDevices = rememberConnectedAudioOutputs()
+    var showAudioOutputDialog by remember { mutableStateOf(false) }
+    var showSmartDownloadsDialog by remember { mutableStateOf(false) }
+
+    if (showAudioOutputDialog) {
+        val options = listOf("") + outputDevices.map { it.key } +
+            listOfNotNull(audioOutputKey.takeIf { key -> key.isNotBlank() && outputDevices.none { it.key == key } })
+        EnumDialog(
+            onDismiss = { showAudioOutputDialog = false },
+            onSelect = {
+                onAudioOutputKeyChange(it)
+                showAudioOutputDialog = false
+            },
+            title = stringResource(R.string.baaja_pb_output_dialog_title),
+            current = audioOutputKey,
+            values = options,
+            valueText = { key -> audioOutputLabel(key, outputDevices) },
+            valueDescription = { key ->
+                when {
+                    key.isBlank() -> stringResource(R.string.baaja_pb_output_automatic_desc)
+                    key == audioOutputKey -> stringResource(R.string.baaja_pb_output_remembered)
+                    else -> outputDevices.firstOrNull { it.key == key }?.kind?.let { audioOutputKindLabel(it) }.orEmpty()
+                }
+            },
+        )
+    }
+
+    if (showSmartDownloadsDialog) {
+        EnumDialog(
+            onDismiss = { showSmartDownloadsDialog = false },
+            onSelect = { count ->
+                onSmartDownloadsCountChange(count)
+                SmartDownloads.schedule(context, count, smartDownloadsWifiOnly)
+                showSmartDownloadsDialog = false
+            },
+            title = stringResource(R.string.baaja_pb_smart_dialog_title),
+            current = smartDownloadsCount,
+            values = SmartDownloadsCounts,
+            valueText = { count ->
+                if (count == 0) stringResource(R.string.baaja_pb_smart_off) else stringResource(R.string.baaja_pb_smart_option, count)
+            },
+        )
+    }
 
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
@@ -393,6 +466,9 @@ fun PlayerSettings(
                         description = {
                             Column {
                                 Text(pluralStringResource(R.plurals.seconds, crossfadeDuration.toInt(), crossfadeDuration.toInt()))
+                                if (automixEnabled) {
+                                    Text(stringResource(R.string.baaja_pb_crossfade_duration_automix))
+                                }
                                 Slider(
                                     value = crossfadeDuration,
                                     onValueChange = onCrossfadeDurationChange,
@@ -422,6 +498,27 @@ fun PlayerSettings(
                             )
                         },
                         onClick = { onCrossfadeGaplessChange(!crossfadeGapless) }
+                    ))
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.swipe),
+                        title = { Text(stringResource(R.string.baaja_pb_automix_title)) },
+                        description = { Text(stringResource(R.string.baaja_pb_automix_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = automixEnabled,
+                                onCheckedChange = onAutomixEnabledChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (automixEnabled) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onAutomixEnabledChange(!automixEnabled) }
                     ))
                 }
                 add(Material3SettingsItem(
@@ -458,6 +555,48 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { onShowAudioFormatChange(!showAudioFormat) }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.lyrics),
+                    title = { Text(stringResource(R.string.baaja_player_show_lyric_preview)) },
+                    description = { Text(stringResource(R.string.baaja_player_show_lyric_preview_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = showLyricPreview,
+                            onCheckedChange = onShowLyricPreviewChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (showLyricPreview) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onShowLyricPreviewChange(!showLyricPreview) }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.fullscreen),
+                    title = { Text(stringResource(R.string.baaja_player_immersive_player)) },
+                    description = { Text(stringResource(R.string.baaja_player_immersive_player_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = immersivePlayer,
+                            onCheckedChange = onImmersivePlayerChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (immersivePlayer) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onImmersivePlayerChange(!immersivePlayer) }
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.skip_next),
@@ -736,6 +875,89 @@ fun PlayerSettings(
                 initialDayTimes = dayTimesMap
             )
         }
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.baaja_pb_group_output),
+            items = buildList {
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.volume_up),
+                    title = { Text(stringResource(R.string.baaja_pb_output_title)) },
+                    description = {
+                        Text(
+                            when {
+                                audioOutputKey.isBlank() -> stringResource(R.string.baaja_pb_output_automatic)
+                                outputDevices.any { it.key == audioOutputKey } -> audioOutputLabel(audioOutputKey, outputDevices)
+                                else -> stringResource(R.string.baaja_pb_output_not_connected, audioOutputLabel(audioOutputKey, outputDevices))
+                            }
+                        )
+                    },
+                    onClick = { showAudioOutputDialog = true }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.graphic_eq),
+                    title = { Text(stringResource(R.string.baaja_pb_float_title)) },
+                    description = { Text(stringResource(R.string.baaja_pb_float_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = floatOutput,
+                            onCheckedChange = onFloatOutputChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (floatOutput) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onFloatOutputChange(!floatOutput) }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.offline),
+                    title = { Text(stringResource(R.string.baaja_pb_smart_title)) },
+                    description = {
+                        Text(
+                            if (smartDownloadsCount <= 0) stringResource(R.string.baaja_pb_smart_off)
+                            else stringResource(R.string.baaja_pb_smart_on, smartDownloadsCount)
+                        )
+                    },
+                    onClick = { showSmartDownloadsDialog = true }
+                ))
+                if (smartDownloadsCount > 0) {
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.wifi_proxy),
+                        title = { Text(stringResource(R.string.baaja_pb_smart_wifi_title)) },
+                        description = { Text(stringResource(R.string.baaja_pb_smart_wifi_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = smartDownloadsWifiOnly,
+                                onCheckedChange = {
+                                    onSmartDownloadsWifiOnlyChange(it)
+                                    SmartDownloads.schedule(context, smartDownloadsCount, it, runNow = false)
+                                },
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (smartDownloadsWifiOnly) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = {
+                            onSmartDownloadsWifiOnlyChange(!smartDownloadsWifiOnly)
+                            SmartDownloads.schedule(context, smartDownloadsCount, !smartDownloadsWifiOnly, runNow = false)
+                        }
+                    ))
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
 
         Material3SettingsGroup(
             title = stringResource(R.string.sound_shaping),
@@ -1327,4 +1549,52 @@ private fun AudioQualityDialog(
         values = AudioQuality.entries.toList(),
         valueText = { if (it == AudioQuality.AUTO) autoLabel else audioQualityLabel(it) },
     )
+}
+
+/** Connected outputs, kept up to date while the screen is shown. */
+@Composable
+private fun rememberConnectedAudioOutputs(): List<AudioOutputDevice> {
+    val context = LocalContext.current
+    val audioManager = remember { context.getSystemService<AudioManager>()!! }
+    var devices by remember { mutableStateOf(audioManager.connectedAudioOutputs()) }
+    DisposableEffect(audioManager) {
+        val callback =
+            object : AudioDeviceCallback() {
+                override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+                    devices = audioManager.connectedAudioOutputs()
+                }
+
+                override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
+                    devices = audioManager.connectedAudioOutputs()
+                }
+            }
+        audioManager.registerAudioDeviceCallback(callback, Handler(Looper.getMainLooper()))
+        onDispose { audioManager.unregisterAudioDeviceCallback(callback) }
+    }
+    return devices
+}
+
+@Composable
+private fun audioOutputKindLabel(kind: AudioOutputKind): String =
+    when (kind) {
+        AudioOutputKind.SPEAKER -> stringResource(R.string.baaja_pb_output_kind_speaker)
+        AudioOutputKind.WIRED -> stringResource(R.string.baaja_pb_output_kind_wired)
+        AudioOutputKind.USB -> stringResource(R.string.baaja_pb_output_kind_usb)
+        AudioOutputKind.BLUETOOTH -> stringResource(R.string.baaja_pb_output_kind_bluetooth)
+        AudioOutputKind.HDMI -> stringResource(R.string.baaja_pb_output_kind_hdmi)
+    }
+
+@Composable
+private fun audioOutputLabel(key: String, connected: List<AudioOutputDevice>): String {
+    if (key.isBlank()) return stringResource(R.string.baaja_pb_output_automatic)
+    val device = connected.firstOrNull { it.key == key }
+    // The built-in speaker reports the phone model as its name; "Phone speaker" reads better.
+    if (device?.kind == AudioOutputKind.SPEAKER) return stringResource(R.string.baaja_pb_output_kind_speaker)
+    val name = device?.productName ?: audioOutputKeyName(key)
+    val kind = device?.kind?.let { audioOutputKindLabel(it) }
+    return when {
+        name.isBlank() -> kind ?: key
+        kind == null -> name
+        else -> "$name · $kind"
+    }
 }

@@ -9,62 +9,48 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,14 +61,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.metrolist.music.LocalListenTogetherManager
@@ -94,15 +89,19 @@ import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.JoinRequestPayload
 import com.metrolist.music.listentogether.ListenTogetherEvent
-import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.listentogether.SuggestionReceivedPayload
 import com.metrolist.music.listentogether.UserInfo
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.theme.BaajaArtwork
+import com.metrolist.music.ui.theme.BaajaCard
+import com.metrolist.music.ui.theme.BaajaIconButton
+import com.metrolist.music.ui.theme.BaajaPillButton
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.rememberPreference
 import kotlinx.coroutines.launch
-import androidx.compose.material3.IconButton as MaterialIconButton
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -126,7 +125,7 @@ fun ListenTogetherScreen(
     val pendingJoinRequests by listenTogetherManager.pendingJoinRequests.collectAsStateWithLifecycle()
     val pendingSuggestions by listenTogetherManager.pendingSuggestions.collectAsStateWithLifecycle()
 
-    val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
+    val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = false)
     val shouldShowTopBar = showTopBar || listenTogetherInTopBar
 
     var savedUsername by rememberPreference(ListenTogetherUsernameKey, "")
@@ -243,44 +242,20 @@ fun ListenTogetherScreen(
                 .imePadding(),
         contentPadding =
             PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = windowInsets.asPaddingValues().calculateTopPadding() + 16.dp,
+                start = 20.dp,
+                end = 20.dp,
+                top = windowInsets.asPaddingValues().calculateTopPadding() + 20.dp,
                 bottom = windowInsets.asPaddingValues().calculateBottomPadding() + 16.dp + AppBarHeight,
             ),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        // Header
-        item {
-            HeaderSection(isInRoom = isInRoom)
-        }
-
-        // Connection status card
-        item {
-            ConnectionStatusCard(
-                connectionState = connectionState,
-                onConnect = { listenTogetherManager.connect() },
-                onDisconnect = { listenTogetherManager.disconnect() },
-                onReconnect = { listenTogetherManager.forceReconnect() },
-            )
-        }
-
-        if (connectionState == ConnectionState.CONNECTED && !isInRoom) {
-            item {
-                Text(
-                    text = stringResource(R.string.listen_together_background_disconnect_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+        item(key = "header") {
+            HeaderSection()
         }
 
         if (isInRoom) {
-            // Room status card
             roomState?.let { room ->
-                item {
+                item(key = "room") {
                     RoomStatusCard(
                         roomCode = room.roomCode,
                         isHost = isHost,
@@ -288,10 +263,21 @@ fun ListenTogetherScreen(
                     )
                 }
 
+                if (room.hasCurrentTrack() && room.currentTrack.title.isNotBlank()) {
+                    item(key = "now_playing") {
+                        NowPlayingInRoomCard(
+                            title = room.currentTrack.title,
+                            artist = room.currentTrack.artist,
+                            thumbnail = room.currentTrack.thumbnail,
+                            isPlaying = room.isPlaying,
+                        )
+                    }
+                }
+
                 // Connected users
                 val connectedUsers = room.usersList.filter { it.isConnected }
                 val currentUserIdValue = userId ?: ""
-                item {
+                item(key = "users") {
                     ConnectedUsersSection(
                         users = connectedUsers,
                         isHost = isHost,
@@ -307,7 +293,7 @@ fun ListenTogetherScreen(
 
                 // Pending join requests (host only)
                 if (isHost && pendingJoinRequests.isNotEmpty()) {
-                    item {
+                    item(key = "join_requests") {
                         PendingJoinRequestsSection(
                             requests = pendingJoinRequests,
                             onApprove = { listenTogetherManager.approveJoin(it) },
@@ -318,7 +304,7 @@ fun ListenTogetherScreen(
 
                 // Pending suggestions (host only)
                 if (isHost && pendingSuggestions.isNotEmpty()) {
-                    item {
+                    item(key = "suggestions") {
                         PendingSuggestionsSection(
                             suggestions = pendingSuggestions,
                             onApprove = { listenTogetherManager.approveSuggestion(it) },
@@ -327,33 +313,49 @@ fun ListenTogetherScreen(
                     }
                 }
 
+                item(key = "connection") {
+                    ConnectionStatusCard(
+                        connectionState = connectionState,
+                        onConnect = { listenTogetherManager.connect() },
+                        onDisconnect = { listenTogetherManager.disconnect() },
+                        onReconnect = { listenTogetherManager.forceReconnect() },
+                    )
+                }
+
                 // Leave room button
-                item {
-                    Button(
-                        onClick = { listenTogetherManager.leaveRoom() },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                            ),
-                        shape = RoundedCornerShape(16.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.logout),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.leave_room),
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
+                item(key = "leave") {
+                    LeaveRoomButton(onClick = { listenTogetherManager.leaveRoom() })
                 }
             }
         } else {
+            item(key = "hero") {
+                TogetherHero(savedUsername = savedUsername)
+            }
+
+            // Connection status card
+            item(key = "connection") {
+                ConnectionStatusCard(
+                    connectionState = connectionState,
+                    onConnect = { listenTogetherManager.connect() },
+                    onDisconnect = { listenTogetherManager.disconnect() },
+                    onReconnect = { listenTogetherManager.forceReconnect() },
+                )
+            }
+
+            if (connectionState == ConnectionState.CONNECTED) {
+                item(key = "background_note") {
+                    Text(
+                        text = stringResource(R.string.listen_together_background_disconnect_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+
             // Join/Create room section
-            item {
+            item(key = "join_create") {
                 JoinCreateRoomSection(
                     usernameInput = usernameInput,
                     onUsernameChange = { usernameInput = it },
@@ -406,10 +408,14 @@ fun ListenTogetherScreen(
                     },
                 )
             }
+
+            item(key = "how") {
+                HowItWorksCard()
+            }
         }
 
         // Settings link
-        item {
+        item(key = "settings") {
             SettingsLinkCard(
                 onClick = { navController.navigate("settings/integrations/listen_together") },
             )
@@ -434,77 +440,131 @@ fun ListenTogetherScreen(
     }
 }
 
+private data class FaceColors(val container: Color, val content: Color)
+
+/** Avatar colours from the theme (yellow, teal, pink, lilac) so dark mode stays legible. */
+@Composable
+private fun faceColors(index: Int): FaceColors {
+    val scheme = MaterialTheme.colorScheme
+    val palette =
+        listOf(
+            FaceColors(scheme.secondaryContainer, scheme.onSecondaryContainer),
+            FaceColors(scheme.tertiaryContainer, scheme.onTertiaryContainer),
+            FaceColors(scheme.secondary.copy(alpha = 0.22f).compositeOver(scheme.surface), scheme.onSurface),
+            FaceColors(scheme.primaryContainer, scheme.onPrimaryContainer),
+        )
+    return palette[Math.floorMod(index, palette.size)]
+}
+
 @Composable
 private fun NotConfiguredContent() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.group),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(64.dp),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.listen_together),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.listen_together_not_configured),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        BaajaCard(Modifier.padding(24.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(24.dp),
+            ) {
+                Box(
+                    Modifier
+                        .size(72.dp)
+                        .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, CircleShape, shadowOffset = 0.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.group),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(36.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.baaja_ai_together_title),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.listen_together_not_configured),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun HeaderSection(isInRoom: Boolean = false) {
-    if (isInRoom) return
-
+private fun HeaderSection() {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.group_outlined),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(48.dp),
-            )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = stringResource(R.string.listen_together),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            text = stringResource(R.string.baaja_ai_together_title),
+            fontSize = 34.sp,
+            lineHeight = 38.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.5).sp,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = stringResource(R.string.listen_together_description),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
+            text = stringResource(R.string.baaja_ai_together_tagline),
+            fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** Decorative lilac card with overlapping friend avatars. */
+@Composable
+private fun TogetherHero(savedUsername: String) {
+    val initials =
+        listOf(
+            savedUsername.trim().take(1).uppercase().ifBlank { null },
+            null,
+            null,
+        )
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(28.dp), shadowOffset = 4.dp, borderWidth = 2.5.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy((-12).dp)) {
+            initials.forEachIndexed { index, initial ->
+                val colors = faceColors(index)
+                Box(
+                    Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(colors.container)
+                        .border(2.5.dp, baajaInk, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (initial != null) {
+                        Text(initial, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = colors.content)
+                    } else {
+                        Icon(painterResource(R.drawable.person), null, tint = colors.content, modifier = Modifier.size(32.dp))
+                    }
+                }
+            }
+            Box(
+                Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(2.5.dp, baajaInk, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.add), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(30.dp))
+            }
+        }
     }
 }
 
@@ -515,54 +575,30 @@ private fun ConnectionStatusCard(
     onDisconnect: () -> Unit,
     onReconnect: () -> Unit,
 ) {
-    Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .animateContentSize(
-                    animationSpec =
-                        spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow,
-                        ),
-                ),
-        shape = RoundedCornerShape(20.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    when (connectionState) {
-                        ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primaryContainer
-                        ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.secondaryContainer
-                        ConnectionState.ERROR -> MaterialTheme.colorScheme.errorContainer
-                        ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.surfaceContainerHigh
-                    },
-            ),
+    val scheme = MaterialTheme.colorScheme
+    val dotColor =
+        when (connectionState) {
+            ConnectionState.CONNECTED -> scheme.primary
+            ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> scheme.tertiary
+            ConnectionState.ERROR -> scheme.error
+            ConnectionState.DISCONNECTED -> scheme.onSurfaceVariant
+        }
+    BaajaCard(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        shape = RoundedCornerShape(22.dp),
+        color = if (connectionState == ConnectionState.ERROR) scheme.errorContainer else scheme.surfaceVariant,
+        shadowOffset = 0.dp,
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    modifier =
-                        Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(
-                                color =
-                                    when (connectionState) {
-                                        ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
-                                        ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-                                        ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                                        ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outline
-                                    },
-                            ),
+                    Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(dotColor)
+                        .border(1.5.dp, baajaInk, CircleShape),
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(Modifier.width(10.dp))
                 Text(
                     text =
                         when (connectionState) {
@@ -572,76 +608,59 @@ private fun ConnectionStatusCard(
                             ConnectionState.ERROR -> stringResource(R.string.listen_together_error)
                             ConnectionState.DISCONNECTED -> stringResource(R.string.listen_together_disconnected)
                         },
-                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color =
-                        when (connectionState) {
-                            ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primary
-                            ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> MaterialTheme.colorScheme.tertiary
-                            ConnectionState.ERROR -> MaterialTheme.colorScheme.error
-                            ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    color = if (connectionState == ConnectionState.ERROR) scheme.onErrorContainer else scheme.onSurface,
+                    modifier = Modifier.weight(1f),
                 )
             }
 
             if (connectionState == ConnectionState.CONNECTING || connectionState == ConnectionState.RECONNECTING) {
-                Spacer(modifier = Modifier.height(12.dp))
                 LinearProgressIndicator(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp)),
-                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                    color = scheme.primary,
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 if (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.ERROR) {
-                    Button(
+                    BaajaPillButton(
+                        text = stringResource(R.string.connect),
                         onClick = onConnect,
+                        icon = R.drawable.link,
+                        height = 46.dp,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                            ),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.link),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.connect), fontWeight = FontWeight.SemiBold)
-                    }
+                    )
                 } else {
-                    Button(
+                    BaajaPillButton(
+                        text = stringResource(R.string.disconnect),
                         onClick = onDisconnect,
+                        primary = false,
+                        height = 46.dp,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                            ),
-                    ) {
-                        Text(stringResource(R.string.disconnect), fontWeight = FontWeight.SemiBold)
-                    }
-                    FilledTonalButton(
+                    )
+                    BaajaPillButton(
+                        text = stringResource(R.string.baaja_ai_together_reconnect),
                         onClick = onReconnect,
+                        primary = false,
+                        icon = R.drawable.sync,
+                        height = 46.dp,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Text("Reconnect", fontWeight = FontWeight.SemiBold)
-                    }
+                    )
                 }
             }
         }
     }
+}
+
+private fun copyToClipboard(
+    context: Context,
+    label: String,
+    text: String,
+) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+    clipboard.setPrimaryClip(android.content.ClipData.newPlainText(label, text))
+    Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
 }
 
 @Composable
@@ -650,98 +669,107 @@ private fun RoomStatusCard(
     isHost: Boolean,
     context: Context,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            ),
+    val content = MaterialTheme.colorScheme.onSecondaryContainer
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .baajaSurface(baajaInk, MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(28.dp), shadowOffset = 4.dp, borderWidth = 2.5.dp)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(R.string.room_code),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.room_code).uppercase(),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            color = content,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = roomCode,
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 6.sp,
-                textAlign = TextAlign.Center,
+                fontSize = 40.sp,
+                lineHeight = 44.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 3.sp,
+                color = content,
+                maxLines = 1,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text =
+            BaajaIconButton(
+                icon = R.drawable.content_copy,
+                contentDescription = stringResource(R.string.copy_code),
+                onClick = { copyToClipboard(context, "Room Code", roomCode) },
+                size = 48.dp,
+            )
+        }
+        Text(
+            text =
+                stringResource(R.string.baaja_ai_together_share_hint) + " " +
                     if (isHost) {
                         stringResource(R.string.listen_together_you_are_host)
                     } else {
                         stringResource(R.string.listen_together_you_are_guest)
                     },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+            fontSize = 15.sp,
+            color = content,
+        )
+
+        Text(
+            text = stringResource(R.string.baaja_fix_community_server),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = content.copy(alpha = 0.75f),
+        )
+
+        if (isHost) {
+            val inviteText = stringResource(R.string.baaja_fix_share_room, roomCode)
+            BaajaPillButton(
+                text = stringResource(R.string.baaja_fix_copy_invite),
+                onClick = { copyToClipboard(context, "Listen Together Invite", inviteText) },
+                primary = false,
+                icon = R.drawable.link,
+                height = 46.dp,
+                modifier = Modifier.padding(top = 4.dp),
             )
+        }
+    }
+}
 
-            if (isHost) {
-                Spacer(modifier = Modifier.height(16.dp))
-                val inviteLink =
-                    remember(roomCode) {
-                        "https://metrolist.cc/listen?code=$roomCode"
-                    }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    FilledTonalButton(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText("Listen Together Link", inviteLink)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.link),
-                            contentDescription = stringResource(R.string.copy_link),
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.copy_link))
-                    }
-
-                    FilledTonalButton(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText("Room Code", roomCode)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.content_copy),
-                            contentDescription = stringResource(R.string.copy_code),
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.copy_code))
-                    }
-                }
+@Composable
+private fun NowPlayingInRoomCard(
+    title: String,
+    artist: String,
+    thumbnail: String,
+    isPlaying: Boolean,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .baajaSurface(baajaInk, MaterialTheme.colorScheme.surface, RoundedCornerShape(22.dp), shadowOffset = 3.dp)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        BaajaArtwork(thumbnail.ifBlank { null }, Modifier.size(54.dp), shape = RoundedCornerShape(14.dp), shadowOffset = 0.dp)
+        Column(Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.baaja_ai_together_playing).uppercase(),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (artist.isNotBlank()) {
+                Text(artist, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+        Icon(
+            painterResource(if (isPlaying) R.drawable.equalizer else R.drawable.pause),
+            contentDescription = stringResource(if (isPlaying) R.string.play else R.string.pause),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp),
+        )
     }
 }
 
@@ -752,143 +780,138 @@ private fun ConnectedUsersSection(
     currentUserId: String,
     onUserClick: (String, String) -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
-            Text(
-                text = "${stringResource(R.string.connected_users)} (${users.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = stringResource(R.string.baaja_ai_together_in_room, users.size),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        users.forEachIndexed { index, user ->
+            UserRow(
+                user = user,
+                colorIndex = index,
+                isCurrentUser = user.userId == currentUserId,
+                isClickable = isHost && user.userId != currentUserId,
+                onClick = { onUserClick(user.userId, user.username) },
             )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                users.forEach { user ->
-                    UserAvatar(
-                        user = user,
-                        isCurrentUser = user.userId == currentUserId,
-                        isClickable = isHost && user.userId != currentUserId,
-                        onClick = { onUserClick(user.userId, user.username) },
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
-private fun UserAvatar(
+private fun UserRow(
     user: UserInfo,
+    colorIndex: Int,
     isCurrentUser: Boolean,
     isClickable: Boolean,
     onClick: () -> Unit,
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier =
-            Modifier
-                .width(72.dp)
-                .clickable(enabled = isClickable, onClick = onClick),
+    val colors = faceColors(colorIndex)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(enabled = isClickable, role = Role.Button, onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
+            Modifier
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(colors.container)
+                .border(2.dp, baajaInk, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                color =
-                    when {
-                        user.isHost -> MaterialTheme.colorScheme.primary
-                        isCurrentUser -> MaterialTheme.colorScheme.secondary
-                        else -> MaterialTheme.colorScheme.surfaceVariant
-                    },
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Text(
-                        text = user.username.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color =
-                            when {
-                                user.isHost -> MaterialTheme.colorScheme.onPrimary
-                                isCurrentUser -> MaterialTheme.colorScheme.onSecondary
-                                else -> MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                }
-            }
-
-            if (user.isHost || isCurrentUser) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .offset(x = 4.dp, y = 4.dp)
-                            .size(20.dp),
-                    shape = CircleShape,
-                    color = if (user.isHost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Icon(
-                            painter =
-                                painterResource(
-                                    if (user.isHost) R.drawable.crown else R.drawable.person,
-                                ),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(12.dp),
-                        )
-                    }
-                }
+            Text(
+                text = user.username.take(1).uppercase(),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = colors.content,
+            )
+        }
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = user.username,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (isCurrentUser) {
+                Text(
+                    text = stringResource(R.string.you_label),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = user.username,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (isCurrentUser) FontWeight.Bold else FontWeight.Medium,
-            color = if (user.isHost) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
-
         if (user.isHost) {
-            Text(
-                text = stringResource(R.string.host_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-            )
-        } else if (isCurrentUser) {
-            Text(
-                text = stringResource(R.string.you_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
+            Row(
+                Modifier
+                    .heightIn(min = 28.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .border(1.5.dp, baajaInk, CircleShape)
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(painterResource(R.drawable.crown), null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
+                Text(
+                    text = stringResource(R.string.host_label),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+        }
+        if (isClickable) {
+            Icon(
+                painterResource(R.drawable.more_vert),
+                contentDescription = stringResource(R.string.manage_user),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun PendingRow(
+    leading: @Composable () -> Unit,
+    title: String,
+    subtitle: String?,
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        leading()
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        BaajaIconButton(
+            icon = R.drawable.check,
+            contentDescription = stringResource(R.string.approve),
+            onClick = onApprove,
+            filled = true,
+            size = 44.dp,
+        )
+        BaajaIconButton(
+            icon = R.drawable.close,
+            contentDescription = stringResource(R.string.reject),
+            onClick = onReject,
+            size = 44.dp,
+        )
     }
 }
 
@@ -898,74 +921,37 @@ private fun PendingJoinRequestsSection(
     onApprove: (String) -> Unit,
     onReject: (String) -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
+    BaajaCard(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), shadowOffset = 3.dp) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = stringResource(R.string.listen_together_join_requests),
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            requests.forEach { request ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                ) {
-                    Surface(
-                        modifier = Modifier.size(40.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.secondary,
-                    ) {
+            requests.forEachIndexed { index, request ->
+                val colors = faceColors(index + 1)
+                PendingRow(
+                    leading = {
                         Box(
+                            Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(colors.container)
+                                .border(2.dp, baajaInk, CircleShape),
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize(),
                         ) {
                             Text(
                                 text = request.username.take(1).uppercase(),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colors.content,
                             )
                         }
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = request.username,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MaterialIconButton(onClick = { onApprove(request.userId) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.check),
-                            contentDescription = stringResource(R.string.approve),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                    MaterialIconButton(onClick = { onReject(request.userId) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.reject),
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
+                    },
+                    title = request.username,
+                    subtitle = null,
+                    onApprove = { onApprove(request.userId) },
+                    onReject = { onReject(request.userId) },
+                )
             }
         }
     }
@@ -977,76 +963,87 @@ private fun PendingSuggestionsSection(
     onApprove: (String) -> Unit,
     onReject: (String) -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
+    BaajaCard(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), shadowOffset = 3.dp) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = stringResource(R.string.pending_suggestions),
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(modifier = Modifier.height(12.dp))
-
             suggestions.forEach { suggestion ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.queue_music),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = suggestion.trackInfo.title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                PendingRow(
+                    leading = {
+                        BaajaArtwork(
+                            suggestion.trackInfo.thumbnail.ifBlank { null },
+                            Modifier.size(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            shadowOffset = 0.dp,
                         )
-                        Text(
-                            text = suggestion.fromUsername,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    MaterialIconButton(onClick = { onApprove(suggestion.suggestionId) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.check),
-                            contentDescription = stringResource(R.string.approve),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                    MaterialIconButton(onClick = { onReject(suggestion.suggestionId) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.reject),
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
+                    },
+                    title = suggestion.trackInfo.title,
+                    subtitle = suggestion.fromUsername,
+                    onApprove = { onApprove(suggestion.suggestionId) },
+                    onReject = { onReject(suggestion.suggestionId) },
+                )
             }
         }
     }
+}
+
+/** Outlined pill text field with Baaja's hard shadow. */
+@Composable
+private fun BaajaInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    leadingIcon: Int? = null,
+    fontSize: TextUnit = 17.sp,
+    letterSpacing: TextUnit = TextUnit.Unspecified,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    height: Dp = 56.dp,
+) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = TextStyle(color = onSurface, fontSize = fontSize, fontWeight = FontWeight.SemiBold, letterSpacing = letterSpacing),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(capitalization = capitalization),
+        modifier = modifier.heightIn(min = height),
+        decorationBox = { inner ->
+            Row(
+                Modifier
+                    .heightIn(min = height)
+                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.surface, CircleShape, shadowOffset = 3.dp)
+                    .padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                if (leadingIcon != null) {
+                    Icon(painterResource(leadingIcon), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) {
+                        Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    inner()
+                }
+                if (value.isNotEmpty()) {
+                    Box(
+                        Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .clickable(role = Role.Button) { onValueChange("") },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(painterResource(R.drawable.close), stringResource(R.string.clear), modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -1064,211 +1061,176 @@ private fun JoinCreateRoomSection(
     onJoinRoom: () -> Unit,
     onFieldFocused: () -> Unit = {},
 ) {
-    Card(
+    val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
+    val hasRoomCode = roomCodeInput.length == 8
+
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            ),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Username input
-            OutlinedTextField(
+        // Username input
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.baaja_ai_together_your_name), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            BaajaInputField(
                 value = usernameInput,
                 onValueChange = onUsernameChange,
-                label = { Text(stringResource(R.string.username)) },
-                placeholder = { Text(stringResource(R.string.enter_username)) },
-                leadingIcon = {
-                    Icon(
-                        painterResource(R.drawable.person),
-                        null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                trailingIcon = {
-                    if (usernameInput.isNotBlank()) {
-                        MaterialIconButton(onClick = { onUsernameChange("") }) {
-                            Icon(painterResource(R.drawable.close), null)
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ),
+                placeholder = stringResource(R.string.enter_username),
+                leadingIcon = R.drawable.person,
+                capitalization = KeyboardCapitalization.Words,
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .onFocusChanged { if (it.isFocused) onFieldFocused() },
             )
+        }
 
-            // Room code input
-            OutlinedTextField(
-                value = roomCodeInput,
-                onValueChange = { if (it.length <= 8) onRoomCodeChange(it.uppercase()) },
-                label = { Text(stringResource(R.string.room_code)) },
-                placeholder = { Text(stringResource(R.string.enter_room_code)) },
-                leadingIcon = {
-                    Icon(
-                        painterResource(R.drawable.group),
-                        null,
-                        tint = MaterialTheme.colorScheme.primary,
+        // Create Room button
+        BaajaPillButton(
+            text = stringResource(R.string.baaja_ai_together_start),
+            onClick = onCreateRoom,
+            enabled = hasUsername,
+            icon = R.drawable.add,
+            height = 60.dp,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // Room code input + Join
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.baaja_ai_together_have_code), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                BaajaInputField(
+                    value = roomCodeInput,
+                    onValueChange = { if (it.length <= 8) onRoomCodeChange(it.uppercase()) },
+                    placeholder = stringResource(R.string.enter_room_code),
+                    fontSize = 18.sp,
+                    letterSpacing = 1.5.sp,
+                    capitalization = KeyboardCapitalization.Characters,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .bringIntoViewRequester(bringIntoViewRequester)
+                            .onFocusChanged { if (it.isFocused) onFieldFocused() },
+                )
+                val joinEnabled = hasUsername && hasRoomCode
+                val ink = baajaInk
+                Box(
+                    Modifier
+                        .heightIn(min = 56.dp)
+                        .clip(CircleShape)
+                        .background(if (joinEnabled) ink else ink.copy(alpha = 0.35f))
+                        .clickable(enabled = joinEnabled, role = Role.Button, onClick = onJoinRoom)
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(R.string.join_room),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.surface,
                     )
-                },
-                trailingIcon = {
-                    if (roomCodeInput.isNotBlank()) {
-                        MaterialIconButton(onClick = { onRoomCodeChange("") }) {
-                            Icon(painterResource(R.drawable.close), null)
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ),
+                }
+            }
+        }
+
+        // Waiting for approval indicator
+        AnimatedVisibility(
+            visible = isJoiningRoom,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut() + slideOutVertically(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .bringIntoViewRequester(bringIntoViewRequester)
-                        .onFocusChanged { if (it.isFocused) onFieldFocused() },
-            )
-
-            // Waiting for approval indicator
-            AnimatedVisibility(
-                visible = isJoiningRoom,
-                enter = fadeIn() + slideInVertically(),
-                exit = fadeOut() + slideOutVertically(),
+                        .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(18.dp), shadowOffset = 0.dp)
+                        .padding(16.dp),
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = waitingForApprovalText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        // Error message
+        AnimatedVisibility(
+            visible = joinErrorMessage != null,
+            enter = fadeIn() + slideInVertically(),
+            exit = fadeOut() + slideOutVertically(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .baajaSurface(baajaInk, MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(18.dp), shadowOffset = 0.dp)
+                        .padding(16.dp),
+            ) {
+                Icon(
+                    painterResource(R.drawable.error),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = joinErrorMessage ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HowItWorksCard() {
+    val steps =
+        listOf(
+            stringResource(R.string.baaja_ai_together_step1),
+            stringResource(R.string.baaja_ai_together_step2),
+            stringResource(R.string.baaja_ai_together_step3),
+        )
+    BaajaCard(
+        Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shadowOffset = 0.dp,
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.baaja_ai_together_how), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            steps.forEachIndexed { index, step ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .border(2.dp, baajaInk, CircleShape),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = waitingForApprovalText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
+                            (index + 1).toString(),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                     }
-                }
-            }
-
-            // Error message
-            AnimatedVisibility(
-                visible = joinErrorMessage != null,
-                enter = fadeIn() + slideInVertically(),
-                exit = fadeOut() + slideOutVertically(),
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.errorContainer,
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.error),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = joinErrorMessage ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-
-            // Action buttons
-            val hasUsername = usernameInput.trim().isNotBlank() || savedUsername.isNotBlank()
-            val hasRoomCode = roomCodeInput.length == 8
-
-            // Create Room button - visible when username is provided
-            AnimatedVisibility(visible = hasUsername && !hasRoomCode) {
-                Button(
-                    onClick = onCreateRoom,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = hasUsername,
-                    shape = RoundedCornerShape(16.dp),
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                        ),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.add),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.create_room), fontWeight = FontWeight.SemiBold)
-                }
-            }
-
-            // Join Room button - visible when username and room code are provided
-            AnimatedVisibility(visible = hasUsername && hasRoomCode) {
-                Button(
-                    onClick = onJoinRoom,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = hasUsername && hasRoomCode,
-                    shape = RoundedCornerShape(16.dp),
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary,
-                        ),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.login),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.join_room), fontWeight = FontWeight.SemiBold)
+                    Text(step, fontSize = 16.sp)
                 }
             }
         }
@@ -1276,17 +1238,28 @@ private fun JoinCreateRoomSection(
 }
 
 @Composable
+private fun LeaveRoomButton(onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 54.dp)
+            .baajaSurface(baajaInk, MaterialTheme.colorScheme.surface, CircleShape, shadowOffset = 3.dp)
+            .clickable(role = Role.Button, onClick = onClick),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.logout), null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+        Text(stringResource(R.string.leave_room), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+    }
+}
+
+@Composable
 private fun SettingsLinkCard(onClick: () -> Unit) {
-    Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
+    BaajaCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        shadowOffset = 0.dp,
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -1295,15 +1268,15 @@ private fun SettingsLinkCard(onClick: () -> Unit) {
             Icon(
                 painter = painterResource(R.drawable.settings),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.settings),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
                 Text(
                     text = stringResource(R.string.listen_together_settings_desc),
@@ -1314,7 +1287,6 @@ private fun SettingsLinkCard(onClick: () -> Unit) {
             Icon(
                 painter = painterResource(R.drawable.arrow_forward),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp),
             )
         }

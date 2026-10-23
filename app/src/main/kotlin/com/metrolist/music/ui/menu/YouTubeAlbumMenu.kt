@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -235,6 +236,7 @@ fun YouTubeAlbumMenu(
         }
     }
 
+    BaajaMenuHeader {
     YouTubeListItem(
         item = albumItem,
         badges = {},
@@ -254,8 +256,9 @@ fun YouTubeAlbumMenu(
             }
         },
     )
+    }
 
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
 
     Spacer(modifier = Modifier.height(12.dp))
 

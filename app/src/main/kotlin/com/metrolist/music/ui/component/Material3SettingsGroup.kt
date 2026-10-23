@@ -6,7 +6,6 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,29 +14,40 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.metrolist.music.ui.screens.onboarding.baajaPastel
+import com.metrolist.music.ui.theme.BaajaInk
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
 
 /**
- * A Material 3 Expressive style settings group component
+ * Settings group in Baaja's look: a bold section title above one outlined card with a hard shadow,
+ * rows separated by hairlines, each row led by a pastel icon badge.
+ * Every settings screen goes through this, so they all share the style.
  * @param title The title of the settings group
  * @param items List of settings items to display
+ * @param useLowContrast Kept for callers on tinted sheets; the card then uses the lowest surface container.
  */
 @Composable
 fun Material3SettingsGroup(
@@ -45,48 +55,52 @@ fun Material3SettingsGroup(
     items: List<Material3SettingsItem>,
     useLowContrast: Boolean = false
 ) {
+    val ink = baajaInk
+    val paletteSeed = remember(title) { title?.hashCode() ?: 0 }
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(end = 4.dp, bottom = 4.dp)
     ) {
-        // Section title
         title?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .padding(start = 4.dp, top = 8.dp, bottom = 10.dp)
+                    .semantics { heading() }
             )
         }
 
-        // Settings items
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .baajaSurface(
+                    ink = ink,
+                    color = if (useLowContrast) {
+                        MaterialTheme.colorScheme.surfaceContainerLowest
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                    shape = RoundedCornerShape(24.dp),
+                    shadowOffset = 4.dp,
+                    borderWidth = 2.dp,
+                )
+                .animateContentSize()
         ) {
             items.forEachIndexed { index, item ->
-                val shape = when {
-                    items.size == 1 -> RoundedCornerShape(24.dp)
-                    index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
-                    index == items.size - 1 -> RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-                    else -> RoundedCornerShape(6.dp)
-                }
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
-                    shape = shape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (!useLowContrast) {
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        }
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Material3SettingsItemRow(item = item)
+                Material3SettingsItemRow(
+                    item = item,
+                    badgeColor = baajaPastel(paletteSeed + index),
+                )
+                if (index < items.lastIndex) {
+                    HorizontalDivider(
+                        thickness = 1.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
         }
@@ -94,35 +108,43 @@ fun Material3SettingsGroup(
 }
 
 /**
- * Individual settings item row with Material 3 styling
+ * Individual settings row: pastel icon badge, title/description and optional trailing content.
  */
 @Composable
 private fun Material3SettingsItemRow(
-    item: Material3SettingsItem
+    item: Material3SettingsItem,
+    badgeColor: Color,
 ) {
+    val ink = baajaInk
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 64.dp)
             .clickable(
                 enabled = item.enabled && item.onClick != null,
                 onClick = { item.onClick?.invoke() }
             )
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Custom leading content or Icon with background
         if (item.leadingContent != null) {
             item.leadingContent.invoke()
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
         } else if (item.icon != null) {
+            val badgeFill = if (item.isHighlighted) MaterialTheme.colorScheme.primary else badgeColor
+            val iconTint = when {
+                !item.enabled -> BaajaInk.copy(alpha = 0.38f)
+                item.isHighlighted -> MaterialTheme.colorScheme.onPrimary
+                else -> BaajaInk
+            }
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(
-                            alpha = if (item.isHighlighted) 0.15f else 0.1f
-                        )
+                    .size(38.dp)
+                    .baajaSurface(
+                        ink = ink,
+                        color = if (item.enabled) badgeFill else badgeFill.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp),
+                        shadowOffset = 0.dp,
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -137,41 +159,30 @@ private fun Material3SettingsItemRow(
                         Icon(
                             painter = item.icon,
                             contentDescription = null,
-                            tint = if (!item.enabled)
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                            else if (item.isHighlighted)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                            modifier = Modifier.size(24.dp)
+                            tint = iconTint,
+                            modifier = Modifier.size(21.dp)
                         )
                     }
                 } else {
                     Icon(
                         painter = item.icon,
                         contentDescription = null,
-                        tint = if (!item.enabled)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        else if (item.isHighlighted)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                        modifier = Modifier.size(24.dp)
+                        tint = iconTint,
+                        modifier = Modifier.size(21.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
         }
 
-        // Title and description
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            // Title content
             ProvideTextStyle(
                 MaterialTheme.typography.titleMedium.copy(
-                    color = if (!item.enabled) 
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (!item.enabled)
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     else
                         MaterialTheme.colorScheme.onSurface
@@ -180,7 +191,6 @@ private fun Material3SettingsItemRow(
                 item.title()
             }
 
-            // Description if provided
             item.description?.let { desc ->
                 Spacer(modifier = Modifier.height(2.dp))
                 ProvideTextStyle(
@@ -196,7 +206,6 @@ private fun Material3SettingsItemRow(
             }
         }
 
-        // Trailing content
         item.trailingContent?.let { trailing ->
             Spacer(modifier = Modifier.width(8.dp))
             trailing()

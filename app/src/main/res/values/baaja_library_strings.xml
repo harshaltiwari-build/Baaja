@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baaja: Library, collections, album/artist/playlist and history screens -->
+<resources>
+    <string name="baaja_library_title">Library</string>
+    <string name="baaja_library_search">Search library</string>
+    <string name="baaja_library_new_playlist">New playlist</string>
+    <string name="baaja_library_collections">Collections</string>
+    <string name="baaja_library_your_library">Your library</string>
+    <string name="baaja_library_local_music">On this device</string>
+    <string name="baaja_library_local_music_desc">Music files on your phone</string>
+    <string name="baaja_library_import_spotify">Import from Spotify</string>
+    <string name="baaja_library_import_spotify_desc">Bring your playlists over</string>
+    <string name="baaja_library_play_item">Play %1$s</string>
+    <string name="baaja_library_more_for">More options for %1$s</string>
+    <string name="baaja_library_like_album">Save to library</string>
+    <string name="baaja_library_unlike_album">Remove from library</string>
+    <string name="baaja_library_download_all">Download all</string>
+    <string name="baaja_library_storage_used">Baaja is using %1$s</string>
+    <string name="baaja_library_storage_free">of %1$s free space</string>
+    <string name="baaja_library_storage_desc">Baaja is using %1$s, %2$d percent of free space</string>
+    <string name="baaja_library_downloaded_count">Downloaded · %1$s</string>
+    <string name="baaja_library_liked_synced">%1$s · synced with YouTube Music</string>
+    <string name="baaja_library_find_in">Find in %1$s</string>
+    <string name="baaja_library_history_pause_desc">Songs you play won\'t be saved or used for picks</string>
+    <string name="baaja_library_history_empty">Nothing here yet. Play something!</string>
+    <string name="baaja_library_artist_kind">Artist</string>
+    <string name="baaja_library_album_kind">Album</string>
+    <string name="baaja_library_playlist_kind">Playlist</string>
+    <string name="baaja_library_by_you">By you</string>
+    <string name="baaja_library_switch_view">Switch layout</string>
+</resources>

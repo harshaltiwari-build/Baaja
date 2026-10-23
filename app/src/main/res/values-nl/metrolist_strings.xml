@@ -129,12 +129,8 @@
     <string name="check_for_updates">Automatisch voor updates controleren</string>
     <string name="update_notifications">Update meldingen aanzetten</string>
     <string name="update_available_title">Update beschikbaar</string>
-    <string name="integrations">Integraties</string>
     <string name="username">Gebruikersnaam</string>
     <string name="password">Wachtwoord</string>
-    <string name="lastfm_integration">Last.fm Integratie</string>
-    <string name="enable_scrobbling">Scrobbling aanzetten</string>
-    <string name="scrobbling_configuration">Scrobbling Configuratie</string>
     <string name="hide_video_songs">Video nummers verbergen</string>
     <string name="primary_color_style">Primaire kleur</string>
     <string name="auto_scroll">Synchroniseren</string>
@@ -156,7 +152,6 @@
     <string name="sync_playlist_desc">Synchroniseer afspeellijst met YouTube Music</string>
     <string name="lyrics_text_size">Songtekst lettergrootte</string>
     <string name="lyrics_line_spacing">Songtekst regel afstand</string>
-    <string name="show_wrapped_card">Toon Wrapped</string>
     <string name="progress_percent">Vooruitgang %s%%</string>
     <string name="copied_title">Titel gekopieerd</string>
     <string name="copied_artist">Artiest gekopieerd</string>

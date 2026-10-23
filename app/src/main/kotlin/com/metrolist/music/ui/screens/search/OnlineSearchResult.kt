@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.search
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -22,31 +24,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import com.metrolist.music.ui.theme.baajaEntrance
+import com.metrolist.music.ui.theme.rememberBaajaEntranceKey
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -57,10 +51,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -98,12 +90,22 @@ import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.ui.component.EmptyPlaceholder
 import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.ui.component.LocalMenuState
-import com.metrolist.music.ui.component.NavigationTitle
-import com.metrolist.music.ui.component.YouTubeListItem
+import com.metrolist.music.ui.component.home.BaajaChipsRow
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
+import com.metrolist.music.ui.component.home.BaajaHomeSectionTitle
+import com.metrolist.music.ui.component.home.BaajaMoreButton
+import com.metrolist.music.ui.component.home.BaajaPlainIconButton
+import com.metrolist.music.ui.component.home.BaajaSearchField
+import com.metrolist.music.ui.component.home.BaajaYouTubeCard
+import com.metrolist.music.ui.component.home.BaajaYouTubeRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.ui.Alignment
 import com.metrolist.music.ui.component.shimmer.ListItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 import com.metrolist.music.ui.menu.YouTubeAlbumMenu
@@ -230,133 +232,126 @@ fun OnlineSearchResult(
         }
     }
 
-    val ytItemContent: @Composable LazyItemScope.(YTItem) -> Unit = { item: YTItem ->
-        val longClick = {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            menuState.show {
-                when (item) {
-                    is SongItem -> {
-                        YouTubeSongMenu(
-                            song = item,
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+    val showItemMenu: (YTItem) -> Unit = { item ->
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        menuState.show {
+            when (item) {
+                is SongItem -> {
+                    YouTubeSongMenu(
+                        song = item,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
 
-                    is AlbumItem -> {
-                        YouTubeAlbumMenu(
-                            albumItem = item,
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+                is AlbumItem -> {
+                    YouTubeAlbumMenu(
+                        albumItem = item,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
 
-                    is ArtistItem -> {
-                        YouTubeArtistMenu(
-                            artist = item,
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+                is ArtistItem -> {
+                    YouTubeArtistMenu(
+                        artist = item,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
 
-                    is PlaylistItem -> {
-                        YouTubePlaylistMenu(
-                            playlist = item,
-                            coroutineScope = coroutineScope,
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+                is PlaylistItem -> {
+                    YouTubePlaylistMenu(
+                        playlist = item,
+                        coroutineScope = coroutineScope,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
 
-                    is PodcastItem -> {
-                        YouTubePlaylistMenu(
-                            playlist = item.asPlaylistItem(),
-                            coroutineScope = coroutineScope,
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+                is PodcastItem -> {
+                    YouTubePlaylistMenu(
+                        playlist = item.asPlaylistItem(),
+                        coroutineScope = coroutineScope,
+                        onDismiss = menuState::dismiss,
+                    )
+                }
 
-                    is EpisodeItem -> {
-                        YouTubeSongMenu(
-                            song = item.asSongItem(),
-                            onDismiss = menuState::dismiss,
-                        )
-                    }
+                is EpisodeItem -> {
+                    YouTubeSongMenu(
+                        song = item.asSongItem(),
+                        onDismiss = menuState::dismiss,
+                    )
                 }
             }
         }
-        YouTubeListItem(
-            item = item,
-            isActive =
-                when (item) {
-                    is SongItem -> mediaMetadata?.id == item.id
-                    is AlbumItem -> mediaMetadata?.album?.id == item.id
-                    is EpisodeItem -> mediaMetadata?.id == item.id
-                    else -> false
-                },
-            isPlaying = isPlaying,
-            trailingContent = {
-                IconButton(
-                    onClick = longClick,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
+    }
+
+    val openItem: (YTItem) -> Unit = { item ->
+        when (item) {
+            is SongItem -> {
+                if (item.id == mediaMetadata?.id) {
+                    playerConnection.togglePlayPause()
+                } else {
+                    playerConnection.playQueue(
+                        if (autoRadioQueue) {
+                            YouTubeQueue(
+                                WatchEndpoint(videoId = item.id),
+                                item.toMediaMetadata(),
+                            )
+                        } else {
+                            ListQueue(
+                                title = item.title,
+                                items = listOf(item.toMediaItem())
+                            )
+                        }
                     )
                 }
+            }
+
+            is AlbumItem -> {
+                navController.navigate("album/${item.id}")
+            }
+
+            is ArtistItem -> {
+                navController.navigate("artist/${item.id}")
+            }
+
+            is PlaylistItem -> {
+                navController.navigate("online_playlist/${item.id}")
+            }
+
+            is PodcastItem -> {
+                navController.navigate("online_podcast/${item.id}")
+            }
+
+            is EpisodeItem -> {
+                if (item.id == mediaMetadata?.id) {
+                    playerConnection.togglePlayPause()
+                } else {
+                    playerConnection.playQueue(
+                        YouTubeQueue(
+                            WatchEndpoint(videoId = item.id),
+                            item.toMediaMetadata(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    val ytItemContent: @Composable LazyItemScope.(YTItem) -> Unit = { item: YTItem ->
+        BaajaYouTubeRow(
+            item = item,
+            isActive = item.isNowPlaying(mediaMetadata),
+            isPlaying = isPlaying,
+            trailing = {
+                BaajaMoreButton(
+                    itemTitle = item.title,
+                    onClick = { showItemMenu(item) },
+                )
             },
             modifier =
                 Modifier
                     .combinedClickable(
-                        onClick = {
-                            when (item) {
-                                is SongItem -> {
-                                    if (item.id == mediaMetadata?.id) {
-                                        playerConnection.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            if (autoRadioQueue) {
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata(),
-                                                )
-                                            } else {
-                                                ListQueue(
-                                                    title = item.title,
-                                                    items = listOf(item.toMediaItem())
-                                                )
-                                            }
-                                        )
-                                    }
-                                }
-
-                                is AlbumItem -> {
-                                    navController.navigate("album/${item.id}")
-                                }
-
-                                is ArtistItem -> {
-                                    navController.navigate("artist/${item.id}")
-                                }
-
-                                is PlaylistItem -> {
-                                    navController.navigate("online_playlist/${item.id}")
-                                }
-
-                                is PodcastItem -> {
-                                    navController.navigate("online_podcast/${item.id}")
-                                }
-
-                                is EpisodeItem -> {
-                                    if (item.id == mediaMetadata?.id) {
-                                        playerConnection.togglePlayPause()
-                                    } else {
-                                        playerConnection.playQueue(
-                                            YouTubeQueue(
-                                                WatchEndpoint(videoId = item.id),
-                                                item.toMediaMetadata(),
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-                        },
-                        onLongClick = longClick,
+                        onClick = { openItem(item) },
+                        onLongClick = { showItemMenu(item) },
                     ).animateItem(),
         )
     }
@@ -365,88 +360,35 @@ fun OnlineSearchResult(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
-                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
+                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
     ) {
-        // Google-style SearchBar with Material 3 design
-        OutlinedTextField(
-            value = query,
-            onValueChange = { newQuery ->
-                query = newQuery
-            },
-            placeholder = {
-                Text(
-                    text = stringResource(R.string.search_yt_music),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            },
-            leadingIcon = {
-                IconButton(
-                    onClick = { navController.navigateUp() },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.arrow_back),
-                        contentDescription = stringResource(R.string.dismiss),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            trailingIcon = {
-                if (query.text.isNotEmpty()) {
-                    IconButton(
-                        onClick = {
-                            query = TextFieldValue("")
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            },
-            keyboardOptions =
-                KeyboardOptions(
-                    imeAction = ImeAction.Search,
-                ),
-            keyboardActions =
-                KeyboardActions(
-                    onSearch = {
-                        onSearch(query.text)
-                    },
-                ),
-            singleLine = true,
-            shape = RoundedCornerShape(28.dp),
-            colors =
-                OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor =
-                        if (pureBlack) {
-                            MaterialTheme.colorScheme.surface
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        },
-                    unfocusedContainerColor =
-                        if (pureBlack) {
-                            MaterialTheme.colorScheme.surface
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        },
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                ),
+        Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            isSearchFocused = true
-                        }
-                    },
-        )
+                    .padding(start = 8.dp, end = BaajaHomeGutter, top = 12.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            BaajaPlainIconButton(
+                icon = R.drawable.arrow_back,
+                contentDescription = stringResource(R.string.baaja_home_back),
+                onClick = { navController.navigateUp() },
+                iconSize = 26.dp,
+            )
+            BaajaSearchField(
+                value = query,
+                onValueChange = { newQuery -> query = newQuery },
+                onSearch = { onSearch(it) },
+                placeholder = stringResource(R.string.search_yt_music),
+                highlighted = isSearchFocused,
+                focusRequester = focusRequester,
+                onFocusChanged = { focused -> if (focused) isSearchFocused = true },
+                height = 52.dp,
+                modifier = Modifier.weight(1f),
+            )
+        }
 
         // Main content area below search bar
         Box(modifier = Modifier.weight(1f)) {
@@ -474,7 +416,7 @@ fun OnlineSearchResult(
                             FILTER_PROFILE to stringResource(R.string.filter_profiles),
                         )
 
-                ChipsRow(
+                BaajaChipsRow(
                     chips = visibleChips,
                     currentValue = searchFilter,
                     onValueUpdate = {
@@ -488,21 +430,75 @@ fun OnlineSearchResult(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                val entranceKey = rememberBaajaEntranceKey()
                 LazyColumn(
                     state = lazyListState,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     if (searchFilter == null) {
-                        searchSummary?.summaries?.forEach { summary ->
-                            item {
-                                NavigationTitle(summary.title.toLocalizedSearchSection())
-                            }
+                        searchSummary?.summaries?.forEachIndexed { summaryIndex, summary ->
+                            val isTopResult = summary.title == YouTubeConstants.DEFAULT_TOP_RESULT
+                            val isCardRow =
+                                !isTopResult &&
+                                    summary.items.isNotEmpty() &&
+                                    summary.items.all { it is AlbumItem || it is PlaylistItem || it is PodcastItem }
 
-                            itemsIndexed(
-                                items = summary.items,
-                                key = { index, item -> "${summary.title}/${item.id}/$index" },
-                                itemContent = { index, item -> ytItemContent(item) },
-                            )
+                            if (isTopResult && summary.items.isNotEmpty()) {
+                                val top = summary.items.first()
+                                item(key = "summary_$summaryIndex/top/${top.id}") {
+                                    TopResultCard(
+                                        item = top,
+                                        isActive = top.isNowPlaying(mediaMetadata),
+                                        isPlaying = isPlaying,
+                                        onOpen = { openItem(top) },
+                                        onMore = { showItemMenu(top) },
+                                        onPlay = topResultPlayAction(top, playerConnection) { openItem(top) },
+                                        onRadio = topResultRadioAction(top, playerConnection),
+                                        modifier = Modifier.animateItem().baajaEntrance(0, entranceKey),
+                                    )
+                                }
+                                itemsIndexed(
+                                    items = summary.items.drop(1),
+                                    key = { index, item -> "summary_$summaryIndex/${item.id}/${index + 1}" },
+                                    itemContent = { _, item -> ytItemContent(item) },
+                                )
+                            } else {
+                                item(key = "summary_$summaryIndex/title") {
+                                    BaajaHomeSectionTitle(
+                                        title = summary.title.toLocalizedSearchSection(),
+                                        modifier = Modifier.animateItem().baajaEntrance(summaryIndex + 1, entranceKey),
+                                    )
+                                }
+
+                                if (isCardRow) {
+                                    item(key = "summary_$summaryIndex/cards") {
+                                        LazyRow(
+                                            contentPadding = PaddingValues(horizontal = BaajaHomeGutter - 4.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                            modifier = Modifier.animateItem(),
+                                        ) {
+                                            items(
+                                                items = summary.items.distinctBy { it.id },
+                                                key = { "${summary.title}/card/${it.id}" },
+                                            ) { item ->
+                                                BaajaYouTubeCard(
+                                                    item = item,
+                                                    isActive = item.isNowPlaying(mediaMetadata),
+                                                    isPlaying = isPlaying,
+                                                    onClick = { openItem(item) },
+                                                    onLongClick = { showItemMenu(item) },
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    itemsIndexed(
+                                        items = summary.items,
+                                        key = { index, item -> "summary_$summaryIndex/${item.id}/$index" },
+                                        itemContent = { _, item -> ytItemContent(item) },
+                                    )
+                                }
+                            }
                         }
 
                         if (searchSummary?.summaries?.isEmpty() == true) {
@@ -590,4 +586,12 @@ private fun String.toLocalizedSearchSection(): String =
         "Episodes" -> stringResource(R.string.filter_episodes)
         "Profiles" -> stringResource(R.string.filter_profiles)
         else -> this
+    }
+
+private fun YTItem.isNowPlaying(mediaMetadata: com.metrolist.music.models.MediaMetadata?): Boolean =
+    when (this) {
+        is SongItem -> mediaMetadata?.id == id
+        is AlbumItem -> mediaMetadata?.album?.id == id
+        is EpisodeItem -> mediaMetadata?.id == id
+        else -> false
     }

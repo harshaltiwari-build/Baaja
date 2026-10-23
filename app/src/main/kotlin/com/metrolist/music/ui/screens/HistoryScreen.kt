@@ -9,7 +9,15 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,12 +71,15 @@ import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.HistorySource
 import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.constants.PauseListenHistoryKey
 import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.ui.component.ChipsRow
+import com.metrolist.music.ui.component.BaajaGroupTitle
+import com.metrolist.music.ui.screens.playlist.BaajaSwitchCard
+import com.metrolist.music.ui.theme.BaajaChip
 import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.LocalMenuState
@@ -83,6 +94,7 @@ import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.DateAgo
 import com.metrolist.music.viewmodels.HistoryViewModel
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -137,6 +149,9 @@ fun HistoryScreen(
 
     val events by viewModel.events.collectAsStateWithLifecycle()
 
+    var pauseListenHistory by rememberPreference(PauseListenHistoryKey, false)
+    val timeFormatter = remember { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT) }
+    val dayFormatter = remember { DateTimeFormatter.ofPattern("EEE d MMM") }
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val isLoggedIn =
         remember(innerTubeCookie) {
@@ -223,8 +238,11 @@ fun HistoryScreen(
                 ),
         ) {
             item(key = "chips_row") {
-                ChipsRow(
-                    chips =
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                ) {
+                    val sources =
                         if (isLoggedIn) {
                             listOf(
                                 HistorySource.LOCAL to stringResource(R.string.local_history),
@@ -232,26 +250,68 @@ fun HistoryScreen(
                             )
                         } else {
                             listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
-                        },
-                    currentValue = historySource,
-                    onValueUpdate = {
-                        viewModel.historySource.value = it
-                        if (it == HistorySource.REMOTE) {
-                            viewModel.fetchRemoteHistory()
                         }
-                    },
-                )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(start = 20.dp, end = 20.dp, bottom = 4.dp),
+                    ) {
+                        sources.forEach { (source, label) ->
+                            BaajaChip(
+                                label = label,
+                                selected = historySource == source,
+                                onClick = {
+                                    viewModel.historySource.value = source
+                                    if (source == HistorySource.REMOTE) {
+                                        viewModel.fetchRemoteHistory()
+                                    }
+                                },
+                            )
+                        }
+                    }
+                    BaajaSwitchCard(
+                        title = stringResource(R.string.baaja_library_history_pause),
+                        description = stringResource(R.string.baaja_library_history_pause_desc),
+                        checked = pauseListenHistory,
+                        onCheckedChange = { pauseListenHistory = it },
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                }
+            }
+
+            val isEmpty =
+                if (historySource == HistorySource.REMOTE && isLoggedIn) {
+                    filteredRemoteContent?.none { it.songs.isNotEmpty() } == true
+                } else {
+                    allEvents.isEmpty()
+                }
+            if (isEmpty && query.text.isEmpty()) {
+                item(key = "history_empty") {
+                    Text(
+                        text = stringResource(R.string.baaja_library_history_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 40.dp),
+                    )
+                }
             }
 
             if (historySource == HistorySource.REMOTE && isLoggedIn) {
                 filteredRemoteContent?.forEach { section ->
                     stickyHeader {
-                        NavigationTitle(
-                            title = section.title,
+                        BaajaGroupTitle(
+                            text = section.title,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.background),
+                                    .background(MaterialTheme.colorScheme.surface),
                         )
                     }
 
@@ -314,8 +374,8 @@ fun HistoryScreen(
             } else {
                 filteredEvents.forEach { (dateAgo, dateEvents) ->
                     stickyHeader {
-                        NavigationTitle(
-                            title = dateAgoToString(dateAgo),
+                        BaajaGroupTitle(
+                            text = dateAgoToString(dateAgo),
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -348,6 +408,17 @@ fun HistoryScreen(
                                         onCheckedChange = onCheckedChange,
                                     )
                                 } else {
+                                    Text(
+                                        text =
+                                            if (dateAgo == DateAgo.Today || dateAgo == DateAgo.Yesterday) {
+                                                event.event.timestamp.format(timeFormatter)
+                                            } else {
+                                                event.event.timestamp.format(dayFormatter)
+                                            },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
                                     IconButton(
                                         onClick = {
                                             menuState.show {

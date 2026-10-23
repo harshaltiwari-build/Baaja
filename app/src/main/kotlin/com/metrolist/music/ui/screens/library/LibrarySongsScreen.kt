@@ -38,7 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -332,36 +332,13 @@ fun LibrarySongsScreen(
                 key = "filter",
                 contentType = CONTENT_TYPE_HEADER,
             ) {
-                Row {
-                    Spacer(Modifier.width(12.dp))
-                    FilterChip(
-                        label = { Text(stringResource(R.string.songs)) },
-                        selected = true,
-                        colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surface),
-                        onClick = onDeselect,
-                        shape = RoundedCornerShape(16.dp),
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(R.drawable.close),
-                                contentDescription = "",
-                            )
-                        },
-                    )
-                    ChipsRow(
-                        chips =
-                            listOf(
-                                SongFilter.LIKED to stringResource(R.string.filter_liked),
-                                SongFilter.LIBRARY to stringResource(R.string.filter_library),
-                                SongFilter.UPLOADED to stringResource(R.string.filter_uploaded),
-                                SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
-                            ),
-                        currentValue = filter,
-                        onValueUpdate = {
-                            filter = it
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                BaajaSectionFilterRow(
+                    sectionLabel = stringResource(R.string.songs),
+                    onDeselect = onDeselect,
+                    chips = listOf(SongFilter.LIKED to stringResource(R.string.filter_liked), SongFilter.LIBRARY to stringResource(R.string.filter_library), SongFilter.UPLOADED to stringResource(R.string.filter_uploaded), SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded)),
+                    currentValue = filter,
+                    onValueUpdate = { filter = it },
+                )
             }
 
             item(
@@ -377,43 +354,25 @@ fun LibrarySongsScreen(
                         viewModel.updateSearchQuery("")
                     },
                     keyboardController = keyboardController,
-                    modifier = Modifier.padding(start = 16.dp),
+                    modifier = Modifier.padding(horizontal = if (isSearchActive) 16.dp else 0.dp),
                 ) {
-                    SortHeader(
-                        sortType = sortType,
-                        sortDescending = sortDescending,
-                        onSortTypeChange = onSortTypeChange,
-                        onSortDescendingChange = onSortDescendingChange,
-                        sortTypeText = { sortType ->
-                            when (sortType) {
-                                SongSortType.CREATE_DATE -> R.string.sort_by_create_date
-                                SongSortType.NAME -> R.string.sort_by_name
-                                SongSortType.ARTIST -> R.string.sort_by_artist
-                                SongSortType.PLAY_TIME -> R.string.sort_by_play_time
-                            }
-                        },
-                    )
-
-                    Spacer(Modifier.weight(1f))
-
-                    Text(
-                        text =
-                            pluralStringResource(
-                                R.plurals.n_song,
-                                filteredSongs.size,
-                                filteredSongs.size,
-                            ),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-
-                    IconButton(
-                        onClick = { isSearchActive = true },
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp).size(40.dp),
+                    BaajaLibraryToolbar(
+                        onSearch = { isSearchActive = true },
+                        countText = pluralStringResource(R.plurals.n_song, filteredSongs.size, filteredSongs.size),
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.search),
-                            contentDescription = stringResource(R.string.search),
+                        SortHeader(
+                            sortType = sortType,
+                            sortDescending = sortDescending,
+                            onSortTypeChange = onSortTypeChange,
+                            onSortDescendingChange = onSortDescendingChange,
+                            sortTypeText = { sortType ->
+                                when (sortType) {
+                                    SongSortType.CREATE_DATE -> R.string.sort_by_create_date
+                                    SongSortType.NAME -> R.string.sort_by_name
+                                    SongSortType.ARTIST -> R.string.sort_by_artist
+                                    SongSortType.PLAY_TIME -> R.string.sort_by_play_time
+                                }
+                            },
                         )
                     }
                 }
@@ -453,7 +412,7 @@ fun LibrarySongsScreen(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.more_vert),
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.more_options),
                             )
                         }
                     },

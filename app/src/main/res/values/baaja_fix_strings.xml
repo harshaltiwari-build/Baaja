@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="baaja_fix_play_next">Play next</string>
+    <string name="baaja_fix_add_to_queue">Add to queue</string>
+    <string name="baaja_fix_share_room">Join my Baaja room with code %1$s</string>
+    <string name="baaja_fix_community_server">Uses a community server</string>
+    <string name="baaja_fix_more_options">More options</string>
+    <string name="baaja_fix_copy_invite">Copy invite</string>
+    <string name="baaja_fix_not_now">Not now</string>
+</resources>

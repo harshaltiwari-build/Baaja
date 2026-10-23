@@ -5,13 +5,11 @@
 
 package com.metrolist.music.ui.screens.search
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -28,29 +26,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.metrolist.music.LocalNavController
@@ -64,13 +55,19 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.AutoRadioQueueKey
-import com.metrolist.music.constants.SuggestionItemHeight
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.LocalMenuState
-import com.metrolist.music.ui.component.YouTubeListItem
+import com.metrolist.music.LocalPlayerAwareWindowInsets
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
+import com.metrolist.music.ui.component.home.BaajaHomeSectionTitle
+import com.metrolist.music.ui.component.home.BaajaMoreButton
+import com.metrolist.music.ui.component.home.BaajaSuggestionRow
+import com.metrolist.music.ui.component.home.BaajaYouTubeRow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.metrolist.music.ui.menu.YouTubeAlbumMenu
 import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
@@ -125,11 +122,11 @@ fun OnlineSearchScreen(
 
     LazyColumn(
         state = lazyListState,
-        contentPadding = WindowInsets.systemBars.only(WindowInsetsSides.Bottom).asPaddingValues(),
+        contentPadding = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom).asPaddingValues(),
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background),
+                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface),
     ) {
         // Show parsed URL item at the top if present
         if (viewState.isUrlQuery && viewState.parsedUrlItem != null) {
@@ -138,12 +135,14 @@ fun OnlineSearchScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = BaajaHomeGutter, vertical = 8.dp),
                 ) {
                     Text(
-                        text = stringResource(R.string.parsed_from_link),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = stringResource(R.string.parsed_from_link).uppercase(),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
@@ -151,7 +150,7 @@ fun OnlineSearchScreen(
 
             item(key = "parsed_url_item") {
                 val item = viewState.parsedUrlItem!!
-                YouTubeListItem(
+                BaajaYouTubeRow(
                     item = item,
                     isActive =
                         when (item) {
@@ -161,8 +160,9 @@ fun OnlineSearchScreen(
                             else -> false
                         },
                     isPlaying = isPlaying,
-                    trailingContent = {
-                        IconButton(
+                    trailing = {
+                        BaajaMoreButton(
+                            itemTitle = item.title,
                             onClick = {
                                 menuState.show {
                                     when (item) {
@@ -230,12 +230,7 @@ fun OnlineSearchScreen(
                                     }
                                 }
                             },
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.more_vert),
-                                contentDescription = null,
-                            )
-                        }
+                        )
                     },
                     modifier =
                         Modifier
@@ -360,8 +355,7 @@ fun OnlineSearchScreen(
                                         }
                                     }
                                 },
-                            ).background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
-                            .animateItem(),
+                            ).animateItem(),
                 )
             }
 
@@ -375,9 +369,25 @@ fun OnlineSearchScreen(
             }
         }
 
+        if (query.isEmpty() && viewState.history.isNotEmpty()) {
+            item(key = "recent_header") {
+                BaajaHomeSectionTitle(
+                    title = stringResource(R.string.baaja_home_recent),
+                    actionLabel = stringResource(R.string.baaja_home_clear_all),
+                    onAction = {
+                        database.query {
+                            clearSearchHistory()
+                        }
+                    },
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
+
         items(viewState.history, key = { "history_${it.query}" }) { history ->
             SuggestionItem(
                 query = history.query,
+                typed = query,
                 online = false,
                 onClick = {
                     onSearch(history.query)
@@ -396,16 +406,17 @@ fun OnlineSearchScreen(
             )
         }
 
-        items(viewState.suggestions, key = { "suggestion_$it" }) { query ->
+        items(viewState.suggestions, key = { "suggestion_$it" }) { suggestion ->
             SuggestionItem(
-                query = query,
+                query = suggestion,
+                typed = query,
                 online = true,
                 onClick = {
-                    onSearch(query)
+                    onSearch(suggestion)
                     onDismiss()
                 },
                 onFillTextField = {
-                    onQueryChange(TextFieldValue(query, TextRange(query.length)))
+                    onQueryChange(TextFieldValue(suggestion, TextRange(suggestion.length)))
                 },
                 modifier = Modifier.animateItem(),
                 pureBlack = pureBlack,
@@ -414,9 +425,7 @@ fun OnlineSearchScreen(
 
         if (viewState.items.isNotEmpty() && viewState.history.size + viewState.suggestions.size > 0) {
             item(key = "search_divider") {
-                HorizontalDivider(
-                    modifier = Modifier.animateItem(),
-                )
+                Spacer(modifier = Modifier.height(4.dp).animateItem())
             }
             item(key = "search_divider_spacer") {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -424,7 +433,7 @@ fun OnlineSearchScreen(
         }
 
         items(viewState.items, key = { "item_${it.id}" }) { item ->
-            YouTubeListItem(
+            BaajaYouTubeRow(
                 item = item,
                 isActive =
                     when (item) {
@@ -434,8 +443,9 @@ fun OnlineSearchScreen(
                         else -> false
                     },
                 isPlaying = isPlaying,
-                trailingContent = {
-                    IconButton(
+                trailing = {
+                    BaajaMoreButton(
+                        itemTitle = item.title,
                         onClick = {
                             menuState.show {
                                 when (item) {
@@ -503,12 +513,7 @@ fun OnlineSearchScreen(
                                 }
                             }
                         },
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_vert),
-                            contentDescription = null,
-                        )
-                    }
+                    )
                 },
                 modifier =
                     Modifier
@@ -633,8 +638,7 @@ fun OnlineSearchScreen(
                                     }
                                 }
                             },
-                        ).background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
-                        .animateItem(),
+                        ).animateItem(),
             )
         }
     }
@@ -649,50 +653,18 @@ fun SuggestionItem(
     onDelete: () -> Unit = {},
     onFillTextField: () -> Unit,
     pureBlack: Boolean,
+    typed: String = "",
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    BaajaSuggestionRow(
+        query = query,
+        typed = typed,
+        isHistory = !online,
+        onClick = onClick,
+        onFillTextField = onFillTextField,
+        onDelete = if (online) null else onDelete,
         modifier =
             modifier
-                .fillMaxWidth()
-                .height(SuggestionItemHeight)
                 .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
-                .clickable(onClick = onClick)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)),
-    ) {
-        Icon(
-            painterResource(if (online) R.drawable.search else R.drawable.history),
-            contentDescription = null,
-            modifier = Modifier.padding(horizontal = 16.dp).alpha(0.5f),
-        )
-
-        Text(
-            text = query,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-
-        if (!online) {
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.alpha(0.5f),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.close),
-                    contentDescription = null,
-                )
-            }
-        }
-
-        IconButton(
-            onClick = onFillTextField,
-            modifier = Modifier.alpha(0.5f),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.arrow_top_left),
-                contentDescription = null,
-            )
-        }
-    }
+    )
 }

@@ -156,7 +156,6 @@
     <string name="shuffle_playlist_first_desc">Пры мяшанні прайграваць усе трэкі з бягучага плэйліста або альбома перад пераходам да падобнага кантэнту</string>
     <string name="prevent_duplicate_tracks_in_queue">Выключаць дублікаты ў чарзе</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">Калі трэк ужо ёсць у чарзе, ён будзе перамешчаны, а не дададзены паўторна</string>
-    <string name="show_wrapped_card">Паказаць картку Wrapped</string>
     <string name="skip_silence_desc">Паскараць узнаўленне ціхіх участкаў трэкаў</string>
     <string name="skip_silence_instant">Імгненна прапускаць цішыню</string>
     <string name="skip_silence_instant_desc">Прапускаць ціхія фрагменты адразу замест іх паскарэння</string>
@@ -352,13 +351,7 @@
     <string name="google_cast">Google Cast</string>
     <string name="google_cast_description">Трансляцыя гуку на Chromecast і іншыя прылады з падтрымкай Cast</string>
     <string name="lyrics_romanize_as_main">Паказваць раманізаваныя тэксты як асноўныя</string>
-    <string name="integrations">Інтэграцыі</string>
     <string name="username">Імя карыстальніка</string>
     <string name="password">Пароль</string>
-    <string name="lastfm_integration">Інтэграцыя з Last.fm</string>
-    <string name="enable_scrobbling">Уключыць скробблінг</string>
-    <string name="lastfm_now_playing">Адпраўляць статус \"Зараз іграе\"</string>
-    <string name="last_fm_send_likes">Сінхранізаваць адзнакі «Падабаецца»</string>
-    <string name="last_fm_send_likes_description">Дадаваць ці прыбіраць адзнаку «Любімае» на Last.fm, калі ставіцца ці здымаецца адзнака «Падабаецца» ў Metrolist</string>
     <string name="logging_in">Выконваецца ўваход…</string>
 </resources>

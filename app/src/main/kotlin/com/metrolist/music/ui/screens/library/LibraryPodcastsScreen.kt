@@ -46,6 +46,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import com.metrolist.music.ui.screens.playlist.BaajaSortPill
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -177,37 +181,13 @@ fun LibraryPodcastsScreen(
     ) {
         // Chip row header — same pattern as LibrarySongsScreen
         val chipsHeader = @Composable {
-            Row {
-                Spacer(Modifier.width(12.dp))
-                FilterChip(
-                    label = { Text(stringResource(R.string.filter_podcasts)) },
-                    selected = true,
-                    colors =
-                        FilterChipDefaults.filterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                        ),
-                    onClick = onDeselect,
-                    shape = RoundedCornerShape(16.dp),
-                    border = null,
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = stringResource(R.string.close_chip),
-                        )
-                    },
-                )
-                ChipsRow(
-                    chips =
-                        listOf(
-                            PodcastFilter.EPISODES to stringResource(R.string.filter_episodes),
-                            PodcastFilter.CHANNELS to stringResource(R.string.filter_channels),
-                            PodcastFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
-                        ),
-                    currentValue = podcastFilter,
-                    onValueUpdate = { podcastFilter = it },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            BaajaSectionFilterRow(
+                sectionLabel = stringResource(R.string.filter_podcasts),
+                onDeselect = onDeselect,
+                chips = listOf(PodcastFilter.EPISODES to stringResource(R.string.filter_episodes), PodcastFilter.CHANNELS to stringResource(R.string.filter_channels), PodcastFilter.DOWNLOADED to stringResource(R.string.filter_downloaded)),
+                currentValue = podcastFilter,
+                onValueUpdate = { podcastFilter = it },
+            )
         }
 
         when (podcastFilter) {
@@ -299,7 +279,7 @@ fun LibraryPodcastsScreen(
                                         podcastChannels.size,
                                     ),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -356,20 +336,22 @@ fun LibraryPodcastsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
-                            SortHeader(
-                                sortType = sortType,
-                                sortDescending = sortDescending,
-                                onSortTypeChange = onSortTypeChange,
-                                onSortDescendingChange = onSortDescendingChange,
-                                sortTypeText = { st ->
-                                    when (st) {
-                                        SongSortType.CREATE_DATE -> R.string.sort_by_create_date
-                                        SongSortType.NAME -> R.string.sort_by_name
-                                        SongSortType.ARTIST -> R.string.sort_by_artist
-                                        SongSortType.PLAY_TIME -> R.string.sort_by_play_time
-                                    }
-                                },
-                            )
+                            BaajaSortPill {
+                                SortHeader(
+                                    sortType = sortType,
+                                    sortDescending = sortDescending,
+                                    onSortTypeChange = onSortTypeChange,
+                                    onSortDescendingChange = onSortDescendingChange,
+                                    sortTypeText = { st ->
+                                        when (st) {
+                                            SongSortType.CREATE_DATE -> R.string.sort_by_create_date
+                                            SongSortType.NAME -> R.string.sort_by_name
+                                            SongSortType.ARTIST -> R.string.sort_by_artist
+                                            SongSortType.PLAY_TIME -> R.string.sort_by_play_time
+                                        }
+                                    },
+                                )
+                            }
                             Spacer(Modifier.weight(1f))
                             Text(
                                 text =
@@ -379,7 +361,7 @@ fun LibraryPodcastsScreen(
                                         downloadedEpisodes.size,
                                     ),
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -511,8 +493,7 @@ private fun AutoPlaylistCard(
             modifier =
                 Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp), shadowOffset = 2.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (thumbnailUrl != null) {
@@ -521,9 +502,7 @@ private fun AutoPlaylistCard(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier =
-                        Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                        Modifier.fillMaxSize(),
                 )
             } else {
                 Icon(
@@ -541,6 +520,7 @@ private fun AutoPlaylistCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -581,8 +561,7 @@ private fun PodcastEpisodePlaylistItem(
             modifier =
                 Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(14.dp), shadowOffset = 2.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (podcast.thumbnailUrl != null) {
@@ -591,9 +570,7 @@ private fun PodcastEpisodePlaylistItem(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier =
-                        Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                        Modifier.fillMaxSize(),
                 )
             } else {
                 Icon(
@@ -611,6 +588,7 @@ private fun PodcastEpisodePlaylistItem(
             Text(
                 text = podcast.title,
                 style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -756,7 +734,7 @@ private fun PodcastArtistChannelItem(
             modifier =
                 Modifier
                     .size(56.dp)
-                    .clip(CircleShape),
+                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.surfaceVariant, CircleShape, shadowOffset = 2.dp),
         )
 
         Spacer(Modifier.width(12.dp))
@@ -764,6 +742,7 @@ private fun PodcastArtistChannelItem(
         Text(
             text = channelName,
             style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),

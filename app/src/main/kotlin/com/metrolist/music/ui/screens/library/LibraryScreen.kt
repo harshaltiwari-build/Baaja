@@ -6,22 +6,22 @@
 package com.metrolist.music.ui.screens.library
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.LocalNavController
-import com.metrolist.music.R
 import com.metrolist.music.constants.AlbumViewTypeKey
 import com.metrolist.music.constants.ChipSortTypeKey
+import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.LibraryFilter
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.constants.PlaylistViewTypeKey
-import com.metrolist.music.ui.component.ChipsRow
 import com.metrolist.music.utils.rememberEnumPreference
+import com.metrolist.music.utils.rememberPreference
 
 @Composable
 fun LibraryScreen() {
@@ -30,23 +30,19 @@ fun LibraryScreen() {
     var libraryViewType by rememberEnumPreference(AlbumViewTypeKey, LibraryViewType.GRID)
     var playlistViewType by rememberEnumPreference(PlaylistViewTypeKey, LibraryViewType.GRID)
 
+    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+    val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
+    // A saved Podcasts filter makes no sense once the user has signed out.
+    if (!isLoggedIn && filterType == LibraryFilter.PODCASTS) filterType = LibraryFilter.LIBRARY
+
     val filterContent = @Composable {
-        Row {
-            ChipsRow(
-                chips = listOf(
-                    LibraryFilter.PLAYLISTS to stringResource(R.string.filter_playlists),
-                    LibraryFilter.SONGS to stringResource(R.string.filter_songs),
-                    LibraryFilter.ALBUMS to stringResource(R.string.filter_albums),
-                    LibraryFilter.ARTISTS to stringResource(R.string.filter_artists),
-                    LibraryFilter.PODCASTS to stringResource(R.string.filter_podcasts),
-                ),
-                currentValue = filterType,
-                onValueUpdate = {
-                    filterType = if (filterType == it) LibraryFilter.LIBRARY else it
-                },
-                modifier = Modifier.weight(1f),
-            )
-        }
+        BaajaLibraryFilterRow(
+            filterType = filterType,
+            onFilterClick = {
+                filterType = if (filterType == it) LibraryFilter.LIBRARY else it
+            },
+            isLoggedIn = isLoggedIn,
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

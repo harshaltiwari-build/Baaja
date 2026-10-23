@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <string name="baaja_onb_wordmark" translatable="false">baaja</string>
+    <string name="baaja_onb_wordmark_hindi" translatable="false">बाजा</string>
+    <string name="baaja_onb_logo_description">Baaja logo</string>
+
+    <!-- Welcome -->
+    <string name="baaja_onb_welcome_sticker_no_ads">No ads</string>
+    <string name="baaja_onb_welcome_sticker_lyrics">Synced lyrics</string>
+    <string name="baaja_onb_welcome_sticker_offline">Listen offline</string>
+    <string name="baaja_onb_welcome_title_start">Music that</string>
+    <string name="baaja_onb_welcome_title_highlight">moves</string>
+    <string name="baaja_onb_welcome_title_end">with you</string>
+    <string name="baaja_onb_welcome_body">Stream YouTube Music with no ads, synced lyrics, downloads and listening rooms with friends.</string>
+    <string name="baaja_onb_welcome_start">Baaja bajao!</string>
+    <string name="baaja_onb_welcome_have_account">Have a YouTube Music account?</string>
+    <string name="baaja_onb_sign_in">Sign in</string>
+
+    <!-- Login intro -->
+    <string name="baaja_onb_login_title">Sign in to Baaja</string>
+    <string name="baaja_onb_login_body">Use your YouTube Music account to bring your library with you.</string>
+    <string name="baaja_onb_login_perk_sync">Sync likes, playlists and subscriptions</string>
+    <string name="baaja_onb_login_perk_mixes">Get mixes made for your taste</string>
+    <string name="baaja_onb_login_perk_resume">Pick up where you left off</string>
+    <string name="baaja_onb_login_google">Sign in with Google</string>
+    <string name="baaja_onb_login_guest">Continue as guest</string>
+    <string name="baaja_onb_login_note">Sign-in happens on Google\'s own page. Baaja never sees your password.</string>
+
+    <!-- Profile -->
+    <string name="baaja_onb_profile_title">Profile</string>
+    <string name="baaja_onb_profile_guest_name">Music lover</string>
+    <string name="baaja_onb_profile_guest_subtitle">Listening as a guest</string>
+    <string name="baaja_onb_profile_since">listening since %1$d</string>
+    <string name="baaja_onb_profile_minutes">Minutes</string>
+    <string name="baaja_onb_profile_plays">Plays</string>
+    <string name="baaja_onb_profile_artists">Artists</string>
+    <string name="baaja_onb_profile_listening_stats">Listening stats</string>
+    <string name="baaja_onb_profile_top_artists">Your top artists</string>
+    <string name="baaja_onb_profile_account">Account</string>
+    <string name="baaja_onb_profile_youtube_library">Your YouTube library</string>
+    <string name="baaja_onb_profile_sign_in_title">Sign in</string>
+    <string name="baaja_onb_profile_sign_in_body">Sync your YouTube Music library</string>
+    <string name="baaja_onb_profile_no_artists">Play some music and your favourite artists will show up here.</string>
+
+    <!-- Edit profile -->
+    <string name="baaja_onb_edit_profile">Edit profile</string>
+    <string name="baaja_onb_edit_title">Edit profile</string>
+    <string name="baaja_onb_edit_choose_photo">Choose photo</string>
+    <string name="baaja_onb_edit_remove_photo">Remove photo</string>
+    <string name="baaja_onb_edit_photo_failed">Couldn\'t use that photo. Try another one.</string>
+    <string name="baaja_onb_edit_name">Display name</string>
+    <string name="baaja_onb_edit_bio">Tagline (optional)</string>
+    <string name="baaja_onb_edit_bio_hint">What are you listening to?</string>
+    <string name="baaja_onb_edit_local_note">Stored on this device. It is never uploaded or shared.</string>
+
+    <!-- Settings -->
+    <string name="baaja_onb_settings_account_guest">Sign in to sync your YouTube Music library</string>
+    <string name="baaja_onb_settings_account_signed_in">Account, library sync and channel</string>
+    <string name="baaja_onb_settings_quick_appearance">Appearance</string>
+    <string name="baaja_onb_settings_theme_system">System</string>
+    <string name="baaja_onb_settings_theme_light">Light</string>
+    <string name="baaja_onb_settings_theme_dark">Dark</string>
+    <string name="baaja_onb_settings_album_colours">Colours from album art</string>
+    <string name="baaja_onb_settings_album_colours_sub">Tint the app with each cover</string>
+    <string name="baaja_onb_settings_pure_black_sub">Saves battery on OLED screens</string>
+    <string name="baaja_onb_settings_more_appearance">More appearance options</string>
+    <string name="baaja_onb_settings_footer_version">Baaja · version %1$s</string>
+    <string name="baaja_onb_settings_footer_credit">Based on Metrolist and InnerTune · GPL-3.0</string>
+
+    <!-- Listening analytics -->
+    <string name="baaja_onb_stats_title">Your stats</string>
+    <string name="baaja_onb_stats_range_week">Week</string>
+    <string name="baaja_onb_stats_range_month">Month</string>
+    <string name="baaja_onb_stats_range_year">Year</string>
+    <string name="baaja_onb_stats_minutes_listened">Minutes listened</string>
+    <string name="baaja_onb_stats_vs_previous_up">+%1$d%% vs previous</string>
+    <string name="baaja_onb_stats_vs_previous_down">−%1$d%% vs previous</string>
+    <string name="baaja_onb_stats_vs_previous_none">Nothing to compare yet</string>
+    <string name="baaja_onb_stats_top_artist">Top artist</string>
+    <string name="baaja_onb_stats_top_artist_share">%1$d%% of your listening</string>
+    <string name="baaja_onb_stats_top_artist_none">Nothing yet</string>
+    <string name="baaja_onb_stats_minutes_per_day">Minutes per day</string>
+    <string name="baaja_onb_stats_minutes_per_week">Minutes per week</string>
+    <string name="baaja_onb_stats_minutes_per_month">Minutes per month</string>
+    <string name="baaja_onb_stats_bar_label">%1$s · %2$s min</string>
+    <string name="baaja_onb_stats_minutes_short">%1$s min</string>
+    <string name="baaja_onb_stats_search">Search artists</string>
+    <string name="baaja_onb_stats_time_transfer">Transfer listening time</string>
+    <string name="baaja_onb_stats_clear_artists">Clear artist filter</string>
+    <string name="baaja_onb_stats_close_selection">Close selection</string>
+    <string name="baaja_onb_stats_more">More</string>
+
+</resources>

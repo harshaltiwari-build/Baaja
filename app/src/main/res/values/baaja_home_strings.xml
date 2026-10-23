@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Baaja Project (C) 2026
+  Licensed under GPL-3.0 | See git history for contributors
+-->
+<resources>
+    <string name="baaja_home_wordmark" translatable="false">baaja</string>
+    <string name="baaja_home_logo">Baaja logo</string>
+    <string name="baaja_home_profile">Profile</string>
+    <string name="baaja_home_mixed_for_you">Mixed for you</string>
+    <string name="baaja_home_popular_artists">Popular artists</string>
+    <string name="baaja_home_see_all">See all</string>
+    <string name="baaja_home_play_named">Play %1$s</string>
+    <string name="baaja_home_open_named">Open %1$s</string>
+    <string name="baaja_home_show_page">Show item %1$d of %2$d</string>
+    <string name="baaja_home_more_options_for">More options for %1$s</string>
+    <string name="baaja_home_song_by">By %1$s</string>
+
+    <string name="baaja_home_explore">Explore</string>
+    <string name="baaja_home_search_hint">Songs, artists, podcasts</string>
+    <string name="baaja_home_identify_song">Identify a song</string>
+    <string name="baaja_home_recent">Recent</string>
+    <string name="baaja_home_clear_all">Clear all</string>
+    <string name="baaja_home_remove_from_recent">Remove %1$s from recent</string>
+    <string name="baaja_home_fill_in">Fill in %1$s</string>
+    <string name="baaja_home_clear_search">Clear search</string>
+    <string name="baaja_home_search_online">Search YouTube Music</string>
+    <string name="baaja_home_search_library">Search your library</string>
+    <string name="baaja_home_top_charts">Top charts this week</string>
+    <string name="baaja_home_top_charts_sub">Trending songs and videos</string>
+    <string name="baaja_home_new_releases">New releases</string>
+    <string name="baaja_home_moods_genres">Moods &amp; genres</string>
+    <string name="baaja_home_more">More</string>
+    <string name="baaja_home_back">Back</string>
+    <string name="baaja_home_kind_artist">Artist</string>
+</resources>

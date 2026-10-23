@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,13 +65,15 @@ fun ArtistMenu(
     val artist = artistState.value ?: originalArtist
     val isPinned by database.speedDialDao.isPinned(artist.id).collectAsStateWithLifecycle(initialValue = false)
 
+    BaajaMenuHeader {
     ArtistListItem(
         artist = artist,
         badges = {},
         trailingContent = {},
     )
+    }
 
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
 
     Spacer(modifier = Modifier.height(12.dp))
 

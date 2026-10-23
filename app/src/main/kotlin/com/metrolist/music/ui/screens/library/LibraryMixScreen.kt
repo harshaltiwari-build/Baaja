@@ -70,6 +70,8 @@ import com.metrolist.music.constants.MixSortDescendingKey
 import com.metrolist.music.constants.MixSortType
 import com.metrolist.music.constants.MixSortTypeKey
 import com.metrolist.music.constants.ShowCachedPlaylistKey
+import com.metrolist.innertube.utils.parseCookieString
+import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.ShowDownloadedPlaylistKey
 import com.metrolist.music.constants.ShowLikedPlaylistKey
 import com.metrolist.music.constants.ShowTopPlaylistKey
@@ -227,8 +229,10 @@ fun LibraryMixScreen(
     val showDownloadedPlaylist =
         showDownloaded && matchesNormalizedQuery(normalizedQuery, downloadPlaylist.playlist.name)
     val showTopPlaylists = showTop && matchesNormalizedQuery(normalizedQuery, topPlaylist.playlist.name)
+    val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+    val isLoggedIn = remember(innerTubeCookie) { "SAPISID" in parseCookieString(innerTubeCookie) }
     val showUploadedPlaylists =
-        showUploaded && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
+        showUploaded && isLoggedIn && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
     val showCachedPlaylists = showCached && matchesNormalizedQuery(normalizedQuery, cachedPlaylist.playlist.name)
 
 
@@ -383,57 +387,44 @@ fun LibraryMixScreen(
                 viewModel.updateSearchQuery("")
             },
             keyboardController = keyboardController,
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.padding(horizontal = if (isSearchActive) 16.dp else 0.dp),
         ) {
-            SortHeader(
-                sortType = sortType,
-                sortDescending = sortDescending,
-                onSortTypeChange = onSortTypeChange,
-                onSortDescendingChange = onSortDescendingChange,
-                sortTypeText = { sortType ->
-                    when (sortType) {
-                        MixSortType.CREATE_DATE -> R.string.sort_by_create_date
-                        MixSortType.LAST_UPDATED -> R.string.sort_by_last_updated
-                        MixSortType.NAME -> R.string.sort_by_name
-                    }
-                },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            IconButton(
-                onClick = { isSearchActive = true },
-                modifier = Modifier.padding(start = 8.dp).size(40.dp),
+            BaajaLibraryToolbar(
+                onSearch = { isSearchActive = true },
+                viewType = viewType,
+                onToggleViewType = { onViewTypeChange(viewType.toggle()) },
+                onCreatePlaylist = { showCreatePlaylistDialog = true },
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.search),
-                    contentDescription = stringResource(R.string.search),
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    onViewTypeChange(viewType.toggle())
-                },
-                modifier = Modifier.padding(end = 8.dp).size(40.dp),
-            ) {
-                Icon(
-                    painter =
-                    painterResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.drawable.list
-                            LibraryViewType.GRID -> R.drawable.grid_view
-                        },
-                    ),
-                    contentDescription = stringResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.string.switch_to_grid_view
-                            LibraryViewType.GRID -> R.string.switch_to_list_view
-                        },
-                    ),
+                SortHeader(
+                    sortType = sortType,
+                    sortDescending = sortDescending,
+                    onSortTypeChange = onSortTypeChange,
+                    onSortDescendingChange = onSortDescendingChange,
+                    sortTypeText = { sortType ->
+                        when (sortType) {
+                            MixSortType.CREATE_DATE -> R.string.sort_by_create_date
+                            MixSortType.LAST_UPDATED -> R.string.sort_by_last_updated
+                            MixSortType.NAME -> R.string.sort_by_name
+                        }
+                    },
                 )
             }
         }
+    }
+
+    val collectionsContent = @Composable { itemModifier: Modifier ->
+        BaajaLibraryCollections(
+            showLiked = showLikedPlaylist,
+            showDownloaded = showDownloadedPlaylist,
+            showCached = showCachedPlaylists,
+            showTop = showTopPlaylists,
+            showUploaded = showUploadedPlaylists,
+            topLabel = topPlaylist.playlist.name,
+            topSize = topSize.toString().toIntOrNull() ?: 50,
+            showEntryPoints = normalizedQuery.isBlank(),
+            onNavigate = { navController.navigate(it) },
+            modifier = itemModifier,
+        )
     }
 
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -462,103 +453,15 @@ fun LibraryMixScreen(
                         filterContent()
                     }
 
+                    item(key = "collections", contentType = CONTENT_TYPE_HEADER) {
+                        collectionsContent(Modifier.animateItem())
+                    }
+
                     item(
                         key = "header",
                         contentType = CONTENT_TYPE_HEADER,
                     ) {
                         headerContent()
-                    }
-
-                    if (showLikedPlaylist) {
-                        item(
-                            key = "likedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = likedPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/liked")
-                                        }.animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showDownloadedPlaylist) {
-                        item(
-                            key = "downloadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = downloadPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/downloaded")
-                                        }
-                                        .animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showCachedPlaylists) {
-                        item(
-                            key = "cachedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = cachedPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        navController.navigate("cache_playlist/cached")
-                                    }
-                                    .animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showTopPlaylists) {
-                        item(
-                            key = "TopPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = topPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("top_playlist/$topSize")
-                                        }.animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showUploadedPlaylists) {
-                        item(
-                            key = "uploadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = uploadedPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
-                                        }.animateItem(),
-                            )
-                        }
                     }
 
                     items(
@@ -584,7 +487,7 @@ fun LibraryMixScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
+                                                contentDescription = stringResource(R.string.more_options),
                                             )
                                         }
                                     },
@@ -634,7 +537,7 @@ fun LibraryMixScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
+                                                contentDescription = stringResource(R.string.more_options),
                                             )
                                         }
                                     },
@@ -687,7 +590,7 @@ fun LibraryMixScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
+                                                contentDescription = stringResource(R.string.more_options),
                                             )
                                         }
                                     },
@@ -730,7 +633,7 @@ fun LibraryMixScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(R.drawable.more_vert),
-                                                contentDescription = null,
+                                                contentDescription = stringResource(R.string.more_options),
                                             )
                                         }
                                     },
@@ -790,116 +693,19 @@ fun LibraryMixScreen(
                     }
 
                     item(
+                        key = "collections",
+                        span = { GridItemSpan(maxLineSpan) },
+                        contentType = CONTENT_TYPE_HEADER,
+                    ) {
+                        collectionsContent(Modifier.animateItem())
+                    }
+
+                    item(
                         key = "header",
                         span = { GridItemSpan(maxLineSpan) },
                         contentType = CONTENT_TYPE_HEADER,
                     ) {
                         headerContent()
-                    }
-
-                    if (showLikedPlaylist) {
-                        item(
-                            key = "likedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = likedPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            onClick = {
-                                                navController.navigate("auto_playlist/liked")
-                                            },
-                                        ).animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showDownloadedPlaylist) {
-                        item(
-                            key = "downloadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = downloadPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            onClick = {
-                                                navController.navigate("auto_playlist/downloaded")
-                                            },
-                                        )
-                                        .animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showCachedPlaylists) {
-                        item(
-                            key = "cachedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = cachedPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = {
-                                            navController.navigate("cache_playlist/cached")
-                                        },
-                                    )
-                                    .animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showTopPlaylists) {
-                        item(
-                            key = "TopPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = topPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            onClick = {
-                                                navController.navigate("top_playlist/$topSize")
-                                            },
-                                        ).animateItem(),
-                            )
-                        }
-                    }
-
-                    if (showUploadedPlaylists) {
-                        item(
-                            key = "uploadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = uploadedPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
-                                        }.animateItem(),
-                            )
-                        }
                     }
 
                     items(
@@ -1050,23 +856,6 @@ fun LibraryMixScreen(
                     }
                 }
             }
-        }
-
-        // Always visible + button (no scroll hiding)
-        FloatingActionButton(
-            onClick = { showCreatePlaylistDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .windowInsetsPadding(
-                    LocalPlayerAwareWindowInsets.current
-                        .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
-                )
-                .padding(16.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.add),
-                contentDescription = stringResource(R.string.create_playlist),
-            )
         }
 
         Indicator(

@@ -43,7 +43,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -82,6 +82,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.metrolist.music.ui.component.BaajaCollectionHeader
+import com.metrolist.music.ui.component.BaajaDownloadAction
+import com.metrolist.music.ui.component.BaajaHeroArtwork
+import com.metrolist.music.ui.component.BaajaHeroCard
+import com.metrolist.music.ui.component.BaajaHeroPlayButton
+import com.metrolist.music.ui.component.BaajaIconBadge
+import com.metrolist.music.ui.component.BaajaPlayShufflePills
+import com.metrolist.music.ui.component.BaajaRoundAction
+import com.metrolist.music.ui.component.BaajaTileColors
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.compose.ui.util.fastSumBy
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -91,7 +101,9 @@ import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.metrolist.innertube.YouTube
+import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalDownloadUtil
+import com.metrolist.music.LocalSyncUtils
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
@@ -135,6 +147,8 @@ fun AutoPlaylistScreen(
 ) {
     val context = LocalContext.current
     val menuState = LocalMenuState.current
+    val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val haptic = LocalHapticFeedback.current
     val uploadUnsupportedFormatStr = stringResource(R.string.upload_unsupported_format)
     val uploadFileTooLargeStr = stringResource(R.string.upload_file_too_large)
@@ -328,20 +342,15 @@ fun AutoPlaylistScreen(
         }
 
     LaunchedEffect(Unit) {
-        println("[UPLOAD_DEBUG] AutoPlaylistScreen LaunchedEffect: playlistId=$playlistId, playlistType=$playlistType, ytmSync=$ytmSync")
         if (ytmSync) {
             withContext(Dispatchers.IO) {
                 if (playlistType == PlaylistType.LIKE) {
-                    println("[UPLOAD_DEBUG] AutoPlaylistScreen: Calling syncLikedSongs()")
                     viewModel.syncLikedSongs()
                 }
                 if (playlistType == PlaylistType.UPLOADED) {
-                    println("[UPLOAD_DEBUG] AutoPlaylistScreen: Calling syncUploadedSongs()")
                     viewModel.syncUploadedSongs()
                 }
             }
-        } else {
-            println("[UPLOAD_DEBUG] AutoPlaylistScreen: ytmSync is false, not syncing")
         }
     }
 
@@ -525,15 +534,33 @@ fun AutoPlaylistScreen(
                                 downloadState = downloadState,
                                 onShowRemoveDownloadDialog = { showRemoveDownloadDialog = true },
                                 menuState = menuState,
+                                playlistType = playlistType,
+                                ytmSync = ytmSync,
                                 modifier = Modifier.animateItem(),
                             )
                         }
                     }
 
                     item(key = "songs_header") {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(start = 16.dp),
+                        Column {
+                        if (playlistType == PlaylistType.LIKE && !isSearching) {
+                            BaajaSearchPill(
+                                value = query,
+                                onValueChange = { query = it },
+                                placeholder = stringResource(R.string.baaja_library_find_in, playlist.lowercase()),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp),
+                            )
+                        }
+                        BaajaSortRow(
+                            title =
+                                if (playlistType == PlaylistType.DOWNLOAD) {
+                                    stringResource(
+                                        R.string.baaja_library_downloaded_count,
+                                        pluralStringResource(R.plurals.n_song, songs!!.size, songs!!.size),
+                                    )
+                                } else {
+                                    null
+                                },
                         ) {
                             SortHeader(
                                 sortType = sortType,
@@ -548,8 +575,8 @@ fun AutoPlaylistScreen(
                                         SongSortType.PLAY_TIME -> R.string.sort_by_play_time
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
                             )
+                        }
                         }
                     }
                 }
@@ -579,6 +606,21 @@ fun AutoPlaylistScreen(
                                         onCheckedChange = onCheckedChange,
                                     )
                                 } else {
+                                    if (playlistType == PlaylistType.LIKE) {
+                                        IconButton(
+                                            onClick = {
+                                                val toggled = song.song.toggleLike()
+                                                database.query { update(toggled) }
+                                                syncUtils.likeSong(toggled)
+                                            },
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(if (song.song.liked) R.drawable.favorite else R.drawable.favorite_border),
+                                                contentDescription = stringResource(if (song.song.liked) R.string.remove_from_library else R.string.like),
+                                                tint = if (song.song.liked) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
                                     IconButton(
                                         onClick = {
                                             menuState.show {
@@ -685,7 +727,12 @@ fun AutoPlaylistScreen(
                                 .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
                         ).padding(16.dp),
             ) {
-                FloatingActionButton(
+                BaajaRoundAction(
+                    icon = R.drawable.upload,
+                    contentDescription = stringResource(R.string.upload_songs),
+                    size = 60.dp,
+                    container = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     onClick = {
                         filePickerLauncher.launch(
                             arrayOf(
@@ -698,12 +745,7 @@ fun AutoPlaylistScreen(
                             ),
                         )
                     },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.upload),
-                        contentDescription = stringResource(R.string.upload_songs),
-                    )
-                }
+                )
             }
         }
 
@@ -841,187 +883,160 @@ private fun AutoPlaylistHeader(
     downloadState: Int,
     onShowRemoveDownloadDialog: () -> Unit,
     menuState: com.metrolist.music.ui.component.MenuState,
+    playlistType: PlaylistType,
+    ytmSync: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
     val downloadUtil = LocalDownloadUtil.current
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // Playlist Thumbnail - Large centered with shadow
-        Box(
-            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp),
-        ) {
-            androidx.compose.material3.Surface(
-                modifier =
-                    Modifier
-                        .size(240.dp)
-                        .shadow(
-                            elevation = 24.dp,
-                            shape = RoundedCornerShape(3.dp),
-                            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        ),
-                shape = RoundedCornerShape(3.dp),
+    val onPlay = {
+        playerConnection.playQueue(
+            ListQueue(
+                title = name,
+                items = songs.map { it.toMediaItem() },
+            ),
+        )
+    }
+    val onShuffle = {
+        playerConnection.playQueue(
+            ListQueue(
+                title = name,
+                items = songs.shuffled().map { it.toMediaItem() },
+            ),
+        )
+    }
+    val onDownload = {
+        when (downloadState) {
+            Download.STATE_COMPLETED -> onShowRemoveDownloadDialog()
+            Download.STATE_DOWNLOADING -> {
+                songs.forEach { song ->
+                    DownloadService.sendRemoveDownload(
+                        context,
+                        ExoDownloadService::class.java,
+                        song.song.id,
+                        false,
+                    )
+                }
+            }
+            else -> songs.forEach { downloadUtil.download(it) }
+        }
+    }
+    val onMenu = {
+        menuState.show {
+            AutoPlaylistMenu(
+                downloadState = downloadState,
+                onQueue = {
+                    playerConnection.addToQueue(
+                        songs.map { it.toMediaItem() },
+                    )
+                },
+                onDownload = onDownload,
+                onDismiss = { menuState.dismiss() },
+                songs = songs,
+                playlistName = name,
+            )
+        }
+    }
+    val songCount = pluralStringResource(R.plurals.n_song, songs.size, songs.size)
+    val moreDescription = stringResource(R.string.more_options)
+
+    when (playlistType) {
+        PlaylistType.LIKE -> {
+            BaajaHeroCard(
+                containerColor = BaajaTileColors.liked(),
+                modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
             ) {
-                AsyncImage(
-                    model = songs[0].song.thumbnailUrl,
-                    contentDescription = null,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                Row(verticalAlignment = Alignment.Top) {
+                    BaajaIconBadge(
+                        icon = R.drawable.favorite,
+                        container = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    BaajaDownloadAction(downloadState = downloadState, onClick = onDownload, size = 46.dp)
+                }
+                Column {
+                    Text(
+                        text = name,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        lineHeight = 36.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text =
+                            if (ytmSync) {
+                                stringResource(R.string.baaja_library_liked_synced, songCount)
+                            } else {
+                                baajaMeta(songCount, if (likeLength > 0) makeTimeString(likeLength * 1000L) else null)
+                            },
+                        fontSize = 15.sp,
+                    )
+                }
+                BaajaPlayShufflePills(onPlay = onPlay, onShuffle = onShuffle) {
+                    Spacer(Modifier.weight(1f))
+                    BaajaRoundAction(
+                        icon = R.drawable.more_vert,
+                        contentDescription = moreDescription,
+                        onClick = onMenu,
+                        size = 46.dp,
+                    )
+                }
             }
         }
 
-        // Playlist Name
-        Text(
-            text = name,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 32.dp),
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Metadata - Song Count • Duration
-        Text(
-            text =
-                buildString {
-                    append(pluralStringResource(R.plurals.n_song, songs.size, songs.size))
-                    if (likeLength > 0) {
-                        append(" ")
-                        append(makeTimeString(likeLength * 1000L))
-                    }
-                },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Action Buttons Row
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Shuffle Button - Smaller secondary button
-            androidx.compose.material3.Surface(
-                onClick = {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = name,
-                            items = songs.shuffled().map { it.toMediaItem() },
-                        ),
-                    )
-                },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(48.dp),
+        PlaylistType.DOWNLOAD -> {
+            Column(
+                modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.shuffle),
-                        contentDescription = stringResource(R.string.shuffle),
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
-
-            // Play Button - Larger primary circular button
-            Surface(
-                onClick = {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = name,
-                            items = songs.map { it.toMediaItem() },
-                        ),
-                    )
-                },
-                color = MaterialTheme.colorScheme.primary,
-                shape = androidx.compose.foundation.shape.CircleShape,
-                modifier = Modifier.size(72.dp),
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.play),
-                        contentDescription = stringResource(R.string.play),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
-            }
-
-            // Menu Button - Smaller secondary button
-            Surface(
-                onClick = {
-                    menuState.show {
-                        AutoPlaylistMenu(
-                            downloadState = downloadState,
-                            onQueue = {
-                                playerConnection.addToQueue(
-                                    songs.map { it.toMediaItem() },
-                                )
-                            },
-                            onDownload = {
-                                when (downloadState) {
-                                    Download.STATE_COMPLETED -> {
-                                        onShowRemoveDownloadDialog()
-                                    }
-
-                                    Download.STATE_DOWNLOADING -> {
-                                        songs.forEach { song ->
-                                            DownloadService.sendRemoveDownload(
-                                                context,
-                                                ExoDownloadService::class.java,
-                                                song.song.id,
-                                                false,
-                                            )
-                                        }
-                                    }
-
-                                    else -> {
-                                        songs.forEach { downloadUtil.download(it) }
-                                    }
-                                }
-                            },
-                            onDismiss = { menuState.dismiss() },
-                            songs = songs,
-                            playlistName = name,
+                BaajaStorageCard {
+                    BaajaPlayShufflePills(onPlay = onPlay, onShuffle = onShuffle) {
+                        Spacer(Modifier.weight(1f))
+                        BaajaRoundAction(
+                            icon = R.drawable.more_vert,
+                            contentDescription = moreDescription,
+                            onClick = onMenu,
+                            size = 46.dp,
                         )
                     }
-                },
-                shape = androidx.compose.foundation.shape.CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(48.dp),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                    )
                 }
+            }
+        }
+
+        else -> {
+            BaajaCollectionHeader(
+                title = name,
+                meta =
+                    baajaMeta(
+                        stringResource(R.string.baaja_library_playlist_kind),
+                        songCount,
+                        if (likeLength > 0) makeTimeString(likeLength * 1000L) else null,
+                    ),
+                artwork = {
+                    BaajaHeroArtwork(
+                        model = songs.firstOrNull()?.song?.thumbnailUrl,
+                        tilt = -2f,
+                        placeholder = if (playlistType == PlaylistType.UPLOADED) R.drawable.backup else R.drawable.queue_music,
+                    )
+                },
+                modifier = modifier,
+            ) {
+                BaajaDownloadAction(downloadState = downloadState, onClick = onDownload)
+                BaajaHeroPlayButton(onClick = onPlay)
+                BaajaRoundAction(
+                    icon = R.drawable.shuffle,
+                    contentDescription = stringResource(R.string.shuffle),
+                    onClick = onShuffle,
+                )
+                BaajaRoundAction(
+                    icon = R.drawable.more_vert,
+                    contentDescription = moreDescription,
+                    onClick = onMenu,
+                )
             }
         }
     }

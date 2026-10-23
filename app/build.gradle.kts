@@ -54,14 +54,7 @@ android {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
 
-        // LastFM API keys from GitHub Secrets
-        val lastFmKey = localProperties.getProperty("LASTFM_API_KEY") ?: System.getenv("LASTFM_API_KEY") ?: ""
-        val lastFmSecret = localProperties.getProperty("LASTFM_SECRET") ?: System.getenv("LASTFM_SECRET") ?: ""
-
-        buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
-        buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
         buildConfigField("String", "ARCHITECTURE", "\"universal\"")
-        buildConfigField("Long", "DISCORD_APP_ID", "1447278780795064401L")
     }
 
     flavorDimensions += listOf("variant")

@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,12 +65,14 @@ fun YouTubeArtistMenu(
     val isPinned by database.speedDialDao.isPinned(artist.id).collectAsStateWithLifecycle(initialValue = false)
     val coroutineScope = rememberCoroutineScope()
 
+    BaajaMenuHeader {
     YouTubeListItem(
         item = artist,
         trailingContent = {},
     )
+    }
 
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
 
     Spacer(modifier = Modifier.height(12.dp))
 

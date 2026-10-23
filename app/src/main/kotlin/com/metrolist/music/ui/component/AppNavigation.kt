@@ -6,6 +6,23 @@
 package com.metrolist.music.ui.component
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
+import com.metrolist.music.ui.theme.baajaPressScale
+import com.metrolist.music.ui.theme.rememberBaajaMotionEnabled
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -264,14 +281,35 @@ private fun RowScope.BaajaNavigationItem(
         pureBlack -> Color.White
         else -> colorScheme.onSurface
     }
+    val motionEnabled = rememberBaajaMotionEnabled()
+    // The accent pill grows into the selected tab and shrinks out of the old one, so it reads as sliding.
+    val weight by animateFloatAsState(
+        targetValue = if (expanded) 1.8f else 1f,
+        animationSpec = if (motionEnabled) spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow) else snap(),
+        label = "navItemWeight",
+    )
+    val background by animateColorAsState(
+        targetValue = if (selected) colorScheme.primary else colorScheme.primary.copy(alpha = 0f),
+        animationSpec = if (motionEnabled) tween(180) else snap(),
+        label = "navItemBackground",
+    )
+    // Small bounce on the icon whenever this tab becomes selected.
+    val iconScale = remember { Animatable(1f) }
+    LaunchedEffect(selected) {
+        if (selected && motionEnabled) {
+            iconScale.snapTo(0.7f)
+            iconScale.animateTo(1f, spring(dampingRatio = 0.35f, stiffness = Spring.StiffnessMedium))
+        }
+    }
 
     Row(
         modifier = Modifier
-            .weight(if (expanded) 1.8f else 1f)
+            .weight(weight)
             .fillMaxHeight()
             .padding(vertical = 6.dp)
+            .baajaPressScale(interactionSource)
             .clip(CircleShape)
-            .background(if (selected) colorScheme.primary else Color.Transparent)
+            .drawBehind { drawRect(background) }
             .selectable(
                 selected = selected,
                 interactionSource = interactionSource,
@@ -287,16 +325,27 @@ private fun RowScope.BaajaNavigationItem(
             painter = painterResource(id = iconRes),
             contentDescription = if (expanded) null else label,
             tint = contentColor,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .graphicsLayer {
+                    val s = iconScale.value
+                    scaleX = s
+                    scaleY = s
+                },
         )
-        if (expanded) {
-            Spacer(modifier = Modifier.width(8.dp))
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(tween(160, delayMillis = 60)) + expandHorizontally(tween(240, easing = FastOutSlowInEasing)),
+            exit = fadeOut(tween(90)) + shrinkHorizontally(tween(200, easing = FastOutSlowInEasing)),
+        ) {
             Text(
                 text = label,
                 color = contentColor,
                 style = MaterialTheme.typography.labelLarge,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }

@@ -30,6 +30,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.font.FontWeight
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaOutline
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -319,7 +323,13 @@ fun AccountScreen(
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.account)) },
+        title = {
+            Text(
+                stringResource(R.string.baaja_onb_profile_youtube_library),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,
@@ -327,10 +337,11 @@ fun AccountScreen(
             ) {
                 Icon(
                     painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.back_button_desc),
                 )
             }
         },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
     )
 }
 
@@ -489,6 +500,7 @@ private fun PodcastChannelAccountItem(
             modifier =
                 Modifier
                     .size(56.dp)
+                    .baajaOutline(baajaInk, CircleShape, borderWidth = 2.dp, shadowOffset = 0.dp)
                     .clip(CircleShape),
         )
         Spacer(Modifier.width(12.dp))

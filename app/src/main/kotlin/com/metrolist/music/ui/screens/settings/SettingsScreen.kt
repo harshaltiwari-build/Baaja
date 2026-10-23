@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
@@ -36,6 +37,10 @@ import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.ReleaseNotesCard
+import com.metrolist.music.ui.screens.onboarding.BaajaQuickAppearanceCard
+import com.metrolist.music.ui.screens.onboarding.BaajaSettingsFooter
+import com.metrolist.music.ui.screens.onboarding.BaajaSettingsProfileCard
+import com.metrolist.music.ui.screens.onboarding.SettingsChevron
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.Updater
 import androidx.compose.runtime.remember
@@ -74,19 +79,11 @@ fun SettingsScreen(
             )
         )
 
-        // User Interface Section
-        Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_ui),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.palette),
-                    title = { Text(stringResource(R.string.appearance)) },
-                    onClick = { navController.navigate("settings/appearance") }
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        BaajaSettingsProfileCard(onClick = { navController.navigate("profile") })
+        Spacer(modifier = Modifier.height(20.dp))
+        BaajaQuickAppearanceCard(onMoreClick = { navController.navigate("settings/appearance") })
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Player & Content Section (moved up and combined with content)
         Material3SettingsGroup(
@@ -95,17 +92,20 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.play),
                     title = { Text(stringResource(R.string.player_and_audio)) },
+                    trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/player") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.equalizer),
+                    title = { Text(stringResource(R.string.equalizer)) },
+                    trailingContent = { SettingsChevron() },
+                    onClick = { navController.navigate("equalizer") }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content)) },
+                    trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/content") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.translate),
-                    title = { Text(stringResource(R.string.ai_lyrics_translation)) },
-                    onClick = { navController.navigate("settings/ai") }
                 )
             )
         )
@@ -120,6 +120,7 @@ fun SettingsScreen(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.ic_android_auto),
                         title = { Text(stringResource(R.string.android_auto)) },
+                        trailingContent = { SettingsChevron() },
                         onClick = { navController.navigate("settings/android_auto") }
                     )
                 )
@@ -135,6 +136,7 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.security),
                     title = { Text(stringResource(R.string.privacy)) },
+                    trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/privacy") }
                 )
             )
@@ -149,11 +151,13 @@ fun SettingsScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.storage),
                     title = { Text(stringResource(R.string.storage)) },
+                    trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/storage") }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.restore),
                     title = { Text(stringResource(R.string.backup_restore)) },
+                    trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/backup_restore") }
                 )
             )
@@ -214,6 +218,7 @@ fun SettingsScreen(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.update),
                             title = { Text(stringResource(R.string.updater)) },
+                            trailingContent = { SettingsChevron() },
                             onClick = { navController.navigate("settings/updater") }
                         )
                     )
@@ -230,6 +235,7 @@ fun SettingsScreen(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.info),
                         title = { Text(stringResource(R.string.about)) },
+                        trailingContent = { SettingsChevron() },
                         onClick = { navController.navigate("settings/about") }
                     )
                 )
@@ -261,16 +267,25 @@ fun SettingsScreen(
                 }
             }
         )
-    if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
+        if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
             Spacer(modifier = Modifier.height(16.dp))
             ReleaseNotesCard()
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        BaajaSettingsFooter()
+        Spacer(modifier = Modifier.height(24.dp))
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.settings)) },
+        title = {
+            Text(
+                stringResource(R.string.settings),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,
@@ -278,7 +293,7 @@ fun SettingsScreen(
             ) {
                 Icon(
                     painterResource(R.drawable.arrow_back),
-                    contentDescription = null
+                    contentDescription = stringResource(R.string.back_button_desc)
                 )
             }
         }

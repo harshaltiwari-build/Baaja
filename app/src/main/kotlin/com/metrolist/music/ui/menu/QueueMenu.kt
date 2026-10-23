@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -179,6 +180,7 @@ fun QueueMenu(
     // Song header with like button (for episodes, this toggles save for later)
     val isEpisode = librarySong?.song?.isEpisode == true || mediaMetadata.isEpisode
     val isFavorite = if (isEpisode) librarySong?.song?.inLibrary != null else librarySong?.song?.liked == true
+    BaajaMenuHeader {
     MediaMetadataListItem(
         mediaMetadata = mediaMetadata,
         trailingContent = {
@@ -248,8 +250,9 @@ fun QueueMenu(
             }
         },
     )
+    }
 
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
 
     Spacer(modifier = Modifier.height(12.dp))
 

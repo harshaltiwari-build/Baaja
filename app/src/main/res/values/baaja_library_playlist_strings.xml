@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baaja: playlist detail screens and history -->
+<resources>
+    <string name="baaja_library_pl_lock_order">Lock song order</string>
+    <string name="baaja_library_pl_unlock_order">Unlock song order to reorder</string>
+    <string name="baaja_library_history_pause">Pause history</string>
+</resources>

@@ -7,6 +7,38 @@ package com.metrolist.music.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
+import com.metrolist.music.db.MusicDatabase
+import com.metrolist.music.ui.screens.onboarding.BaajaSegmentedToggle
+import com.metrolist.music.ui.theme.BaajaArtwork
+import com.metrolist.music.ui.theme.BaajaCard
+import com.metrolist.music.ui.theme.BaajaInk
+import com.metrolist.music.ui.theme.BaajaYellow
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import java.text.NumberFormat
+import java.time.format.TextStyle
+import java.util.Locale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -26,6 +58,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +67,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +82,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -64,6 +102,7 @@ import androidx.navigation.NavController
 import com.metrolist.innertube.models.Artist
 import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertube.utils.parseCookieString
+import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
@@ -124,20 +163,6 @@ fun StatsScreen(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    var inSelectMode by rememberSaveable { mutableStateOf(false) }
-    val selection =
-        rememberSaveable(
-            saver =
-                listSaver<MutableList<Long>, Long>(
-                    save = { it.toList() },
-                    restore = { it.toMutableStateList() },
-                ),
-        ) { mutableStateListOf() }
-    val onExitSelectionMode = {
-        inSelectMode = false
-        selection.clear()
-    }
-
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
@@ -153,8 +178,6 @@ fun StatsScreen(
             isSearching = false
             query = TextFieldValue()
         }
-    } else if (inSelectMode) {
-        BackHandler(onBack = onExitSelectionMode)
     }
 
     val indexChips by viewModel.indexChips.collectAsStateWithLifecycle()
@@ -187,6 +210,13 @@ fun StatsScreen(
                 mostPeriodPlaylists
             }
         }
+
+    val database = LocalDatabase.current
+    var chartRange by rememberSaveable { mutableStateOf(ListeningChartRange.WEEK) }
+    val listeningChart by remember(chartRange, database) { listeningChartFlow(database, chartRange) }
+        .collectAsStateWithLifecycle(null)
+    var showAllArtists by rememberSaveable { mutableStateOf(false) }
+    val periodTotalMs = remember(mostPlayedSongsStats) { mostPlayedSongsStats.sumOf { it.timeListened ?: 0L } }
 
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -391,6 +421,26 @@ fun StatsScreen(
                 )
             }
 
+            if (!isSearching) {
+                item(key = "baaja_summary") {
+                    StatsSummaryTiles(
+                        periodTotalMs = periodTotalMs,
+                        songCount = mostPlayedSongsStats.size,
+                        topArtist = mostPlayedArtists.firstOrNull(),
+                        onTopArtistClick = { artist -> navController.navigate("artist/${artist.id}") },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+                item(key = "baaja_chart") {
+                    ListeningChartCard(
+                        range = chartRange,
+                        onRangeChange = { chartRange = it },
+                        chart = listeningChart,
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
+
             if (visibleStatsPlaylists.isNotEmpty() && !isSearching && sArtists.isEmpty()) {
                 item(key = "mostPeriodPlaylistsTitle") {
                     NavigationTitle(
@@ -514,45 +564,52 @@ fun StatsScreen(
                         title = "${mostPlayedArtists.size} ${stringResource(id = R.string.artists)}",
                         modifier = Modifier.animateItem(),
                     )
-
-                    LazyRow(
-                        modifier = Modifier.animateItem(),
-                    ) {
-                        itemsIndexed(
-                            items = mostPlayedArtists,
-                            key = { _, artist -> artist.id },
-                        ) { index, artist ->
-                            LocalArtistsGrid(
-                                title = "${index + 1}. ${artist.artist.name}",
-                                subtitle =
-                                    joinByBullet(
-                                        pluralStringResource(
-                                            R.plurals.n_time,
-                                            artist.songCount,
-                                            artist.songCount,
-                                        ),
-                                        makeTimeString(artist.timeListened?.toLong()),
-                                    ),
-                                thumbnailUrl = artist.artist.thumbnailUrl,
-                                modifier =
-                                    Modifier
-                                        .combinedClickable(
-                                            onClick = {
-                                                navController.navigate("artist/${artist.id}")
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                menuState.show {
-                                                    ArtistMenu(
-                                                        originalArtist = artist,
-                                                        coroutineScope = coroutineScope,
-                                                        onDismiss = menuState::dismiss,
-                                                    )
-                                                }
-                                            },
-                                        ).animateItem(),
-                            )
-                        }
+                }
+                val visibleArtists = if (showAllArtists) mostPlayedArtists else mostPlayedArtists.take(TOP_ARTISTS_PREVIEW)
+                val maxArtistTime = mostPlayedArtists.firstOrNull()?.timeListened?.toLong()?.coerceAtLeast(1L) ?: 1L
+                itemsIndexed(
+                    items = visibleArtists,
+                    key = { _, artist -> "stats_bar_artist_${artist.id}" },
+                ) { index, artist ->
+                    StatsArtistBarRow(
+                        rank = index + 1,
+                        artist = artist,
+                        maxTimeListened = maxArtistTime,
+                        modifier =
+                            Modifier
+                                .animateItem()
+                                .combinedClickable(
+                                    onClick = {
+                                        navController.navigate("artist/${artist.id}")
+                                    },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        menuState.show {
+                                            ArtistMenu(
+                                                originalArtist = artist,
+                                                coroutineScope = coroutineScope,
+                                                onDismiss = menuState::dismiss,
+                                            )
+                                        }
+                                    },
+                                ),
+                    )
+                }
+                if (mostPlayedArtists.size > TOP_ARTISTS_PREVIEW) {
+                    item(key = "mostPlayedArtistsToggle") {
+                        Text(
+                            text = stringResource(if (showAllArtists) R.string.show_less else R.string.show_more),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier =
+                                Modifier
+                                    .animateItem()
+                                    .padding(horizontal = 12.dp)
+                                    .clip(CircleShape)
+                                    .clickable { showAllArtists = !showAllArtists }
+                                    .padding(horizontal = 12.dp, vertical = 14.dp),
+                        )
                     }
                 }
             }
@@ -673,9 +730,7 @@ fun StatsScreen(
 
     TopAppBar(
         title = {
-            if (inSelectMode) {
-                Text(pluralStringResource(R.plurals.n_selected, selection.size, selection.size))
-            } else if (isSearching) {
+            if (isSearching) {
                 Row {
                     TextField(
                         value = query,
@@ -707,81 +762,79 @@ fun StatsScreen(
                         androidx.compose.material3.IconButton(onClick = clearArtistSelection) {
                             Icon(
                                 painter = painterResource(R.drawable.close),
-                                contentDescription = "Clear Artists",
+                                contentDescription = stringResource(R.string.baaja_onb_stats_clear_artists),
                                 tint = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     }
                 }
             } else {
-                Text(stringResource(R.string.stats))
+                Text(
+                    stringResource(R.string.baaja_onb_stats_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                )
             }
         },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
         navigationIcon = {
-            if (inSelectMode) {
-                androidx.compose.material3.IconButton(onClick = onExitSelectionMode) {
-                    Icon(
-                        painter = painterResource(R.drawable.close),
-                        contentDescription = "Select Button",
-                    )
-                }
-            } else {
-                IconButton(
-                    onClick = {
-                        if (isSearching) {
-                            isSearching = false
-                            query = TextFieldValue()
-                        } else {
-                            navController.navigateUp()
-                        }
-                    },
-                    onLongClick = {
-                        if (!isSearching) {
-                            navController.backToMain()
-                        }
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.arrow_back),
-                        contentDescription = "Back Button",
-                    )
-                }
+            IconButton(
+                onClick = {
+                    if (isSearching) {
+                        isSearching = false
+                        query = TextFieldValue()
+                    } else {
+                        navController.navigateUp()
+                    }
+                },
+                onLongClick = {
+                    if (!isSearching) {
+                        navController.backToMain()
+                    }
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.arrow_back),
+                    contentDescription = stringResource(R.string.back_button_desc),
+                )
             }
         },
         actions = {
-            if (inSelectMode) {
-                Checkbox(
-                    checked = true,
-                    onCheckedChange = {
-                    },
-                )
-                androidx.compose.material3.IconButton(
-                    enabled = selection.isNotEmpty(),
-                    onClick = {
-                    },
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.more_vert),
-                        contentDescription = "More Button",
-                    )
-                }
-            } else if (!isSearching) {
+            if (!isSearching) {
                 androidx.compose.material3.IconButton(
                     onClick = { isSearching = true },
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.search),
-                        contentDescription = "Search Button",
+                        contentDescription = stringResource(R.string.baaja_onb_stats_search),
                     )
                 }
-                IconButton(
-                    onClick = { showTimeTransfer = true },
-                    onLongClick = { showTimeTransfer = true },
-                ) {
-                    Icon(
-                        painterResource(R.drawable.sync),
-                        contentDescription = "Time Transfer",
-                    )
+                var showOverflow by remember { mutableStateOf(false) }
+                Box {
+                    androidx.compose.material3.IconButton(onClick = { showOverflow = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.more_vert),
+                            contentDescription = stringResource(R.string.baaja_onb_stats_more),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showOverflow,
+                        onDismissRequest = { showOverflow = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.baaja_onb_stats_time_transfer)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.sync),
+                                    contentDescription = null,
+                                )
+                            },
+                            onClick = {
+                                showOverflow = false
+                                showTimeTransfer = true
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -789,3 +842,349 @@ fun StatsScreen(
 }
 
 enum class OptionStats { WEEKS, MONTHS, YEARS, CONTINUOUS }
+
+private const val TOP_ARTISTS_PREVIEW = 8
+
+/** Time window for the listening-time bar chart. */
+enum class ListeningChartRange { WEEK, MONTH, YEAR }
+
+private data class ListeningBucket(
+    val shortLabel: String,
+    val fullLabel: String,
+    val start: LocalDateTime,
+    val end: LocalDateTime,
+)
+
+@Immutable
+private data class ListeningChart(
+    val bars: List<Pair<ListeningBucket, Long>>,
+    val totalMinutes: Long,
+    val previousTotalMinutes: Long,
+)
+
+private fun listeningBuckets(
+    range: ListeningChartRange,
+    now: LocalDateTime,
+): List<ListeningBucket> {
+    val locale = Locale.getDefault()
+    val today = now.toLocalDate()
+    return when (range) {
+        ListeningChartRange.WEEK -> {
+            (6 downTo 0).map { back ->
+                val day = today.minusDays(back.toLong())
+                ListeningBucket(
+                    shortLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, locale),
+                    fullLabel = day.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
+                    start = day.atStartOfDay(),
+                    end = day.plusDays(1).atStartOfDay(),
+                )
+            }
+        }
+
+        ListeningChartRange.MONTH -> {
+            val formatter = DateTimeFormatter.ofPattern("d MMM", locale)
+            (3 downTo 0).map { back ->
+                val first = today.minusDays(back * 7L + 6)
+                ListeningBucket(
+                    shortLabel = formatter.format(first),
+                    fullLabel = "${formatter.format(first)} – ${formatter.format(first.plusDays(6))}",
+                    start = first.atStartOfDay(),
+                    end = first.plusDays(7).atStartOfDay(),
+                )
+            }
+        }
+
+        ListeningChartRange.YEAR -> {
+            val thisMonth = today.withDayOfMonth(1)
+            (11 downTo 0).map { back ->
+                val month = thisMonth.minusMonths(back.toLong())
+                ListeningBucket(
+                    shortLabel = month.month.getDisplayName(TextStyle.NARROW_STANDALONE, locale),
+                    fullLabel = "${month.month.getDisplayName(TextStyle.FULL_STANDALONE, locale)} ${month.year}",
+                    start = month.atStartOfDay(),
+                    end = month.plusMonths(1).atStartOfDay(),
+                )
+            }
+        }
+    }
+}
+
+/** Listening time per bucket from the recorded play events, plus the total for the window before it. */
+private fun listeningChartFlow(
+    database: MusicDatabase,
+    range: ListeningChartRange,
+): Flow<ListeningChart> {
+    val buckets = listeningBuckets(range, LocalDateTime.now())
+    val windowStart = buckets.first().start
+    val previousStart =
+        when (range) {
+            ListeningChartRange.WEEK -> windowStart.minusDays(7)
+            ListeningChartRange.MONTH -> windowStart.minusDays(28)
+            ListeningChartRange.YEAR -> windowStart.minusMonths(12)
+        }
+    val bucketFlows =
+        buckets.map { bucket ->
+            database.getTotalPlayTimeInRange(bucket.start, bucket.end.minusNanos(1_000_000)).map { it ?: 0L }
+        }
+    val previousFlow = database.getTotalPlayTimeInRange(previousStart, windowStart.minusNanos(1_000_000)).map { it ?: 0L }
+    return combine(bucketFlows + previousFlow) { totals ->
+        val minutes = totals.map { it / 60_000L }
+        ListeningChart(
+            bars = buckets.zip(minutes.dropLast(1)),
+            totalMinutes = totals.dropLast(1).sum() / 60_000L,
+            previousTotalMinutes = minutes.last(),
+        )
+    }
+}
+
+@Composable
+private fun StatsSummaryTiles(
+    periodTotalMs: Long,
+    songCount: Int,
+    topArtist: com.metrolist.music.db.entities.Artist?,
+    onTopArtistClick: (com.metrolist.music.db.entities.Artist) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            Modifier
+                .weight(1f)
+                .heightIn(min = 118.dp)
+                .baajaSurface(baajaInk, BaajaYellow, RoundedCornerShape(22.dp), shadowOffset = 3.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(stringResource(R.string.baaja_onb_stats_minutes_listened), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BaajaInk)
+            Text(
+                numberFormat.format(periodTotalMs / 60_000L),
+                fontSize = 30.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = BaajaInk,
+                maxLines = 1,
+            )
+            Text(pluralStringResource(R.plurals.n_song, songCount, songCount), fontSize = 13.sp, color = BaajaInk)
+        }
+        Column(
+            Modifier
+                .weight(1f)
+                .heightIn(min = 118.dp)
+                .baajaSurface(baajaInk, Color(0xFFBDEFE6), RoundedCornerShape(22.dp), shadowOffset = 3.dp)
+                .then(if (topArtist != null) Modifier.clickable { onTopArtistClick(topArtist) } else Modifier)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(stringResource(R.string.baaja_onb_stats_top_artist), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BaajaInk)
+            Text(
+                topArtist?.artist?.name ?: stringResource(R.string.baaja_onb_stats_top_artist_none),
+                fontSize = 22.sp,
+                lineHeight = 26.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = BaajaInk,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val share =
+                if (topArtist != null && periodTotalMs > 0) {
+                    ((topArtist.timeListened ?: 0).toLong() * 100 / periodTotalMs).toInt().coerceIn(0, 100)
+                } else {
+                    null
+                }
+            if (share != null) {
+                Text(stringResource(R.string.baaja_onb_stats_top_artist_share, share), fontSize = 13.sp, color = BaajaInk)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListeningChartCard(
+    range: ListeningChartRange,
+    onRangeChange: (ListeningChartRange) -> Unit,
+    chart: ListeningChart?,
+    modifier: Modifier = Modifier,
+) {
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
+    var selected by rememberSaveable(range) { mutableStateOf(-1) }
+    val bars = chart?.bars.orEmpty()
+    val selectedIndex = if (selected in bars.indices) selected else bars.lastIndex
+    val maxMinutes = (bars.maxOfOrNull { it.second } ?: 0L).coerceAtLeast(1L)
+    val ranges = ListeningChartRange.entries
+    val ink = baajaInk
+
+    BaajaCard(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            BaajaSegmentedToggle(
+                options =
+                    listOf(
+                        stringResource(R.string.baaja_onb_stats_range_week),
+                        stringResource(R.string.baaja_onb_stats_range_month),
+                        stringResource(R.string.baaja_onb_stats_range_year),
+                    ),
+                selectedIndex = ranges.indexOf(range),
+                onSelect = { onRangeChange(ranges[it]) },
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(
+                        when (range) {
+                            ListeningChartRange.WEEK -> R.string.baaja_onb_stats_minutes_per_day
+                            ListeningChartRange.MONTH -> R.string.baaja_onb_stats_minutes_per_week
+                            ListeningChartRange.YEAR -> R.string.baaja_onb_stats_minutes_per_month
+                        },
+                    ),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                bars.getOrNull(selectedIndex)?.let { (bucket, minutes) ->
+                    Text(
+                        stringResource(R.string.baaja_onb_stats_bar_label, bucket.fullLabel, numberFormat.format(minutes)),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 8.dp).weight(1f, fill = false),
+                    )
+                }
+            }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                bars.forEachIndexed { index, (bucket, minutes) ->
+                    val fraction = (minutes.toFloat() / maxMinutes).coerceIn(0.02f, 1f)
+                    val description = stringResource(R.string.baaja_onb_stats_bar_label, bucket.fullLabel, numberFormat.format(minutes))
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { selected = index }
+                            .semantics { contentDescription = description },
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        Box(
+                            Modifier
+                                .widthIn(max = 30.dp)
+                                .fillMaxWidth()
+                                .fillMaxHeight(fraction)
+                                .then(
+                                    if (index == selectedIndex) {
+                                        Modifier.border(2.dp, ink, RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                    } else {
+                                        Modifier
+                                    },
+                                ).clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                .background(
+                                    if (index == selectedIndex) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+                                    },
+                                ),
+                        )
+                    }
+                }
+            }
+            HorizontalDivider(thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                bars.forEach { (bucket, _) ->
+                    Text(
+                        bucket.shortLabel,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            if (chart != null) {
+                val previous = chart.previousTotalMinutes
+                val deltaText =
+                    if (previous <= 0L) {
+                        stringResource(R.string.baaja_onb_stats_vs_previous_none)
+                    } else {
+                        val pct = ((chart.totalMinutes - previous) * 100 / previous).toInt()
+                        if (pct >= 0) {
+                            stringResource(R.string.baaja_onb_stats_vs_previous_up, pct)
+                        } else {
+                            stringResource(R.string.baaja_onb_stats_vs_previous_down, -pct)
+                        }
+                    }
+                Text(
+                    "${stringResource(R.string.baaja_onb_stats_minutes_short, numberFormat.format(chart.totalMinutes))} · $deltaText",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatsArtistBarRow(
+    rank: Int,
+    artist: com.metrolist.music.db.entities.Artist,
+    maxTimeListened: Long,
+    modifier: Modifier = Modifier,
+) {
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
+    val time = (artist.timeListened ?: 0).toLong()
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("$rank", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.width(24.dp))
+        BaajaArtwork(
+            model = artist.artist.thumbnailUrl,
+            shape = CircleShape,
+            shadowOffset = 0.dp,
+            modifier = Modifier.size(46.dp),
+        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    artist.artist.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    stringResource(R.string.baaja_onb_stats_minutes_short, numberFormat.format(time / 60_000L)),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth((time.toFloat() / maxTimeListened).coerceIn(0.02f, 1f))
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+            }
+        }
+    }
+}

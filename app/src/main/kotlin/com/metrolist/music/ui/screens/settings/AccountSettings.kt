@@ -25,7 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -68,6 +68,8 @@ import com.metrolist.music.ui.component.InfoLabel
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.component.TextFieldDialog
+import com.metrolist.music.ui.screens.onboarding.rememberBaajaProfile
+import com.metrolist.music.ui.theme.BaajaLogo
 import com.metrolist.music.utils.Updater
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.viewmodels.AccountSettingsViewModel
@@ -100,6 +102,8 @@ fun AccountSettings(
     val accountSettingsViewModel: AccountSettingsViewModel = hiltViewModel()
     val accountName by homeViewModel.accountName.collectAsStateWithLifecycle()
     val accountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
+    // Edited profile (name/photo) wins over the YouTube account info.
+    val profile = rememberBaajaProfile()
 
     var showToken by remember { mutableStateOf(false) }
     var showTokenEditor by remember { mutableStateOf(false) }
@@ -118,14 +122,15 @@ fun AccountSettings(
                 .padding(start = 8.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            BaajaLogo(size = 32.dp)
             Text(
                 text = stringResource(id = R.string.app_name),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(start = 4.dp)
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                modifier = Modifier.padding(start = 10.dp)
             )
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = onClose) {
-                Icon(painterResource(R.drawable.close), contentDescription = null)
+                Icon(painterResource(R.drawable.close), contentDescription = stringResource(R.string.close))
             }
         }
 
@@ -259,9 +264,9 @@ fun AccountSettings(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (isLoggedIn && accountImageUrl != null) {
+                            if (isLoggedIn && (profile.avatar != null || accountImageUrl != null)) {
                                 AsyncImage(
-                                    model = accountImageUrl,
+                                    model = profile.avatar ?: accountImageUrl,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.size(40.dp).clip(CircleShape)
@@ -271,7 +276,7 @@ fun AccountSettings(
                             }
 
                             Text(
-                                text = if (isLoggedIn) accountName else stringResource(R.string.login),
+                                text = if (isLoggedIn) (if (profile.hasCustomName) profile.name else accountName) else stringResource(R.string.login),
                             )
                         }
                     },
@@ -385,50 +390,26 @@ fun AccountSettings(
             useLowContrast = true
         )
 
-        Spacer(Modifier.height(12.dp))
-
-        Material3SettingsGroup(
-            items = buildList {
-                add(
+        val updateDownloadUrl =
+            if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
+                Updater.getCachedLatestRelease()?.let { Updater.getDownloadUrlForCurrentVariant(it) }
+            } else {
+                null
+            }
+        if (updateDownloadUrl != null) {
+            Spacer(Modifier.height(12.dp))
+            Material3SettingsGroup(
+                items = listOf(
                     Material3SettingsItem(
-                        title = { Text(stringResource(R.string.integrations)) },
-                        icon = painterResource(R.drawable.integration),
-                        onClick = {
-                            onClose()
-                            navController.navigate("settings/integrations")
-                        }
+                        title = { Text(stringResource(R.string.new_version_available)) },
+                        description = { Text(latestVersionName) },
+                        icon = painterResource(R.drawable.update),
+                        showBadge = true,
+                        onClick = { uriHandler.openUri(updateDownloadUrl) }
                     )
-                )
-                add(
-                    Material3SettingsItem(
-                        title = { Text(stringResource(R.string.settings)) },
-                        icon = painterResource(R.drawable.settings),
-                        showBadge = BuildConfig.UPDATER_AVAILABLE &&
-                            latestVersionName != BuildConfig.BASE_VERSION_NAME,
-                        onClick = {
-                            onClose()
-                            navController.navigate("settings")
-                        }
-                    )
-                )
-
-                if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
-                    val releaseInfo = Updater.getCachedLatestRelease()
-                    val downloadUrl = releaseInfo?.let { Updater.getDownloadUrlForCurrentVariant(it) }
-                    if (downloadUrl != null) {
-                        add(
-                            Material3SettingsItem(
-                                title = { Text(stringResource(R.string.new_version_available)) },
-                                description = { Text(latestVersionName) },
-                                icon = painterResource(R.drawable.update),
-                                showBadge = true,
-                                onClick = { uriHandler.openUri(downloadUrl) }
-                            )
-                        )
-                    }
-                }
-            },
-            useLowContrast = true
-        )
+                ),
+                useLowContrast = true
+            )
+        }
     }
 }

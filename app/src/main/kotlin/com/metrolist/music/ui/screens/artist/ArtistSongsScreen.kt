@@ -37,6 +37,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
@@ -120,7 +122,8 @@ fun ArtistSongsScreen(
                     Text(
                         text = pluralStringResource(R.plurals.n_song, songs.size, songs.size),
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
             }
@@ -183,7 +186,15 @@ fun ArtistSongsScreen(
         }
 
         TopAppBar(
-            title = { Text(artist?.artist?.name.orEmpty()) },
+            title = {
+            Text(
+                text = artist?.artist?.name.orEmpty(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
             navigationIcon = {
                 IconButton(
                     onClick = navController::navigateUp,
@@ -191,7 +202,7 @@ fun ArtistSongsScreen(
                 ) {
                     Icon(
                         painterResource(R.drawable.arrow_back),
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.back),
                     )
                 }
             },

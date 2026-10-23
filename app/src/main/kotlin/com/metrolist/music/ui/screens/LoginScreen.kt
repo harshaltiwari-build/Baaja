@@ -31,10 +31,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import com.metrolist.music.ui.component.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +72,8 @@ import com.metrolist.music.constants.InnerTubeAuthUserKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.VisitorDataKey
 import com.metrolist.music.ui.component.IconButton
+import com.metrolist.music.ui.screens.onboarding.BaajaLoginIntro
+import com.metrolist.music.ui.theme.BaajaCard
 import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.utils.safeDataStoreEdit
@@ -100,12 +101,30 @@ private data class AuthData(
     val authUser: String,
 )
 
-@SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     navController: NavController,
     isSwitchingChannel: Boolean = false,
+) {
+    // Switching channel goes straight to the web flow; a fresh sign-in first shows Baaja's intro.
+    var showIntro by rememberSaveable { mutableStateOf(!isSwitchingChannel) }
+    if (showIntro) {
+        BaajaLoginIntro(
+            onBack = navController::navigateUp,
+            onSignIn = { showIntro = false },
+            onContinueAsGuest = navController::navigateUp,
+        )
+    } else {
+        LoginWebFlow(navController, isSwitchingChannel)
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoginWebFlow(
+    navController: NavController,
+    isSwitchingChannel: Boolean,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -487,18 +506,16 @@ private fun YouTubeAccountPickerItem(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    Card(
+    BaajaCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (isSelected) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerHigh
-                    },
-            ),
+        shape = RoundedCornerShape(18.dp),
+        color =
+            if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        shadowOffset = if (isSelected) 3.dp else 0.dp,
     ) {
         Row(
             modifier =

@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.menu
 
+import com.metrolist.music.ui.component.BaajaMenuHeader
 import android.content.Intent
 import android.content.res.Configuration
 import android.widget.Toast
@@ -33,7 +34,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.metrolist.music.ui.component.TextButton
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -417,6 +418,7 @@ fun SongMenu(
         }
     }
 
+    BaajaMenuHeader {
     SongListItem(
         song = song,
         badges = {},
@@ -484,8 +486,9 @@ fun SongMenu(
             }
         },
     )
+    }
 
-    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
 
     Spacer(modifier = Modifier.height(12.dp))
 

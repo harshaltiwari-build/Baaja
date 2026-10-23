@@ -46,7 +46,6 @@ import com.metrolist.music.ui.screens.recognition.RecognitionScreen
 import com.metrolist.music.ui.screens.search.OnlineSearchResult
 import com.metrolist.music.ui.screens.search.SearchScreen
 import com.metrolist.music.ui.screens.settings.AboutScreen
-import com.metrolist.music.ui.screens.settings.AiSettings
 import com.metrolist.music.ui.screens.settings.AndroidAutoSettings
 import com.metrolist.music.ui.screens.settings.AppearanceSettings
 import com.metrolist.music.ui.screens.settings.BackupAndRestore
@@ -57,14 +56,9 @@ import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
-import com.metrolist.music.ui.screens.settings.ThemeScreen
 import com.metrolist.music.ui.screens.settings.UpdaterScreen
-import com.metrolist.music.ui.screens.settings.integrations.DiscordSettings
-import com.metrolist.music.ui.screens.settings.integrations.IntegrationScreen
-import com.metrolist.music.ui.screens.settings.integrations.LastFMSettings
 import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
 
-import com.metrolist.music.ui.screens.wrapped.WrappedScreen
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
@@ -355,9 +349,6 @@ fun NavGraphBuilder.navigationBuilder(
         AppearanceSettings(navController, snackbarHostState)
     }
 
-    composable("settings/appearance/theme") {
-        ThemeScreen(navController)
-    }
 
     composable("settings/content") {
         ContentSettings(navController)
@@ -365,10 +356,6 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/content/romanization") {
         RomanizationSettings(navController)
-    }
-
-    composable("settings/ai") {
-        AiSettings(navController)
     }
 
     composable("settings/player") {
@@ -385,18 +372,6 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/backup_restore") {
         BackupAndRestore(navController)
-    }
-
-    composable("settings/integrations") {
-        IntegrationScreen(navController)
-    }
-
-    composable("settings/integrations/discord") {
-        DiscordSettings(navController)
-    }
-
-    composable("settings/integrations/lastfm") {
-        LastFMSettings(navController)
     }
 
     composable(route = "settings/integrations/listen_together") {
@@ -420,10 +395,6 @@ fun NavGraphBuilder.navigationBuilder(
             navController = navController,
             isSwitchingChannel = true,
         )
-    }
-
-    composable("wrapped") {
-        WrappedScreen()
     }
 
     composable("equalizer") {

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="baaja_pb_group_output">Output &amp; offline</string>
+
+    <!-- Audio output picker -->
+    <string name="baaja_pb_output_title">Audio output</string>
+    <string name="baaja_pb_output_automatic">Automatic</string>
+    <string name="baaja_pb_output_automatic_desc">Let Android choose (follows headphones and Bluetooth)</string>
+    <string name="baaja_pb_output_not_connected">%1$s (not connected, using automatic)</string>
+    <string name="baaja_pb_output_dialog_title">Play music on</string>
+    <string name="baaja_pb_output_kind_speaker">Phone speaker</string>
+    <string name="baaja_pb_output_kind_wired">Wired</string>
+    <string name="baaja_pb_output_kind_usb">USB</string>
+    <string name="baaja_pb_output_kind_bluetooth">Bluetooth</string>
+    <string name="baaja_pb_output_kind_hdmi">HDMI</string>
+    <string name="baaja_pb_output_remembered">Remembered: Baaja switches back to it whenever it reconnects</string>
+
+    <!-- 32-bit float output -->
+    <string name="baaja_pb_float_title">32-bit float output</string>
+    <string name="baaja_pb_float_desc">Normalization, EQ and sound shaping run in 32-bit float and the result goes to Android as float, so boosts don\'t clip. Silence skipping and speed still run at 16-bit before that. Uses a little more battery. Changing it restarts the current song from where it was.</string>
+
+    <!-- Automix -->
+    <string name="baaja_pb_automix_title">Automix</string>
+    <string name="baaja_pb_automix_desc">DJ-style transitions: skips silence at the end and start of songs, starts the blend where a song fades out and evens out the volume of both songs. Songs that end abruptly use your crossfade length (up to 4 s). If a song isn\'t analysed in time, the normal crossfade is used.</string>
+    <string name="baaja_pb_crossfade_duration_automix">Used for abrupt endings and as the fallback</string>
+
+    <!-- Smart downloads -->
+    <string name="baaja_pb_smart_title">Smart downloads</string>
+    <string name="baaja_pb_smart_off">Off</string>
+    <string name="baaja_pb_smart_on">Keeps your %1$d most-played songs (last 90 days) downloaded. Songs you downloaded yourself are never removed.</string>
+    <string name="baaja_pb_smart_option">Top %1$d songs</string>
+    <string name="baaja_pb_smart_dialog_title">Keep downloaded</string>
+    <string name="baaja_pb_smart_wifi_title">Only on Wi-Fi</string>
+    <string name="baaja_pb_smart_wifi_desc">Smart downloads wait for an unmetered network and pause if you leave it</string>
+</resources>

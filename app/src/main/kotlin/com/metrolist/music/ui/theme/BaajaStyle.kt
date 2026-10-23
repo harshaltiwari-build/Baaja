@@ -13,7 +13,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
@@ -153,11 +153,25 @@ fun Modifier.baajaOutline(
     shape: Shape,
     borderWidth: Dp = 2.dp,
     shadowOffset: Dp = 3.dp,
+): Modifier = baajaShadow(color, shape, shadowOffset).border(borderWidth, color, shape)
+
+/**
+ * Just the hard offset shadow of [baajaOutline]. The outline is built once per size/shape in
+ * [drawWithCache] instead of being re-created on every draw.
+ */
+fun Modifier.baajaShadow(
+    color: Color,
+    shape: Shape,
+    shadowOffset: Dp = 3.dp,
 ): Modifier =
-    drawBehind {
-        if (shadowOffset > 0.dp) {
+    if (shadowOffset <= 0.dp) {
+        this
+    } else {
+        drawWithCache {
             val offset = shadowOffset.toPx()
             val outline = shape.createOutline(size, layoutDirection, this)
-            translate(left = offset, top = offset * 1.33f) { drawOutline(outline, color) }
+            onDrawBehind {
+                translate(left = offset, top = offset * 1.33f) { drawOutline(outline, color) }
+            }
         }
-    }.border(borderWidth, color, shape)
+    }

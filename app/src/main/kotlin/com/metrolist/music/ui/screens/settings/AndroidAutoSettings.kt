@@ -245,7 +245,7 @@ fun AndroidAutoSettings(
         var showTargetPlaylistDialog by remember { mutableStateOf(false) }
 
         if (showTargetPlaylistDialog) {
-            androidx.compose.material3.AlertDialog(
+            com.metrolist.music.ui.component.AlertDialog(
                 onDismissRequest = { showTargetPlaylistDialog = false },
                 title = { Text(stringResource(R.string.android_auto_target_playlist)) },
                 text = {
@@ -275,7 +275,7 @@ fun AndroidAutoSettings(
                     }
                 },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(
+                    com.metrolist.music.ui.component.TextButton(
                         onClick = { showTargetPlaylistDialog = false }
                     ) {
                         Text(stringResource(android.R.string.cancel))

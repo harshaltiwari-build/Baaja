@@ -111,32 +111,13 @@ fun LibraryAlbumsScreen(
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
 
     val filterContent = @Composable {
-        Row {
-            Spacer(Modifier.width(12.dp))
-            FilterChip(
-                label = { Text(stringResource(R.string.albums)) },
-                selected = true,
-                colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surface),
-                onClick = onDeselect,
-                shape = RoundedCornerShape(16.dp),
-                leadingIcon = {
-                    Icon(painter = painterResource(R.drawable.close), contentDescription = "")
-                },
-            )
-            ChipsRow(
-                chips =
-                    listOf(
-                        AlbumFilter.LIKED to stringResource(R.string.filter_liked),
-                        AlbumFilter.LIBRARY to stringResource(R.string.filter_library),
-                        AlbumFilter.UPLOADED to stringResource(R.string.filter_uploaded),
-                    ),
-                currentValue = filter,
-                onValueUpdate = {
-                    filter = it
-                },
-                modifier = Modifier.weight(1f),
-            )
-        }
+        BaajaSectionFilterRow(
+            sectionLabel = stringResource(R.string.albums),
+            onDeselect = onDeselect,
+            chips = listOf(AlbumFilter.LIKED to stringResource(R.string.filter_liked), AlbumFilter.LIBRARY to stringResource(R.string.filter_library), AlbumFilter.UPLOADED to stringResource(R.string.filter_uploaded)),
+            currentValue = filter,
+            onValueUpdate = { filter = it },
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -186,64 +167,30 @@ fun LibraryAlbumsScreen(
                 viewModel.updateSearchQuery("")
             },
             keyboardController = keyboardController,
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.padding(horizontal = if (isSearchActive) 16.dp else 0.dp),
         ) {
-            SortHeader(
-                sortType = sortType,
-                sortDescending = sortDescending,
-                onSortTypeChange = onSortTypeChange,
-                onSortDescendingChange = onSortDescendingChange,
-                sortTypeText = { sortType ->
-                    when (sortType) {
-                        AlbumSortType.CREATE_DATE -> R.string.sort_by_create_date
-                        AlbumSortType.NAME -> R.string.sort_by_name
-                        AlbumSortType.ARTIST -> R.string.sort_by_artist
-                        AlbumSortType.YEAR -> R.string.sort_by_year
-                        AlbumSortType.SONG_COUNT -> R.string.sort_by_song_count
-                        AlbumSortType.LENGTH -> R.string.sort_by_length
-                        AlbumSortType.PLAY_TIME -> R.string.sort_by_play_time
-                    }
-                },
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Text(
-                text = pluralStringResource(R.plurals.n_album, filteredAlbums.size, filteredAlbums.size),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.secondary,
-            )
-
-            IconButton(
-                onClick = { isSearchActive = true },
-                modifier = Modifier.padding(start = 8.dp).size(40.dp),
+            BaajaLibraryToolbar(
+                onSearch = { isSearchActive = true },
+                countText = pluralStringResource(R.plurals.n_album, filteredAlbums.size, filteredAlbums.size),
+                viewType = viewType,
+                onToggleViewType = { viewType = viewType.toggle() },
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.search),
-                    contentDescription = stringResource(R.string.search),
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    viewType = viewType.toggle()
-                },
-                modifier = Modifier.padding(end = 8.dp).size(40.dp),
-            ) {
-                Icon(
-                    painter =
-                    painterResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.drawable.list
-                            LibraryViewType.GRID -> R.drawable.grid_view
-                        },
-                    ),
-                    contentDescription = stringResource(
-                        when (viewType) {
-                            LibraryViewType.LIST -> R.string.switch_to_grid_view
-                            LibraryViewType.GRID -> R.string.switch_to_list_view
-                        },
-                    ),
+                SortHeader(
+                    sortType = sortType,
+                    sortDescending = sortDescending,
+                    onSortTypeChange = onSortTypeChange,
+                    onSortDescendingChange = onSortDescendingChange,
+                    sortTypeText = { sortType ->
+                        when (sortType) {
+                            AlbumSortType.CREATE_DATE -> R.string.sort_by_create_date
+                            AlbumSortType.NAME -> R.string.sort_by_name
+                            AlbumSortType.ARTIST -> R.string.sort_by_artist
+                            AlbumSortType.YEAR -> R.string.sort_by_year
+                            AlbumSortType.SONG_COUNT -> R.string.sort_by_song_count
+                            AlbumSortType.LENGTH -> R.string.sort_by_length
+                            AlbumSortType.PLAY_TIME -> R.string.sort_by_play_time
+                        }
+                    },
                 )
             }
         }

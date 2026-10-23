@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -35,8 +34,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
+import com.metrolist.music.ui.component.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.metrolist.music.LocalNavController
@@ -76,11 +76,8 @@ fun DefaultDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Surface(
+        BaajaDialogSurface(
             modifier = Modifier.padding(24.dp),
-            shape = AlertDialogDefaults.shape,
-            color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
                 horizontalAlignment = horizontalAlignment,
@@ -89,7 +86,7 @@ fun DefaultDialog(
                         .padding(24.dp),
             ) {
                 if (icon != null) {
-                    CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.iconContentColor) {
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
                         Box(
                             Modifier.align(Alignment.CenterHorizontally),
                         ) {
@@ -100,8 +97,8 @@ fun DefaultDialog(
                     Spacer(Modifier.height(16.dp))
                 }
                 if (title != null) {
-                    CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.titleContentColor) {
-                        ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                        ProvideTextStyle(MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold)) {
                             Box(
                                 // Align the title to the center when an icon is present.
                                 Modifier.align(if (icon == null) Alignment.Start else Alignment.CenterHorizontally),
@@ -121,8 +118,10 @@ fun DefaultDialog(
 
                     FlowRow(
                         modifier = Modifier.align(Alignment.End),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                             ProvideTextStyle(
                                 value = MaterialTheme.typography.labelLarge,
                             ) {
@@ -161,15 +160,11 @@ fun AccountSettingsDialog(
                     },
             contentAlignment = Alignment.TopCenter,
         ) {
-            Surface(
+            BaajaDialogSurface(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 72.dp, start = 16.dp, end = 16.dp)
-                        .clip(RoundedCornerShape(28.dp)),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp,
+                        .padding(top = 72.dp, start = 16.dp, end = 16.dp),
             ) {
                 AccountSettings(
                     navController = navController,
@@ -204,6 +199,7 @@ fun ActionPromptDialog(
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 }
             } else {
@@ -228,10 +224,12 @@ fun ActionPromptDialog(
                 }
             }
 
-            TextButton(
-                onClick = { onConfirm() },
-            ) {
-                Text(stringResource(android.R.string.ok))
+            CompositionLocalProvider(LocalBaajaPrimaryButton provides true) {
+                TextButton(
+                    onClick = { onConfirm() },
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
             }
         },
     ) {
@@ -249,11 +247,8 @@ fun ListDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Surface(
+        BaajaDialogSurface(
             modifier = Modifier.padding(24.dp),
-            shape = AlertDialogDefaults.shape,
-            color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -333,18 +328,20 @@ fun TextFieldDialog(
                 textFields?.all { isInputValid(it.second.text) }
                     ?: isInputValid(legacyFieldState.value.text)
 
-            TextButton(
-                enabled = isValid,
-                onClick = {
-                    if (autoDismiss) onDismiss()
-                    if (textFields != null && onDoneMultiple != null) {
-                        onDoneMultiple(textFields.map { it.second.text })
-                    } else {
-                        onDone(legacyFieldState.value.text)
-                    }
-                },
-            ) {
-                Text(text = stringResource(android.R.string.ok))
+            CompositionLocalProvider(LocalBaajaPrimaryButton provides true) {
+                TextButton(
+                    enabled = isValid,
+                    onClick = {
+                        if (autoDismiss) onDismiss()
+                        if (textFields != null && onDoneMultiple != null) {
+                            onDoneMultiple(textFields.map { it.second.text })
+                        } else {
+                            onDone(legacyFieldState.value.text)
+                        }
+                    },
+                ) {
+                    Text(text = stringResource(android.R.string.ok))
+                }
             }
         },
     ) {
@@ -353,13 +350,14 @@ fun TextFieldDialog(
         ) {
             if (textFields != null) {
                 textFields.forEachIndexed { index, (label, value) ->
-                    TextField(
+                    OutlinedTextField(
                         value = value,
                         onValueChange = { onTextFieldsChange?.invoke(index, it) },
                         placeholder = { Text(label) },
                         singleLine = singleLine,
                         maxLines = maxLines,
-                        colors = OutlinedTextFieldDefaults.colors(),
+                        colors = baajaTextFieldColors(),
+                        shape = RoundedCornerShape(16.dp),
                         keyboardOptions =
                             KeyboardOptions(
                                 imeAction = if (singleLine) ImeAction.Done else ImeAction.None,
@@ -393,13 +391,14 @@ fun TextFieldDialog(
                                 )
                             },
                 ) {
-                    TextField(
+                    OutlinedTextField(
                         value = legacyFieldState.value,
                         onValueChange = { legacyFieldState.value = it },
                         placeholder = placeholder,
                         singleLine = singleLine,
                         maxLines = maxLines,
-                        colors = OutlinedTextFieldDefaults.colors(),
+                        colors = baajaTextFieldColors(),
+                        shape = RoundedCornerShape(16.dp),
                         keyboardOptions =
                             KeyboardOptions(
                                 imeAction = if (singleLine) ImeAction.Done else ImeAction.None,

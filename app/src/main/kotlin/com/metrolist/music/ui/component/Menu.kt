@@ -25,34 +25,52 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.metrolist.music.ui.screens.onboarding.baajaPastel
+import com.metrolist.music.ui.theme.BaajaInk
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
 
+/**
+ * Baaja menu group: one ink-outlined card with a hard shadow, rows split by hairlines and each led
+ * by a pastel icon badge, like the Settings rows.
+ */
 @Composable
 fun Material3MenuGroup(
     items: List<Material3MenuItemData>
 ) {
+    val ink = baajaInk
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 4.dp, bottom = 4.dp)
+            .baajaSurface(
+                ink = ink,
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(24.dp),
+                shadowOffset = 3.dp,
+            )
+            .animateContentSize(),
     ) {
         items.forEachIndexed { index, item ->
-            val shape = when {
-                items.size == 1 -> RoundedCornerShape(24.dp)
-                index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
-                index == items.size - 1 -> RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-                else -> RoundedCornerShape(6.dp)
-            }
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize(),
-                shape = shape,
-                colors = item.cardColors ?: CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Material3MenuItemRow(item = item)
+            Material3MenuItemRow(
+                item = item,
+                badgeColor = baajaPastel(index + 1),
+            )
+            if (index < items.lastIndex) {
+                HorizontalDivider(
+                    thickness = 1.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
         }
     }
@@ -60,27 +78,45 @@ fun Material3MenuGroup(
 
 @Composable
 private fun Material3MenuItemRow(
-    item: Material3MenuItemData
+    item: Material3MenuItemData,
+    badgeColor: Color,
 ) {
+    val rowColor = item.cardColors?.containerColor ?: Color.Unspecified
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (rowColor != Color.Unspecified && rowColor != Color.Transparent) Modifier.background(rowColor) else Modifier)
+            .heightIn(min = 56.dp)
             .clickable(
                 enabled = item.onClick != null,
                 onClick = { item.onClick?.invoke() }
             )
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         item.icon?.let { icon ->
-            icon()
-            Spacer(modifier = Modifier.width(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .baajaSurface(
+                        ink = baajaInk,
+                        color = badgeColor,
+                        shape = RoundedCornerShape(12.dp),
+                        shadowOffset = 0.dp,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                CompositionLocalProvider(LocalContentColor provides BaajaInk) {
+                    Box(Modifier.size(21.dp), contentAlignment = Alignment.Center) { icon() }
+                }
+            }
+            Spacer(modifier = Modifier.width(14.dp))
         }
 
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)) {
                 item.title()
             }
 

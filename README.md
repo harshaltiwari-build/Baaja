@@ -44,7 +44,7 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 - Sleep timer
 
 **Lyrics & discovery**
-- Live synced lyrics, with AI-powered translation
+- Live synced lyrics
 - Personalised quick picks and mixes
 - Search songs, albums, artists, videos and playlists
 - Identify music playing around you

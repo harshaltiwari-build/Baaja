@@ -113,14 +113,8 @@
     <string name="update_notifications">Lülita uuenduste teavitused sisse</string>
     <string name="update_available_title">Uus versioon on saadaval</string>
     <string name="update_channel_name">Rakenduse uuendused</string>
-    <string name="integrations">Lõimingud</string>
     <string name="username">Kasutajanimi</string>
     <string name="password">Salasõna</string>
-    <string name="lastfm_integration">Last.fm-i lõiming</string>
-    <string name="enable_scrobbling">Lülita kraasimine sisse</string>
-    <string name="lastfm_now_playing">Saada hetkel esitatava loo olek</string>
-    <string name="last_fm_send_likes">Sünkrooni meeldimised/mittemeeldimised</string>
-    <string name="scrobbling_configuration">Kraasimise seadistused</string>
     <string name="show_artist_description">Kuva artisti kirjeldust</string>
     <string name="show_artist_subscriber_count">Kuva tellijate arvu</string>
     <string name="show_artist_monthly_listeners">Kuva igakuine kuulajate arv</string>

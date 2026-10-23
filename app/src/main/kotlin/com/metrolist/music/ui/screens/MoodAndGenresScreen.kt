@@ -6,39 +6,31 @@
 package com.metrolist.music.ui.screens
 
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
-import com.metrolist.music.ui.component.IconButton
-import com.metrolist.music.ui.component.NavigationTitle
+import com.metrolist.music.ui.component.home.BaajaBrowseTopBar
+import com.metrolist.music.ui.component.home.BaajaGenreTile
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
+import com.metrolist.music.ui.component.home.BaajaHomeSectionTitle
 import com.metrolist.music.ui.component.shimmer.ListItemPlaceHolder
 import com.metrolist.music.ui.component.shimmer.ShimmerHost
 import com.metrolist.music.ui.utils.backToMain
@@ -51,99 +43,85 @@ fun MoodAndGenresScreen(
     viewModel: MoodAndGenresViewModel = hiltViewModel(),
 ) {
     val localConfiguration = LocalConfiguration.current
-    val itemsPerRow = if (localConfiguration.orientation == ORIENTATION_LANDSCAPE) 3 else 2
+    val itemsPerRow = if (localConfiguration.orientation == ORIENTATION_LANDSCAPE) 4 else 3
 
     val moodAndGenresList by viewModel.moodAndGenres.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
-    ) {
-        if (moodAndGenresList == null) {
-            item(key = "mood_and_genres_shimmer") {
-                ShimmerHost(
-                    modifier = Modifier.animateItem()
-                ) {
-                    repeat(8) {
-                        ListItemPlaceHolder()
+    Box {
+        LazyColumn(
+            contentPadding = LocalPlayerAwareWindowInsets.current.asPaddingValues(),
+        ) {
+            if (moodAndGenresList == null) {
+                item(key = "mood_and_genres_shimmer") {
+                    ShimmerHost(
+                        modifier = Modifier.animateItem(),
+                    ) {
+                        repeat(8) {
+                            ListItemPlaceHolder()
+                        }
                     }
                 }
             }
-        }
 
-        moodAndGenresList?.forEachIndexed { index, moodAndGenres ->
-            item(key = "mood_and_genres_section_$index") {
-                Column(
-                    modifier = Modifier
-                        .animateItem()
-                        .padding(horizontal = 6.dp),
-                ) {
-                    NavigationTitle(
-                        title = moodAndGenres.title,
-                    )
-                    moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
-                        Row {
-                            row.forEach {
-                                MoodAndGenresButton(
-                                    title = it.title,
-                                    onClick = {
-                                        navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
-                                    },
-                                    modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(6.dp),
-                                )
-                            }
+            moodAndGenresList?.forEachIndexed { index, moodAndGenres ->
+                item(key = "mood_and_genres_section_$index") {
+                    Column(
+                        modifier = Modifier.animateItem(),
+                    ) {
+                        BaajaHomeSectionTitle(
+                            title = moodAndGenres.title,
+                        )
+                        Column(
+                            modifier = Modifier.padding(horizontal = BaajaHomeGutter, vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            moodAndGenres.items.chunked(itemsPerRow).forEach { row ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    row.forEach {
+                                        MoodAndGenresButton(
+                                            title = it.title,
+                                            stripeColor = it.stripeColor,
+                                            onClick = {
+                                                navController.navigate("youtube_browse/${it.endpoint.browseId}?params=${it.endpoint.params}")
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                    }
 
-                            repeat(itemsPerRow - row.size) {
-                                Spacer(Modifier.weight(1f))
+                                    repeat(itemsPerRow - row.size) {
+                                        Spacer(Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.mood_and_genres)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+        BaajaBrowseTopBar(
+            title = stringResource(R.string.mood_and_genres),
+            onBack = navController::navigateUp,
+            onBackLongClick = navController::backToMain,
+        )
+    }
 }
 
+/** Mood/genre tile; [stripeColor] is YouTube's ARGB accent for the category, if known. */
 @Composable
 fun MoodAndGenresButton(
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    stripeColor: Long? = null,
 ) {
-    Box(
-        contentAlignment = Alignment.CenterStart,
-        modifier =
-        modifier
-            .height(MoodAndGenresButtonHeight)
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    BaajaGenreTile(
+        title = title,
+        onClick = onClick,
+        stripeColor = stripeColor?.let { Color(it.toInt()).copy(alpha = 1f) },
+        height = MoodAndGenresButtonHeight,
+        modifier = modifier,
+    )
 }
 
-val MoodAndGenresButtonHeight = 48.dp
+val MoodAndGenresButtonHeight = 64.dp

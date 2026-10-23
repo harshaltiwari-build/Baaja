@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.search
 
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,13 +33,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -58,7 +56,11 @@ import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.ui.component.AlbumListItem
 import com.metrolist.music.ui.component.ArtistListItem
-import com.metrolist.music.ui.component.ChipsRow
+import com.metrolist.music.LocalPlayerAwareWindowInsets
+import com.metrolist.music.ui.component.home.BaajaChipsRow
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.metrolist.music.ui.component.EmptyPlaceholder
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.PlaylistListItem
@@ -110,7 +112,7 @@ fun LocalSearchScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background)
+                .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
                 .let { base ->
                     if (isLandscape) {
                         base.windowInsetsPadding(
@@ -121,7 +123,7 @@ fun LocalSearchScreen(
                     }
                 },
     ) {
-        ChipsRow(
+        BaajaChipsRow(
             chips =
                 listOf(
                     LocalFilter.ALL to stringResource(R.string.filter_all),
@@ -138,7 +140,7 @@ fun LocalSearchScreen(
             state = lazyListState,
             modifier = Modifier.weight(1f),
             contentPadding =
-                WindowInsets.systemBars
+                LocalPlayerAwareWindowInsets.current
                     .only(WindowInsetsSides.Bottom)
                     .asPaddingValues(),
         ) {
@@ -153,7 +155,7 @@ fun LocalSearchScreen(
                                     .fillMaxWidth()
                                     .height(ListItemHeight)
                                     .clickable { viewModel.filter.value = filter }
-                                    .padding(start = 12.dp, end = 18.dp),
+                                    .padding(start = BaajaHomeGutter, end = 18.dp),
                         ) {
                             Text(
                                 text =
@@ -166,7 +168,8 @@ fun LocalSearchScreen(
                                             LocalFilter.ALL -> error("")
                                         },
                                     ),
-                                style = MaterialTheme.typography.titleLarge,
+                                fontSize = 21.sp,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.weight(1f),
                             )
 
