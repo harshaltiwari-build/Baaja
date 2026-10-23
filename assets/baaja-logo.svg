@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="200" height="200" role="img" aria-label="Baaja logo">
+  <rect x="6" y="9" width="94" height="94" rx="24" fill="#17151F"/>
+  <rect x="3" y="4" width="94" height="94" rx="24" fill="#7B4DFF" stroke="#17151F" stroke-width="3"/>
+  <g transform="translate(5 6) scale(0.9)" fill="#FFFFFF">
+    <path d="M32.8 66V20.5C32.8 17 35.5 15.6 38.5 15.8C43.5 16.5 48.7 21 48.7 27V66Z"/>
+    <circle cx="29" cy="74.7" r="10.8"/>
+    <path fill-rule="evenodd" d="M38.4 60.8a22 22 0 1 0 44 0a22 22 0 1 0 -44 0ZM53.5 53.3L53.5 69.2L69.5 61.3Z"/>
+  </g>
+</svg>
