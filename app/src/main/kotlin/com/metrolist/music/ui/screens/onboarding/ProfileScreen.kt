@@ -62,7 +62,10 @@ import androidx.navigation.NavController
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.innertube.YouTube
 import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.constants.UseLoginForBrowse
+import com.metrolist.music.constants.YtmSyncKey
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.theme.BaajaArtwork
 import com.metrolist.music.ui.theme.BaajaCard
@@ -92,6 +95,9 @@ fun ProfileScreen(navController: NavController) {
     val accountSettingsViewModel: AccountSettingsViewModel = hiltViewModel()
     val (_, onInnerTubeCookieChange) = rememberPreference(InnerTubeCookieKey, "")
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var showTokenEditor by rememberSaveable { mutableStateOf(false) }
+    val (useLoginForBrowse, onUseLoginForBrowseChange) = rememberPreference(UseLoginForBrowse, true)
+    val (ytmSync, onYtmSyncChange) = rememberPreference(YtmSyncKey, true)
 
     val now = remember { LocalDateTime.now() }
     val totalPlayTime by remember(database) { database.getTotalPlayTimeInRange(AllTimeStart, now) }
@@ -119,6 +125,8 @@ fun ProfileScreen(navController: NavController) {
             }
             firstEvent?.event?.timestamp?.year?.let { add(stringResource(R.string.baaja_onb_profile_since, it)) }
         }.joinToString(" · ")
+
+    if (showTokenEditor) AdvancedLoginDialog(onDismiss = { showTokenEditor = false })
 
     if (showEdit) EditProfileSheet(profile = profile, onDismiss = { showEdit = false })
 
@@ -245,9 +253,6 @@ fun ProfileScreen(navController: NavController) {
                     navController.navigate("history")
                 }
             }
-            ProfileLinkCard(stringResource(R.string.settings), R.drawable.settings, baajaPastel(3), Modifier.fillMaxWidth()) {
-                navController.navigate("settings")
-            }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -313,6 +318,18 @@ fun ProfileScreen(navController: NavController) {
                             navController.navigate("switch_channel")
                         }
                         HorizontalDivider(Modifier.padding(horizontal = 16.dp), thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp), thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                        ProfileSwitchRow(R.drawable.cached, stringResource(R.string.yt_sync), baajaPastel(1), ytmSync, onCheckedChange = onYtmSyncChange)
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp), thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                        ProfileSwitchRow(R.drawable.cached, stringResource(R.string.more_content), baajaPastel(2), useLoginForBrowse) {
+                            YouTube.useLoginForBrowse = it
+                            onUseLoginForBrowseChange(it)
+                        }
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp), thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                        ProfileAccountRow(R.drawable.token, stringResource(R.string.advanced_login), baajaPastel(3)) {
+                            showTokenEditor = true
+                        }
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp), thickness = 1.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
                         ProfileAccountRow(R.drawable.logout, stringResource(R.string.action_logout), baajaPastel(5)) {
                             showLogoutDialog = true
                         }
@@ -348,6 +365,11 @@ fun ProfileScreen(navController: NavController) {
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
+                    }
+                }
+                BaajaCard(modifier = Modifier.fillMaxWidth()) {
+                    ProfileAccountRow(R.drawable.token, stringResource(R.string.advanced_login), baajaPastel(3)) {
+                        showTokenEditor = true
                     }
                 }
             }

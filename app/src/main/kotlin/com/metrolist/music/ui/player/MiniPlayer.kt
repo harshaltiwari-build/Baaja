@@ -464,7 +464,7 @@ private fun NewMiniPlayer(
                 if (isCasting) {
                     Icon(
                         painter = painterResource(R.drawable.cast_connected),
-                        contentDescription = "Casting",
+                        contentDescription = stringResource(R.string.baaja_fix2_casting),
                         tint = primaryColor,
                         modifier = Modifier.size(20.dp),
                     )

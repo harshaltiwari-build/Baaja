@@ -61,8 +61,6 @@
     <string name="baaja_onb_settings_theme_system">System</string>
     <string name="baaja_onb_settings_theme_light">Light</string>
     <string name="baaja_onb_settings_theme_dark">Dark</string>
-    <string name="baaja_onb_settings_album_colours">Colours from album art</string>
-    <string name="baaja_onb_settings_album_colours_sub">Tint the app with each cover</string>
     <string name="baaja_onb_settings_pure_black_sub">Saves battery on OLED screens</string>
     <string name="baaja_onb_settings_more_appearance">More appearance options</string>
     <string name="baaja_onb_settings_footer_version">Baaja · version %1$s</string>

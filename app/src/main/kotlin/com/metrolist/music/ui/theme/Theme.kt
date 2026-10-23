@@ -24,7 +24,7 @@ import com.materialkolor.score.Score
 val DefaultThemeColor = Color(0xFFED5564)
 
 @Composable
-fun MetrolistTheme(
+fun BaajaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     themeColor: Color = DefaultThemeColor,

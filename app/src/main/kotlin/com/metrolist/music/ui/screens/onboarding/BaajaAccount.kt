@@ -34,7 +34,7 @@ private object BaajaAccountImageCache {
 }
 
 /**
- * Account details from the same sources Metrolist uses: the saved account preferences written at sign-in,
+ * Account details from the same sources the rest of the app uses: the saved account preferences written at sign-in,
  * plus [YouTube.accountInfo] for the avatar.
  */
 @Composable

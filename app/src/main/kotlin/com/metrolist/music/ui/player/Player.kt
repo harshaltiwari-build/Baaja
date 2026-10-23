@@ -210,7 +210,7 @@ import com.metrolist.music.ui.theme.baajaOutline
 import com.metrolist.music.ui.component.BaajaLyricsStyle
 import com.metrolist.music.ui.component.LocalBaajaLyricsStyle
 import androidx.compose.runtime.CompositionLocalProvider
-import java.net.URLEncoder
+import com.metrolist.music.ui.screens.assistant.behindTheSongRoute
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -897,9 +897,8 @@ fun BottomSheetPlayer(
     }
     val openBehindTheSong: () -> Unit = {
         mediaMetadata?.id?.let { id ->
-            // The route is registered by the Behind the Song screen; ignore taps until it exists.
-            runCatching { navController.navigate("behind_the_song/${URLEncoder.encode(id, "UTF-8")}") }
-                .onSuccess { state.collapseSoft() }
+            navController.navigate(behindTheSongRoute(id))
+            state.collapseSoft()
         }
     }
     val openLyricsMenu: () -> Unit = {
@@ -2001,13 +2000,6 @@ private fun PlayerMoreMenuButton(
                 PlayerMenu(
                     mediaMetadata = mediaMetadata,
                     playerBottomSheetState = state,
-                    onShowDetailsDialog = {
-                        mediaMetadata.id.let {
-                            bottomSheetPageState.show {
-                                ShowMediaInfo(it)
-                            }
-                        }
-                    },
                     onDismiss = menuState::dismiss,
                 )
             }

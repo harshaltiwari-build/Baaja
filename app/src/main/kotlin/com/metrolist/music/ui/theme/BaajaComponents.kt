@@ -6,10 +6,12 @@
 package com.metrolist.music.ui.theme
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -159,7 +161,7 @@ fun BaajaChip(
         modifier
             .defaultMinSize(minHeight = 40.dp)
             .baajaSurface(ink, container, CircleShape, if (selected) 0.dp else 2.dp, interactionSource = source)
-            .clickable(interactionSource = source, indication = LocalIndication.current, role = Role.Tab, onClick = onClick)
+            .selectable(selected = selected, interactionSource = source, indication = LocalIndication.current, role = Role.Tab, onClick = onClick)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -245,53 +247,16 @@ fun BaajaSectionHeader(
     }
 }
 
-/** Header row used by Baaja's own screens: back button, title, optional subtitle and actions. */
-@Composable
-fun BaajaTopBar(
-    title: String,
-    onBack: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    contentPadding: PaddingValues = PaddingValues(start = 10.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
-    actions: @Composable RowScope.() -> Unit = {},
-) {
-    Row(
-        modifier.fillMaxWidth().padding(contentPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        if (onBack != null) {
-            Box(
-                Modifier.size(44.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onBack),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(painterResource(R.drawable.arrow_back), null, modifier = Modifier.size(26.dp))
-            }
-        }
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-            }
-        }
-        actions()
-    }
-}
-
-/** The Baaja logo tile: white glyph on the accent square with an ink outline. */
+/** The Baaja logo: the app's own artwork (purple tile, white "b", ink outline and shadow). */
 @Composable
 fun BaajaLogo(
     modifier: Modifier = Modifier,
     size: Dp = 38.dp,
-    container: Color = MaterialTheme.colorScheme.primary,
-    glyph: Color = MaterialTheme.colorScheme.onPrimary,
 ) {
-    Box(
-        modifier
-            .size(size)
-            .baajaSurface(baajaInk, container, RoundedCornerShape(size * 0.27f), shadowOffset = size * 0.06f),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(painterResource(R.drawable.app_logo), null, tint = glyph, modifier = Modifier.size(size * 0.9f))
-    }
+    Image(
+        painter = painterResource(R.drawable.baaja_logo),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = modifier.size(size),
+    )
 }

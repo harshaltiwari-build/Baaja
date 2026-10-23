@@ -809,32 +809,11 @@ fun StatsScreen(
                         contentDescription = stringResource(R.string.baaja_onb_stats_search),
                     )
                 }
-                var showOverflow by remember { mutableStateOf(false) }
-                Box {
-                    androidx.compose.material3.IconButton(onClick = { showOverflow = true }) {
-                        Icon(
-                            painter = painterResource(R.drawable.more_vert),
-                            contentDescription = stringResource(R.string.baaja_onb_stats_more),
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showOverflow,
-                        onDismissRequest = { showOverflow = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.baaja_onb_stats_time_transfer)) },
-                            leadingIcon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.sync),
-                                    contentDescription = null,
-                                )
-                            },
-                            onClick = {
-                                showOverflow = false
-                                showTimeTransfer = true
-                            },
-                        )
-                    }
+                androidx.compose.material3.IconButton(onClick = { showTimeTransfer = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.sync),
+                        contentDescription = stringResource(R.string.baaja_onb_stats_time_transfer),
+                    )
                 }
             }
         },

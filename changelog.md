@@ -1,3 +1,31 @@
+---v1.1.0
+# Baaja 1.1.0
+Every screen now follows Baaja's own look, with new features for listening and your library.
+
+## Design
+- All screens restyled: Home, Explore, Search, Library, Album, Artist, Playlists, Player, Lyrics, Queue, Profile and Settings
+- Dialogs, menus, sheets and notices follow the same outlined look
+- New Welcome screen and a new app logo
+- Smoother animations: press effects, screen transitions, a sliding bottom bar and a springier player
+- Explore shows real cover art on Charts and New releases, with a sticker on every mood
+- Always four tabs at the bottom (Home, Search, Together, Library); portrait only
+
+## New features
+- Lyric preview under the artwork in the player, and an optional immersive player
+- Audio output picker, optional 32-bit float output, and Automix transitions
+- Smart downloads of your most-played songs
+- Play music files stored on your phone
+- Import playlists from Spotify (with your own Spotify key) or from a CSV file
+- Edit your profile: name, tagline and photo, stored on your device
+- Behind the Song: facts and your listening history for any track
+
+## Changes
+- Removed AI features, Integrations (Discord, Last.fm, ListenBrainz), Wrapped and the theme customiser
+- Release notes no longer appear in Settings
+- English only for now
+- Listen Together shares a plain room code, and asks before first using its community server
+- Spotify keys are left out of backups
+
 ---v1.0.0
 # Baaja 1.0.0
 The first release of Baaja, built on Metrolist 13.7.0. Earlier history lives in the [Metrolist changelog](https://github.com/MetrolistGroup/Metrolist/blob/main/changelog.md).

@@ -57,7 +57,7 @@ import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
 import com.metrolist.music.ui.screens.settings.StorageSettings
 import com.metrolist.music.ui.screens.settings.UpdaterScreen
-import com.metrolist.music.ui.screens.settings.integrations.ListenTogetherSettings
+import com.metrolist.music.ui.screens.settings.ListenTogetherSettings
 
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -97,13 +97,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable(Screens.ListenTogether.route) {
-        ListenTogetherScreen(navController, showTopBar = false)
-    }
-
-    composable(
-        route = "listen_together_from_topbar",
-    ) {
-        ListenTogetherScreen(navController, showTopBar = true)
+        ListenTogetherScreen(navController)
     }
 
     composable("history") {
@@ -342,7 +336,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings") {
-        SettingsScreen(navController, latestVersionName)
+        SettingsScreen(navController)
     }
 
     composable("settings/appearance") {
@@ -374,7 +368,7 @@ fun NavGraphBuilder.navigationBuilder(
         BackupAndRestore(navController)
     }
 
-    composable(route = "settings/integrations/listen_together") {
+    composable(route = "settings/listen_together") {
         ListenTogetherSettings(navController)
     }
 
@@ -388,6 +382,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("login") {
         LoginScreen(navController)
+    }
+
+    composable("login_direct") {
+        LoginScreen(navController = navController, skipIntro = true)
     }
 
     composable("switch_channel") {

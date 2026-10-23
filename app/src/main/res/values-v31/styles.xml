@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Baaja launch splash (Android 12+ SplashScreen API): accent background with the logo tile. -->
-    <style name="Theme.Metrolist" parent="Base.Theme.Metrolist">
+    <style name="Theme.Baaja" parent="Base.Theme.Baaja">
         <item name="android:windowSplashScreenBackground">@color/baaja_splash_background</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/baaja_splash_icon</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/baaja_splash_background</item>
     </style>
 
     <!-- Widget Theme for Android 12+ with Dynamic Colors -->
-    <style name="Theme.Widget.Metrolist" parent="@android:style/Theme.DeviceDefault.DayNight" />
+    <style name="Theme.Widget.Baaja" parent="@android:style/Theme.DeviceDefault.DayNight" />
 
-    <style name="Theme.Metrolist.Transparent" parent="@android:style/Theme.Translucent.NoTitleBar">
+    <style name="Theme.Baaja.Transparent" parent="@android:style/Theme.Translucent.NoTitleBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowNoTitle">true</item>

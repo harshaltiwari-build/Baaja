@@ -56,6 +56,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.ui.component.LocalBottomSheetPageState
+import com.metrolist.music.ui.utils.ShowMediaInfo
 import com.metrolist.music.db.entities.FormatEntity
 import com.metrolist.music.ui.theme.BaajaArtwork
 import com.metrolist.music.ui.theme.BaajaCard
@@ -146,7 +148,6 @@ fun BehindTheSongScreen(
         FactChips(
             buildList {
                 song.albumName?.takeIf { it.isNotBlank() }?.let { add(stringResource(R.string.baaja_bts_album) to it) }
-                song.year?.let { add(stringResource(R.string.baaja_bts_year) to it.toString()) }
                 if (song.durationSeconds > 0) add(stringResource(R.string.baaja_bts_length) to formatClock(song.durationSeconds))
                 add(stringResource(R.string.baaja_bts_plays) to playCount.toString())
                 format?.let { add(stringResource(R.string.baaja_bts_audio) to describeFormat(it)) }
@@ -154,6 +155,16 @@ fun BehindTheSongScreen(
         )
 
         ListeningSection(stats, song.totalPlayTimeMs)
+
+        // Technical file details (format, itag, loudness...) live in the media info sheet.
+        val bottomSheetPageState = LocalBottomSheetPageState.current
+        BaajaPillButton(
+            text = stringResource(R.string.details),
+            onClick = { bottomSheetPageState.show { ShowMediaInfo(song.id) } },
+            primary = false,
+            icon = R.drawable.info,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

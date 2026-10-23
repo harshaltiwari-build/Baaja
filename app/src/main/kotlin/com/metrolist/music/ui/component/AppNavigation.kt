@@ -94,7 +94,6 @@ fun AppNavigationRail(
     modifier: Modifier = Modifier,
     pureBlack: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
-    onHomeLongHold: (() -> Unit)? = null,
 ) {
     val containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer
     val haptics = LocalHapticFeedback.current
@@ -116,21 +115,20 @@ fun AppNavigationRail(
             }
 
             val isSearchItem = screen == Screens.Search && onSearchLongClick != null
-            val isHomeHoldItem = screen == Screens.Home && onHomeLongHold != null
             val interactionSource = remember { MutableInteractionSource() }
 
             // Long press detection using InteractionSource
-            if (isSearchItem || isHomeHoldItem) {
+            if (isSearchItem) {
                 LaunchedEffect(interactionSource) {
                     var isLongClick = false
                     interactionSource.interactions.collectLatest { interaction ->
                         when (interaction) {
                             is PressInteraction.Press -> {
                                 isLongClick = false
-                                delay(if (isHomeHoldItem) 15_000L else viewConfiguration.longPressTimeoutMillis)
+                                delay(viewConfiguration.longPressTimeoutMillis)
                                 isLongClick = true
                                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                if (isHomeHoldItem) onHomeLongHold.invoke() else onSearchLongClick?.invoke()
+                                onSearchLongClick?.invoke()
                             }
                             is PressInteraction.Release -> {
                                 if (!isLongClick) {
@@ -152,7 +150,7 @@ fun AppNavigationRail(
                     indicatorColor = MaterialTheme.colorScheme.primary,
                 ),
                 onClick = {
-                    if (!isSearchItem && !isHomeHoldItem) {
+                    if (!isSearchItem) {
                         onItemClick(screen, currentIsSelected)
                     }
                     // Long presses are handled via InteractionSource
@@ -180,7 +178,6 @@ fun AppNavigationBar(
     pureBlack: Boolean = false,
     slimNav: Boolean = false,
     onSearchLongClick: (() -> Unit)? = null,
-    onHomeLongHold: (() -> Unit)? = null,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val containerColor = if (pureBlack) Color.Black else colorScheme.surface
@@ -216,21 +213,20 @@ fun AppNavigationBar(
                 }
 
                 val isSearchItem = screen == Screens.Search && onSearchLongClick != null
-                val isHomeHoldItem = screen == Screens.Home && onHomeLongHold != null
                 val interactionSource = remember { MutableInteractionSource() }
 
                 // Long press detection using InteractionSource
-                if (isSearchItem || isHomeHoldItem) {
+                if (isSearchItem) {
                     LaunchedEffect(interactionSource) {
                         var isLongClick = false
                         interactionSource.interactions.collectLatest { interaction ->
                             when (interaction) {
                                 is PressInteraction.Press -> {
                                     isLongClick = false
-                                    delay(if (isHomeHoldItem) 15_000L else viewConfiguration.longPressTimeoutMillis)
+                                    delay(viewConfiguration.longPressTimeoutMillis)
                                     isLongClick = true
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    if (isHomeHoldItem) onHomeLongHold.invoke() else onSearchLongClick?.invoke()
+                                    onSearchLongClick?.invoke()
                                 }
                                 is PressInteraction.Release -> {
                                     if (!isLongClick) {
@@ -253,7 +249,7 @@ fun AppNavigationBar(
                     pureBlack = pureBlack,
                     interactionSource = interactionSource,
                     onClick = {
-                        if (!isSearchItem && !isHomeHoldItem) {
+                        if (!isSearchItem) {
                             onItemClick(screen, currentIsSelected)
                         }
                         // Long presses are handled via InteractionSource

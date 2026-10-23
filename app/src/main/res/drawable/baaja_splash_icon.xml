@@ -1,35 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash icon: white logo tile with ink outline and hard offset shadow, purple Baaja glyph.
-     Drawn on a 108 grid like an adaptive icon so everything stays inside the splash's circular mask. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- offset shadow -->
-    <path
-        android:fillColor="@color/baaja_splash_ink"
-        android:pathData="M43.5,31h26a13,13 0,0 1,13 13v26a13,13 0,0 1,-13 13h-26a13,13 0,0 1,-13 -13v-26a13,13 0,0 1,13 -13z" />
-    <!-- tile -->
-    <path
-        android:fillColor="@color/baaja_splash_tile"
-        android:strokeColor="@color/baaja_splash_ink"
-        android:strokeWidth="1.6"
-        android:pathData="M41,28h26a13,13 0,0 1,13 13v26a13,13 0,0 1,-13 13h-26a13,13 0,0 1,-13 -13v-26a13,13 0,0 1,13 -13z" />
-    <group
-        android:scaleX="0.46"
-        android:scaleY="0.46"
-        android:translateX="31"
-        android:translateY="30.7">
-        <path
-            android:fillColor="@color/baaja_splash_background"
-            android:pathData="M32.8,66V20.5C32.8,17 35.5,15.6 38.5,15.8C43.5,16.5 48.7,21 48.7,27V66Z" />
-        <path
-            android:fillColor="@color/baaja_splash_background"
-            android:pathData="M18.2,74.7a10.8,10.8 0,1 0,21.6 0a10.8,10.8 0,1 0,-21.6 0Z" />
-        <path
-            android:fillColor="@color/baaja_splash_background"
-            android:fillType="evenOdd"
-            android:pathData="M38.4,60.8a22,22 0,1 0,44 0a22,22 0,1 0,-44 0ZM53.5,53.3L53.5,69.2L69.5,61.3Z" />
-    </group>
-</vector>
+<!-- Splash icon: the Baaja logo, inset so it stays inside the splash's circular mask. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/baaja_logo"
+    android:insetLeft="22dp"
+    android:insetTop="22dp"
+    android:insetRight="22dp"
+    android:insetBottom="22dp" />

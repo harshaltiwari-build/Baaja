@@ -62,7 +62,7 @@ fun BaajaMainTopBar(
     accountImageUrl: String?,
     showUpdateBadge: Boolean,
     onProfileClick: () -> Unit,
-    onProfileLongClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
     containerColor: Color,
     modifier: Modifier = Modifier,
@@ -80,8 +80,24 @@ fun BaajaMainTopBar(
             imageUrl = accountImageUrl,
             showBadge = showUpdateBadge,
             onClick = onProfileClick,
-            onLongClick = onProfileLongClick,
         )
+    }
+    val settingsDescription = stringResource(R.string.settings)
+    val settingsButton: @Composable () -> Unit = {
+        Box(
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = onSettingsClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.settings),
+                contentDescription = settingsDescription,
+                modifier = Modifier.size(26.dp),
+            )
+        }
     }
     if (isHome) {
         CenterAlignedTopAppBar(
@@ -92,6 +108,7 @@ fun BaajaMainTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    settingsButton()
                     avatar()
                 }
             },
@@ -116,6 +133,7 @@ fun BaajaMainTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
+                    settingsButton()
                     avatar()
                 }
             },

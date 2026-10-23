@@ -18,7 +18,7 @@
     <!-- Identify music -->
     <string name="baaja_ai_rec_title">Identify song</string>
     <string name="baaja_ai_rec_ready">Tap to identify</string>
-    <string name="baaja_ai_rec_ready_sub">Hum, sing or play the song near your phone</string>
+    <string name="baaja_ai_rec_ready_sub">Play the song near your phone</string>
     <string name="baaja_ai_rec_listening_sub">Keep the music close to the microphone</string>
     <string name="baaja_ai_rec_processing">Almost there…</string>
     <string name="baaja_ai_rec_processing_sub">Matching what we heard</string>
@@ -46,5 +46,4 @@
     <string name="baaja_ai_together_playing">Playing in room</string>
     <string name="baaja_ai_together_in_room">In this room · %d</string>
     <string name="baaja_ai_together_reconnect">Reconnect</string>
-    <string name="baaja_ai_together_in_sync">In sync</string>
 </resources>

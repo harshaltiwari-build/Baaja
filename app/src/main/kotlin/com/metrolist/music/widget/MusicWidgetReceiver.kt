@@ -80,10 +80,10 @@ class MusicWidgetReceiver : AppWidgetProvider() {
     }
 
     companion object {
-        const val ACTION_PLAY_PAUSE = "com.metrolist.music.widget.PLAY_PAUSE"
-        const val ACTION_LIKE = "com.metrolist.music.widget.LIKE"
-        const val ACTION_NEXT = "com.metrolist.music.widget.NEXT"
-        const val ACTION_PREVIOUS = "com.metrolist.music.widget.PREVIOUS"
-        const val ACTION_UPDATE_WIDGET = "com.metrolist.music.widget.UPDATE_WIDGET"
+        const val ACTION_PLAY_PAUSE = "com.baaja.music.widget.PLAY_PAUSE"
+        const val ACTION_LIKE = "com.baaja.music.widget.LIKE"
+        const val ACTION_NEXT = "com.baaja.music.widget.NEXT"
+        const val ACTION_PREVIOUS = "com.baaja.music.widget.PREVIOUS"
+        const val ACTION_UPDATE_WIDGET = "com.baaja.music.widget.UPDATE_WIDGET"
     }
 }

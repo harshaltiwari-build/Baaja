@@ -896,7 +896,7 @@ fun LocalPlaylistHeader(
     val overrideThumbnail = remember { mutableStateOf<String?>(null) }
     var isCustomThumbnail: Boolean =
         playlist.thumbnails.firstOrNull()?.let {
-            it.contains("studio_square_thumbnail") || it.contains("content://com.metrolist.music")
+            it.contains("studio_square_thumbnail") || it.contains("content://${context.packageName}")
         } ?: false
 
     val result = remember { mutableStateOf<Uri?>(null) }

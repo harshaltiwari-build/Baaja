@@ -309,18 +309,6 @@ internal fun LyricsLine(
                         )
                     }
                 }
-                
-                val transText by item.translatedTextFlow.collectAsStateWithLifecycle()
-                transText?.let { 
-                    Text(
-                        text = it,
-                        fontSize = 16.sp,
-                        color = expressiveAccent.copy(alpha = 0.5f),
-                        textAlign = agentTextAlign,
-                        fontWeight = FontWeight.Normal,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
             }
         }
 

@@ -330,13 +330,6 @@ fun Queue(
                                 PlayerMenu(
                                     mediaMetadata = mediaMetadata,
                                     playerBottomSheetState = playerBottomSheetState,
-                                    onShowDetailsDialog = {
-                                        mediaMetadata?.id?.let {
-                                            bottomSheetPageState.show {
-                                                ShowMediaInfo(it)
-                                            }
-                                        }
-                                    },
                                     onDismiss = menuState::dismiss,
                                 )
                             }

@@ -203,7 +203,7 @@ fun BaajaSuggestionRow(
             modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .clickable(onClick = onClick)
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(start = BaajaHomeGutter, end = 10.dp)
                 .drawBottomDivider(divider),
         verticalAlignment = Alignment.CenterVertically,

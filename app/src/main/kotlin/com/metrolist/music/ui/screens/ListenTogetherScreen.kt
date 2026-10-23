@@ -84,7 +84,7 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.AppBarHeight
-import com.metrolist.music.constants.ListenTogetherInTopBarKey
+import com.metrolist.music.ui.component.rememberListenTogetherNoticeGate
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.JoinRequestPayload
@@ -107,26 +107,20 @@ import kotlinx.coroutines.launch
 @Composable
 fun ListenTogetherScreen(
     navController: NavController,
-    showTopBar: Boolean = false,
 ) {
     val context = LocalContext.current
     val listenTogetherManager = LocalListenTogetherManager.current
     val windowInsets = LocalPlayerAwareWindowInsets.current
     val joiningRoomTemplate = stringResource(R.string.joining_room)
 
-    if (listenTogetherManager == null) {
-        NotConfiguredContent()
-        return
-    }
+    if (listenTogetherManager == null) return
+    val noticeGate = rememberListenTogetherNoticeGate()
 
     val connectionState by listenTogetherManager.connectionState.collectAsStateWithLifecycle()
     val roomState by listenTogetherManager.roomState.collectAsStateWithLifecycle()
     val userId by listenTogetherManager.userId.collectAsStateWithLifecycle()
     val pendingJoinRequests by listenTogetherManager.pendingJoinRequests.collectAsStateWithLifecycle()
     val pendingSuggestions by listenTogetherManager.pendingSuggestions.collectAsStateWithLifecycle()
-
-    val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = false)
-    val shouldShowTopBar = showTopBar || listenTogetherInTopBar
 
     var savedUsername by rememberPreference(ListenTogetherUsernameKey, "")
     var roomCodeInput by rememberSaveable { mutableStateOf("") }
@@ -366,7 +360,7 @@ fun ListenTogetherScreen(
                     joinErrorMessage = joinErrorMessage,
                     waitingForApprovalText = waitingForApprovalText,
                     bringIntoViewRequester = bringIntoViewRequester,
-                    onCreateRoom = {
+                    onCreateRoom = { noticeGate {
                         val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
                         val finalUsername = username.trim()
                         if (finalUsername.isNotBlank()) {
@@ -380,8 +374,8 @@ fun ListenTogetherScreen(
                         } else {
                             Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
                         }
-                    },
-                    onJoinRoom = {
+                    } },
+                    onJoinRoom = { noticeGate {
                         val username = usernameInput.takeIf { it.isNotBlank() } ?: savedUsername
                         val finalUsername = username.trim()
                         if (finalUsername.isNotBlank()) {
@@ -400,7 +394,7 @@ fun ListenTogetherScreen(
                         } else {
                             Toast.makeText(context, R.string.error_username_empty, Toast.LENGTH_SHORT).show()
                         }
-                    },
+                    } },
                     onFieldFocused = {
                         coroutineScope.launch {
                             bringIntoViewRequester.bringIntoView()
@@ -417,26 +411,9 @@ fun ListenTogetherScreen(
         // Settings link
         item(key = "settings") {
             SettingsLinkCard(
-                onClick = { navController.navigate("settings/integrations/listen_together") },
+                onClick = { navController.navigate("settings/listen_together") },
             )
         }
-    }
-
-    if (shouldShowTopBar) {
-        TopAppBar(
-            title = { Text(stringResource(R.string.together)) },
-            navigationIcon = {
-                IconButton(
-                    onClick = navController::navigateUp,
-                    onLongClick = navController::backToMain,
-                ) {
-                    Icon(
-                        painterResource(R.drawable.arrow_back),
-                        contentDescription = null,
-                    )
-                }
-            },
-        )
     }
 }
 
@@ -454,48 +431,6 @@ private fun faceColors(index: Int): FaceColors {
             FaceColors(scheme.primaryContainer, scheme.onPrimaryContainer),
         )
     return palette[Math.floorMod(index, palette.size)]
-}
-
-@Composable
-private fun NotConfiguredContent() {
-    Box(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        BaajaCard(Modifier.padding(24.dp)) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(24.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(72.dp)
-                        .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, CircleShape, shadowOffset = 0.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.group),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(36.dp),
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.baaja_ai_together_title),
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.listen_together_not_configured),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
 }
 
 @Composable

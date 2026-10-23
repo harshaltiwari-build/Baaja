@@ -74,7 +74,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -144,12 +143,13 @@ import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
 import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DisableScreenshotKey
-import com.metrolist.music.constants.DynamicThemeKey
 import com.metrolist.music.constants.EnableHighRefreshRateKey
 import com.metrolist.music.constants.EnableLandscapeScalingKey
 import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
+import com.metrolist.music.constants.ListenTogetherNoticeAcceptedKey
+import com.metrolist.music.ui.component.ListenTogetherNoticeDialog
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.constants.LyricsProviderOrderKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
@@ -161,7 +161,6 @@ import com.metrolist.music.constants.PreferredLyricsProvider
 import com.metrolist.music.constants.PreferredLyricsProviderKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SYSTEM_DEFAULT
-import com.metrolist.music.constants.SelectedThemeColorKey
 import com.metrolist.music.constants.SimpMusicMigrationDoneKey
 import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
@@ -179,7 +178,6 @@ import com.metrolist.music.playback.MusicService
 import com.metrolist.music.playback.MusicService.MusicBinder
 import com.metrolist.music.playback.PlayerConnection
 import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.ui.component.AccountSettingsDialog
 import com.metrolist.music.ui.component.home.BaajaMainTopBar
 import com.metrolist.music.ui.component.AppNavigationBar
 import com.metrolist.music.ui.component.AppNavigationRail
@@ -199,7 +197,7 @@ import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.NavigationTab
 import com.metrolist.music.ui.theme.ColorSaver
 import com.metrolist.music.ui.theme.DefaultThemeColor
-import com.metrolist.music.ui.theme.MetrolistTheme
+import com.metrolist.music.ui.theme.BaajaTheme
 import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
@@ -210,6 +208,7 @@ import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.Updater
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
+import com.metrolist.music.utils.shouldShowChangelog
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -241,10 +240,10 @@ private data class AvailableUpdate(
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     companion object {
-        private const val ACTION_SEARCH = "com.metrolist.music.action.SEARCH"
-        private const val ACTION_LIBRARY = "com.metrolist.music.action.LIBRARY"
-        const val ACTION_RECOGNITION = "com.metrolist.music.action.RECOGNITION"
-        const val ACTION_OPEN_WIDGET_TARGET = "com.metrolist.music.action.OPEN_WIDGET_TARGET"
+        private const val ACTION_SEARCH = "com.baaja.music.action.SEARCH"
+        private const val ACTION_LIBRARY = "com.baaja.music.action.LIBRARY"
+        const val ACTION_RECOGNITION = "com.baaja.music.action.RECOGNITION"
+        const val ACTION_OPEN_WIDGET_TARGET = "com.baaja.music.action.OPEN_WIDGET_TARGET"
         const val EXTRA_AUTO_START_RECOGNITION = "auto_start_recognition"
         const val EXTRA_WIDGET_TARGET_TYPE = "widget_target_type"
         const val EXTRA_WIDGET_TARGET_ID = "widget_target_id"
@@ -263,6 +262,7 @@ class MainActivity : FragmentActivity() {
     lateinit var listenTogetherManager: com.metrolist.music.listentogether.ListenTogetherManager
 
     private lateinit var navController: NavHostController
+    private var pendingListenLink by mutableStateOf<Pair<String, String>?>(null)
     private var pendingIntent: Intent? = null
     private var latestVersionName by mutableStateOf(BuildConfig.BASE_VERSION_NAME)
 
@@ -428,7 +428,6 @@ class MainActivity : FragmentActivity() {
         // Defer migration and version tracking to avoid blocking first frame
         lifecycleScope.launch(Dispatchers.IO) {
             val preferences = dataStore.data.first()
-            val currentVersion = BuildConfig.BASE_VERSION_NAME
 
             // SimpMusic Removal Migration
             if (preferences[SimpMusicMigrationDoneKey] != true) {
@@ -451,7 +450,6 @@ class MainActivity : FragmentActivity() {
                         settings[PreferredLyricsProviderKey] = PreferredLyricsProvider.LRCLIB.name
                     }
                     settings[SimpMusicMigrationDoneKey] = true
-                    settings[LastSeenVersionKey] = currentVersion
                 }
             }
 
@@ -463,14 +461,8 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            safeDataStoreEdit { settings ->
-                settings[LastSeenVersionKey] = BuildConfig.BASE_VERSION_NAME
-            }
-        }
-
         setContent {
-            MetrolistApp(
+            BaajaApp(
                 latestVersionName = latestVersionName,
                 onLatestVersionNameChange = { latestVersionName = it },
                 playerConnection = playerConnectionSnapshot,
@@ -484,7 +476,7 @@ class MainActivity : FragmentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun MetrolistApp(
+    private fun BaajaApp(
         latestVersionName: String,
         onLatestVersionNameChange: (String) -> Unit,
         playerConnection: PlayerConnection?,
@@ -545,7 +537,6 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -595,8 +586,8 @@ class MainActivity : FragmentActivity() {
                 pureBlackEnabled && useDarkTheme
             }
 
-        val (selectedThemeColorInt) = rememberPreference(SelectedThemeColorKey, defaultValue = DefaultThemeColor.toArgb())
-        val selectedThemeColor = Color(selectedThemeColorInt)
+        // Album-art tinting is a fixed behaviour; the default brand colour is the fallback seed.
+        val selectedThemeColor = DefaultThemeColor
 
         val showChangelog = rememberSaveable { mutableStateOf(false) }
 
@@ -606,15 +597,9 @@ class MainActivity : FragmentActivity() {
 
         val themeColorCache = remember { mutableMapOf<String, Color>() }
 
-        LaunchedEffect(selectedThemeColor) {
-            if (!enableDynamicTheme) {
-                themeColor = selectedThemeColor
-            }
-        }
-
-        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
+        LaunchedEffect(playerConnection, selectedThemeColor) {
             val playerConnection = playerConnection
-            if (!enableDynamicTheme || playerConnection == null) {
+            if (playerConnection == null) {
                 themeColor = selectedThemeColor
                 return@LaunchedEffect
             }
@@ -658,7 +643,7 @@ class MainActivity : FragmentActivity() {
                 }
         }
 
-        MetrolistTheme(
+        BaajaTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
@@ -705,9 +690,10 @@ class MainActivity : FragmentActivity() {
                 val navController = rememberNavController()
 
                 LaunchedEffect(Unit) {
-                    val lastSeenVersion = dataStore.data.first()[LastSeenVersionKey] ?: ""
-                    val currentVersion = BuildConfig.BASE_VERSION_NAME
-                    if (lastSeenVersion != currentVersion) {
+                    // Read the stored version before anything writes it; the new value is only
+                    // stored once the changelog has been dismissed, so an update shows it once.
+                    val lastSeenVersion = dataStore.data.first()[LastSeenVersionKey]
+                    if (shouldShowChangelog(lastSeenVersion, BuildConfig.BASE_VERSION_NAME)) {
                         showChangelog.value = true
                     }
                 }
@@ -987,8 +973,6 @@ class MainActivity : FragmentActivity() {
                         }
                     }
 
-                var showAccountDialog by remember { mutableStateOf(false) }
-
                 val baseBg = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface
                 val artistNameAliases by ArtistNameAliases.aliases.collectAsStateWithLifecycle()
 
@@ -1002,12 +986,20 @@ class MainActivity : FragmentActivity() {
                     LocalShimmerTheme provides ShimmerTheme,
                     LocalSyncUtils provides syncUtils,
                     LocalListenTogetherManager provides listenTogetherManager,
-                    LocalChangelogState provides showChangelog,
                     LocalArtistNameAliases provides artistNameAliases,
                 ) {
-                    BaajaWelcomeGate(onSignIn = { navController.navigate("login") }) {
+                    BaajaWelcomeGate(onSignIn = { navController.navigate("login_direct") }) {
                     if (showChangelog.value) {
-                        ChangelogScreen(onDismiss = { showChangelog.value = false })
+                        ChangelogScreen(
+                            onDismiss = {
+                                showChangelog.value = false
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    safeDataStoreEdit { settings ->
+                                        settings[LastSeenVersionKey] = BuildConfig.BASE_VERSION_NAME
+                                    }
+                                }
+                            },
+                        )
                     }
 
                     Scaffold(
@@ -1025,7 +1017,7 @@ class MainActivity : FragmentActivity() {
                                         accountImageUrl = accountImageUrl,
                                         showUpdateBadge = latestVersionName != BuildConfig.BASE_VERSION_NAME,
                                         onProfileClick = { navController.navigate("profile") },
-                                        onProfileLongClick = { showAccountDialog = true },
+                                        onSettingsClick = { navController.navigate("settings") },
                                         scrollBehavior = topAppBarScrollBehavior,
                                         containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface,
                                         modifier =
@@ -1123,7 +1115,6 @@ class MainActivity : FragmentActivity() {
                                         pureBlack = pureBlack,
                                         slimNav = slimNav,
                                         onSearchLongClick = onSearchLongClick,
-                                        onHomeLongHold = { showAccountDialog = true },
                                         modifier =
                                             Modifier
                                                 .align(Alignment.BottomCenter)
@@ -1240,7 +1231,6 @@ class MainActivity : FragmentActivity() {
                                     onItemClick = onRailItemClick,
                                     pureBlack = pureBlack,
                                     onSearchLongClick = onRailSearchLongClick,
-                                    onHomeLongHold = { showAccountDialog = true },
                                 )
                             }
                             Box(Modifier.weight(1f)) {
@@ -1289,14 +1279,24 @@ class MainActivity : FragmentActivity() {
                         modifier = Modifier.align(Alignment.BottomCenter),
                     )
 
-                    if (showAccountDialog) {
-                        AccountSettingsDialog(
-                            onDismiss = {
-                                showAccountDialog = false
-                                homeViewModel.refresh()
-                            },
-                            latestVersionName = latestVersionName,
-                        )
+                    pendingListenLink?.let { (code, name) ->
+                        var noticeAccepted by rememberPreference(ListenTogetherNoticeAcceptedKey, defaultValue = false)
+                        LaunchedEffect(code) {
+                            if (noticeAccepted) {
+                                listenTogetherManager.joinRoom(code, name)
+                                pendingListenLink = null
+                            }
+                        }
+                        if (!noticeAccepted) {
+                            ListenTogetherNoticeDialog(
+                                onContinue = {
+                                    noticeAccepted = true
+                                    listenTogetherManager.joinRoom(code, name)
+                                    pendingListenLink = null
+                                },
+                                onCancel = { pendingListenLink = null },
+                            )
+                        }
                     }
 
                     sharedSong?.let { song ->
@@ -1461,7 +1461,8 @@ class MainActivity : FragmentActivity() {
         val isListenLink = uri.pathSegments.firstOrNull() == "listen" || uri.host?.equals("listen", ignoreCase = true) == true
         if (!listenCode.isNullOrBlank() && isListenLink) {
             val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
-            listenTogetherManager.joinRoom(listenCode, username)
+            // Joining from a link also needs the one-time community-server notice.
+            pendingListenLink = listenCode to username
             return
         }
 
@@ -1580,6 +1581,5 @@ val LocalPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No 
 val LocalDownloadUtil = staticCompositionLocalOf<DownloadUtil> { error("No DownloadUtil provided") }
 val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils provided") }
 val LocalListenTogetherManager = staticCompositionLocalOf<com.metrolist.music.listentogether.ListenTogetherManager?> { null }
-val LocalChangelogState = staticCompositionLocalOf<MutableState<Boolean>> { error("No LocalChangelogState provided") }
 val LocalArtistNameAliases = staticCompositionLocalOf<Map<String, String>> { emptyMap() }
 val LocalIsPlayerExpanded = compositionLocalOf { false }

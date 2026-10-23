@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="baaja_fix2_lt_notice_title">Before you listen together</string>
+    <string name="baaja_fix2_lt_notice_body">Your name, room code and song titles go through a community server so everyone in the room stays in sync. Only share a room code with people you trust.</string>
+    <string name="baaja_fix2_continue">Continue</string>
+    <string name="baaja_fix2_android_auto">Android Auto</string>
+    <string name="baaja_fix2_casting">Casting</string>
+    <string name="baaja_fix2_lyrics_from">Lyrics from %1$s</string>
+    <string name="baaja_fix2_play_all">Play all</string>
+    <string name="baaja_fix2_cache_songs">Cache Songs</string>
+    <string name="baaja_fix2_automix_needs_crossfade">Turn on Crossfade first</string>
+    <string name="baaja_fix2_transfer_listening_time">Transfer listening time</string>
+    <string name="baaja_fix2_state_on">On</string>
+    <string name="baaja_fix2_state_off">Off</string>
+    <string name="baaja_fix2_shuffle_on">Shuffle on</string>
+    <string name="baaja_fix2_shuffle_off">Shuffle off</string>
+    <string name="baaja_fix2_repeat_off">Repeat off</string>
+    <string name="baaja_fix2_repeat_all">Repeat all</string>
+    <string name="baaja_fix2_repeat_one">Repeat one</string>
+</resources>

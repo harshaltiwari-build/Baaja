@@ -114,6 +114,7 @@ fun CachePlaylistScreen(
     val playerConnection = LocalPlayerConnection.current ?: return
     val haptic = LocalHapticFeedback.current
     val focusManager = LocalFocusManager.current
+    val cacheSongsTitle = stringResource(R.string.baaja_fix2_cache_songs)
 
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
@@ -299,7 +300,7 @@ fun CachePlaylistScreen(
                                     } else {
                                         playerConnection.playQueue(
                                             ListQueue(
-                                                title = "Cache Songs",
+                                                title = cacheSongsTitle,
                                                 items = cachedSongs.map { it.toMediaItem() },
                                                 startIndex = cachedSongs.indexOfFirst { it.id == song.id }
                                             )
@@ -475,6 +476,7 @@ private fun CachePlaylistHeader(
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val downloadUtil = LocalDownloadUtil.current
+    val cacheSongsTitle = stringResource(R.string.baaja_fix2_cache_songs)
 
     val totalDuration = songs.sumOf { it.song.duration.coerceAtLeast(0) }
     val onDownloadAll = { songs.forEach { downloadUtil.download(it) } }
@@ -504,7 +506,7 @@ private fun CachePlaylistHeader(
             onClick = {
                 playerConnection.playQueue(
                     ListQueue(
-                        title = "Cache Songs",
+                        title = cacheSongsTitle,
                         items = songs.map { it.toMediaItem() },
                     )
                 )
@@ -516,7 +518,7 @@ private fun CachePlaylistHeader(
             onClick = {
                 playerConnection.playQueue(
                     ListQueue(
-                        title = "Cache Songs",
+                        title = cacheSongsTitle,
                         items = songs.shuffled().map { it.toMediaItem() },
                     )
                 )

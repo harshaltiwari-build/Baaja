@@ -105,9 +105,11 @@ private data class AuthData(
 fun LoginScreen(
     navController: NavController,
     isSwitchingChannel: Boolean = false,
+    skipIntro: Boolean = false,
 ) {
-    // Switching channel goes straight to the web flow; a fresh sign-in first shows Baaja's intro.
-    var showIntro by rememberSaveable { mutableStateOf(!isSwitchingChannel) }
+    // Switching channel and "Sign in" from the Welcome screen go straight to the web flow;
+    // other fresh sign-ins first show Baaja's intro.
+    var showIntro by rememberSaveable { mutableStateOf(!isSwitchingChannel && !skipIntro) }
     if (showIntro) {
         BaajaLoginIntro(
             onBack = navController::navigateUp,

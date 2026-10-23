@@ -255,7 +255,7 @@ class RecognitionForegroundService : Service() {
             isTerminal = true,
             contentIntent = pendingIntent,
             actionIntent = pendingIntent,
-            actionTitle = getString(R.string.listen_on_metrolist),
+            actionTitle = getString(R.string.listen_on_baaja),
         )
 
         serviceScope.launch {
@@ -271,7 +271,7 @@ class RecognitionForegroundService : Service() {
                     contentIntent = pendingIntent,
                     largeIcon = coverBitmap,
                     actionIntent = pendingIntent,
-                    actionTitle = getString(R.string.listen_on_metrolist),
+                    actionTitle = getString(R.string.listen_on_baaja),
                 )
             }
             finishWithPersistentResult()
@@ -538,8 +538,8 @@ class RecognitionForegroundService : Service() {
         const val EXTRA_RECOGNITION_TITLE = "recognition_title"
         const val EXTRA_RECOGNITION_ARTIST = "recognition_artist"
 
-        const val ACTION_START_WIDGET_RECOGNITION = "com.metrolist.music.widget.recognizer.START"
-        const val ACTION_STOP_WIDGET_RECOGNITION = "com.metrolist.music.widget.recognizer.STOP"
+        const val ACTION_START_WIDGET_RECOGNITION = "com.baaja.music.widget.recognizer.START"
+        const val ACTION_STOP_WIDGET_RECOGNITION = "com.baaja.music.widget.recognizer.STOP"
         const val PREFS_NAME = "recognizer_widget_prefs"
         const val PREF_STATE = "state"
         const val PREF_SONG_TITLE = "song_title"

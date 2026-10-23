@@ -1,23 +1,23 @@
-Material 3 YouTube Music client for Android
+Baaja is a bold, open-source music player for Android that streams from YouTube Music.
 
 Features:
 
-- Play any song or video from YT Music
-- Background playback 
-- Personalized quick picks 
-- Library management 
-- Download and cache songs for offline playback
+- Play any song or video from YT Music, with background playback
+- Personalised quick picks and a full library: songs, albums, artists and playlists
 - Search for songs, albums, artists, videos and playlists
-- Live lyrics 
-- YouTube Music account login support
-- Syncing of songs, artists, albums and playlists, from and to your account
-- Skip silence 
-- Import playlists 
-- Audio normalization 
-- Adjust tempo/pitch 
-- Local playlist management
-- Reorder songs in playlist or queue 
-- Light - Dark - black - Dynamic theme
+- Sign in to YouTube Music and sync your library
+- Live lyrics with a lyric preview
+- Sound shaping: equalizer, tempo and pitch, skip silence, audio normalisation
+- Quality settings for streaming and downloads
+- Smart downloads and offline caching
+- Automix and queue management
+- Audio output picker
+- Local music from your device
+- Spotify playlist import
+- Listen Together with friends
+- Identify music playing nearby
+- SponsorBlock support
+- Automatic backups
+- Editable profile
 - Sleep timer
-- Material 3 
-- etc.
+- Light, dark and black themes

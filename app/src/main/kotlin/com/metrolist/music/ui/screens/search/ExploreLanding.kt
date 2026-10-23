@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,6 +28,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.ContentScale
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.metrolist.music.ui.utils.resize
+import com.metrolist.music.viewmodels.ChartsViewModel
+import com.metrolist.music.viewmodels.NewReleaseViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +66,7 @@ import com.metrolist.music.ui.theme.baajaOutline
 
 private const val EXPLORE_MOOD_COLUMNS = 3
 private const val EXPLORE_MOOD_COUNT = 9
+private const val EXPLORE_COVER_COUNT = 4
 
 /** Explore landing shown on the Search tab before the user starts typing. */
 @Composable
@@ -65,6 +78,28 @@ fun ExploreLanding(
     modifier: Modifier = Modifier,
 ) {
     val navController = LocalNavController.current
+    val chartsViewModel: ChartsViewModel = hiltViewModel()
+    val newReleaseViewModel: NewReleaseViewModel = hiltViewModel()
+    val chartsPage by chartsViewModel.chartsPage.collectAsStateWithLifecycle()
+    val newReleases by newReleaseViewModel.newReleaseAlbums.collectAsStateWithLifecycle()
+    // Loaded once per back-stack entry; the ViewModel keeps the result so re-opening Explore is instant.
+    LaunchedEffect(chartsViewModel) {
+        if (chartsViewModel.chartsPage.value == null) chartsViewModel.loadCharts()
+    }
+    val chartCovers =
+        remember(chartsPage) {
+            chartsPage
+                ?.sections
+                .orEmpty()
+                .flatMap { it.items }
+                .mapNotNull { it.thumbnail }
+                .distinct()
+                .take(EXPLORE_COVER_COUNT)
+        }
+    val newReleaseCovers =
+        remember(newReleases) {
+            newReleases.mapNotNull { it.thumbnail }.distinct().take(EXPLORE_COVER_COUNT)
+        }
     LazyColumn(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -96,13 +131,16 @@ fun ExploreLanding(
                     title = stringResource(R.string.baaja_home_top_charts),
                     subtitle = stringResource(R.string.baaja_home_top_charts_sub),
                     seed = 5,
+                    covers = chartCovers,
                     onClick = { navController.navigate("charts_screen") },
                 )
-                ExploreSmallTile(
-                    label = stringResource(R.string.baaja_home_new_releases),
+                ExploreFeatureTile(
+                    badge = stringResource(R.string.baaja_explore_new_badge),
+                    title = stringResource(R.string.baaja_home_new_releases),
+                    subtitle = stringResource(R.string.baaja_explore_new_releases_sub),
                     seed = 2,
+                    covers = newReleaseCovers,
                     onClick = { navController.navigate("new_release") },
-                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -167,6 +205,7 @@ private fun ExploreFeatureTile(
     title: String,
     subtitle: String,
     seed: Int,
+    covers: List<String>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -181,7 +220,23 @@ private fun ExploreFeatureTile(
                 .clip(shape)
                 .clickable(role = Role.Button, onClick = onClick),
     ) {
+        // The illustration is the placeholder; real covers fade in over it once they load.
         BaajaBlockArt(seed = seed, modifier = Modifier.fillMaxSize())
+        if (covers.isNotEmpty()) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                covers.forEachIndexed { index, url ->
+                    if (index > 0) {
+                        Box(Modifier.fillMaxHeight().width(2.dp).background(ink))
+                    }
+                    AsyncImage(
+                        model = url.resize(400, 400),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                    )
+                }
+            }
+        }
         Box(
             modifier =
                 Modifier
@@ -222,48 +277,6 @@ private fun ExploreFeatureTile(
                 text = subtitle,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExploreSmallTile(
-    label: String,
-    seed: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val ink = baajaInk
-    val shape = RoundedCornerShape(22.dp)
-    Box(
-        modifier =
-            modifier
-                .height(128.dp)
-                .baajaOutline(ink, shape, borderWidth = 2.5.dp, shadowOffset = 3.dp)
-                .clip(shape)
-                .clickable(role = Role.Button, onClick = onClick),
-    ) {
-        BaajaBlockArt(seed = seed, modifier = Modifier.fillMaxSize())
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(10.dp)
-                    .height(34.dp)
-                    .border(2.dp, ink, CircleShape)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 12.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = label,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

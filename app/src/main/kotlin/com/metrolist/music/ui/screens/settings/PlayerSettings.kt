@@ -499,28 +499,36 @@ fun PlayerSettings(
                         },
                         onClick = { onCrossfadeGaplessChange(!crossfadeGapless) }
                     ))
-                    add(Material3SettingsItem(
-                        icon = painterResource(R.drawable.swipe),
-                        title = { Text(stringResource(R.string.baaja_pb_automix_title)) },
-                        description = { Text(stringResource(R.string.baaja_pb_automix_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = automixEnabled,
-                                onCheckedChange = onAutomixEnabledChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter = painterResource(
-                                            id = if (automixEnabled) R.drawable.check else R.drawable.close
-                                        ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                                    )
-                                }
-                            )
-                        },
-                        onClick = { onAutomixEnabledChange(!automixEnabled) }
-                    ))
                 }
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.swipe),
+                    title = { Text(stringResource(R.string.baaja_pb_automix_title)) },
+                    description = {
+                        Text(
+                            stringResource(
+                                if (crossfadeEnabled) R.string.baaja_pb_automix_desc else R.string.baaja_fix2_automix_needs_crossfade,
+                            ),
+                        )
+                    },
+                    enabled = crossfadeEnabled,
+                    trailingContent = {
+                        Switch(
+                            checked = automixEnabled,
+                            enabled = crossfadeEnabled,
+                            onCheckedChange = onAutomixEnabledChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (automixEnabled) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onAutomixEnabledChange(!automixEnabled) }
+                ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.history),
                     title = { Text(stringResource(R.string.history_duration)) },

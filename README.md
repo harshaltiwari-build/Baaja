@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/baaja-logo.svg" alt="Baaja app icon" width="160" />
+<img src="assets/baaja-logo.png" alt="Baaja app icon" width="160" />
 
 # Baaja (बाजा)
 
@@ -36,34 +36,37 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 
 **Playback & audio**
 - Stream any song or video from YouTube Music, with background playback
-- Download and cache for offline listening
+- Smart downloads and offline caching
 - Equalizer, audio normalization, crossfade, skip silence, tempo and pitch control
 - Sound shaping: stereo width, left/right balance, bass and treble
-- Separate quality for Wi-Fi, mobile data and downloads, with the codec and bitrate shown on the player
+- Quality settings: separate quality for Wi-Fi, mobile data and downloads, with the codec and bitrate shown on the player
+- Automix keeps the queue going with similar songs
+- Audio output picker
 - Optional SponsorBlock skipping of non-music segments
 - Sleep timer
 
 **Lyrics & discovery**
-- Live synced lyrics
+- Live synced lyrics, with a lyric preview
 - Personalised quick picks and mixes
 - Search songs, albums, artists, videos and playlists
 - Identify music playing around you
 
 **Library & account**
 - Sign in with your YouTube Music account and sync your library
-- Local playlists, playlist import, and drag-to-reorder queues
+- Local music from your device
+- Spotify playlist import, local playlists and drag-to-reorder queues
 - Automatic daily or weekly backups to a folder you choose
+- Editable profile
 
 **Social**
-- Listen together with friends in real time
-- Last.fm and ListenBrainz scrobbling, and Discord Rich Presence
+- Listen Together with friends in real time
 
 **Design**
 - Baaja's own look: white surfaces, ink outlines, offset shadows and a purple accent
 - Floating navigation bar and outlined mini player
 - Album-art colours tint the app while music plays, with an optional animated glow and spinning album art
 - A heart-burst animation when you like a song
-- Light, dark and pure-black modes, plus preset colour palettes
+- Light, dark and pure-black modes
 - Home-screen widgets
 
 ## Build from source
@@ -89,7 +92,6 @@ Releases are built and published by GitHub Actions (`.github/workflows/release.y
 | `KEYSTORE_PASSWORD` | The keystore password |
 | `KEY_PASSWORD` | The key password |
 | `DEBUG_KEYSTORE` | A debug keystore, base64-encoded (used by the nightly build) |
-| `LASTFM_API_KEY`, `LASTFM_SECRET` | Optional: your own Last.fm API credentials |
 
 Add a `---vX.Y.Z` section to `changelog.md` for each release; the workflow uses it for the release notes. Keep your release keystore backed up: Android only accepts updates signed with the same key.
 

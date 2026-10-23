@@ -10,7 +10,7 @@ on:
     # changes still build.
     paths-ignore:
       - "app/src/main/res/values-*/strings.xml"
-      - "app/src/main/res/values-*/metrolist_strings.xml"
+      - "app/src/main/res/values-*/baaja_strings.xml"
       - "fastlane/**"
 
 concurrency:
@@ -71,9 +71,9 @@ jobs:
         run: ./gradlew --console=plain assembleGmsDebug --warning-mode summary
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          METROLIST_APPLICATION_ID: com.baaja.music.pr.p${{ github.event.number }}
-          METROLIST_APP_NAME: Baaja PR ${{ github.event.number }}
-          METROLIST_DEBUG_KEYSTORE_PATH: pr-debug.keystore
+          BAAJA_APPLICATION_ID: com.baaja.music.pr.p${{ github.event.number }}
+          BAAJA_APP_NAME: Baaja PR ${{ github.event.number }}
+          BAAJA_DEBUG_KEYSTORE_PATH: pr-debug.keystore
           PULL_REQUEST: "true"
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}

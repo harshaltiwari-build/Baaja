@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.onboarding
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -56,6 +58,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -105,8 +108,16 @@ fun BaajaWelcomeGate(
         scope.launch { context.safeDataStoreEdit { it[BaajaHasSeenWelcomeKey] = true } }
     }
 
+    // Back on the welcome screen leaves the app instead of reaching the screens underneath.
+    BackHandler(enabled = showWelcome) {
+        (context as? Activity)?.moveTaskToBack(true)
+    }
+
     Box(Modifier.fillMaxSize()) {
-        content()
+        // Hide the app underneath from screen readers while the welcome overlay covers it.
+        Box(Modifier.fillMaxSize().then(if (showWelcome) Modifier.clearAndSetSemantics { } else Modifier)) {
+            content()
+        }
         AnimatedVisibility(
             visible = showWelcome,
             enter = fadeIn(tween(0)),

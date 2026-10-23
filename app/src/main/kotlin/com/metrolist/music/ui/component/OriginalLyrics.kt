@@ -408,7 +408,7 @@ fun OriginalLyrics(
 
     val lazyListState = rememberLazyListState()
 
-    // Professional animation states for smooth Metrolist-style transitions
+    // Professional animation states for smooth transitions
     var isAnimating by remember { mutableStateOf(false) }
     var isAutoScrollEnabled by rememberSaveable { mutableStateOf(true) }
 
@@ -683,7 +683,7 @@ fun OriginalLyrics(
                 if (isLyricsProviderShown) {
                     item {
                         Text(
-                            text = "Lyrics from ${lyricsEntity?.provider}",
+                            text = stringResource(R.string.baaja_fix2_lyrics_from, lyricsEntity?.provider.orEmpty()),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontWeight = FontWeight.Medium,
@@ -1533,24 +1533,6 @@ fun OriginalLyrics(
                                     )
                                 }
                             }
-
-                            // Show translated text if available
-                            val translatedText by item.translatedTextFlow.collectAsStateWithLifecycle()
-                            translatedText?.let { translated ->
-                                Text(
-                                    text = translated,
-                                    fontSize = 16.sp,
-                                    color = expressiveAccent.copy(alpha = 0.5f),
-                                    textAlign =
-                                        when (lyricsTextPosition) {
-                                            LyricsPosition.LEFT -> TextAlign.Left
-                                            LyricsPosition.CENTER -> TextAlign.Center
-                                            LyricsPosition.RIGHT -> TextAlign.Right
-                                        },
-                                    fontWeight = FontWeight.Normal,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
                         }
                     }
                 }
@@ -2050,11 +2032,11 @@ fun OriginalLyrics(
     }
 }
 
-// Professional page animation constants inspired by Metrolist design - slower for smoothness
-private const val METROLIST_AUTO_SCROLL_DURATION = 1500L // Much slower auto-scroll for smooth transitions
-private const val METROLIST_INITIAL_SCROLL_DURATION = 1000L // Slower initial positioning
-private const val METROLIST_SEEK_DURATION = 800L // Slower user interaction
-private const val METROLIST_FAST_SEEK_DURATION = 600L // Less aggressive seeking
+// Professional page animation constants - slower for smoothness
+private const val LYRICS_AUTO_SCROLL_DURATION = 1500L // Much slower auto-scroll for smooth transitions
+private const val LYRICS_INITIAL_SCROLL_DURATION = 1000L // Slower initial positioning
+private const val LYRICS_SEEK_DURATION = 800L // Slower user interaction
+private const val LYRICS_FAST_SEEK_DURATION = 600L // Less aggressive seeking
 
 // Lyrics constants
 val LyricsPreviewTime = 2.seconds

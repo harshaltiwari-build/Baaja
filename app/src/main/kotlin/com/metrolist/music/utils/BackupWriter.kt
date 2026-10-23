@@ -6,6 +6,13 @@
 package com.metrolist.music.utils
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import com.metrolist.music.constants.SpotifyClientIdKey
+import com.metrolist.music.constants.SpotifyClientSecretKey
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import com.metrolist.music.db.InternalDatabase
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.extensions.div
@@ -22,9 +29,14 @@ import java.util.zip.ZipEntry
 object BackupWriter {
     fun write(context: Context, database: MusicDatabase, output: OutputStream) {
         output.buffered().zipOutputStream().use { zip ->
-            (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered().use { input ->
-                zip.putNextEntry(ZipEntry(SETTINGS_FILENAME))
-                input.copyTo(zip)
+            val settingsCopy = stageSettingsWithoutSecrets(context)
+            try {
+                settingsCopy.inputStream().buffered().use { input ->
+                    zip.putNextEntry(ZipEntry(SETTINGS_FILENAME))
+                    input.copyTo(zip)
+                }
+            } finally {
+                settingsCopy.delete()
             }
             zip.putNextEntry(ZipEntry(ArtistNameAliases.BACKUP_FILENAME))
             zip.write(ArtistNameAliases.serialize().encodeToByteArray())
@@ -44,4 +56,29 @@ object BackupWriter {
             }
         }
     }
+
+    /**
+     * Copies the live settings file and removes the user's own Spotify developer keys from the copy,
+     * so a backup that gets shared never carries them. Restoring simply leaves those two fields empty.
+     */
+    private fun stageSettingsWithoutSecrets(context: Context): File {
+        val live = context.filesDir / "datastore" / SETTINGS_FILENAME
+        val stage = context.filesDir / "datastore" / "settings.backup-stage.preferences_pb"
+        stage.delete()
+        live.copyTo(stage, overwrite = true)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val stageStore = PreferenceDataStoreFactory.create(scope = scope) { stage }
+            runBlocking(Dispatchers.IO) {
+                stageStore.edit { prefs ->
+                    SECRET_KEYS.forEach { prefs.remove(it) }
+                }
+            }
+        } finally {
+            scope.cancel()
+        }
+        return stage
+    }
+
+    private val SECRET_KEYS = listOf(SpotifyClientIdKey, SpotifyClientSecretKey)
 }

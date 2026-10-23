@@ -123,8 +123,8 @@ jobs:
       - name: Build Release APK
         run: ./gradlew --console=plain assemble${{ matrix.variantName }}Release --warning-mode summary
         env:
-          METROLIST_APPLICATION_ID: com.baaja.music
-          METROLIST_APP_NAME: Baaja
+          BAAJA_APPLICATION_ID: com.baaja.music
+          BAAJA_APP_NAME: Baaja
           PULL_REQUEST: "false"
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}

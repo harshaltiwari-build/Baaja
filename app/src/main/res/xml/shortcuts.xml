@@ -6,7 +6,7 @@
         android:shortcutId="search"
         android:shortcutShortLabel="@string/search">
         <intent
-            android:action="com.metrolist.music.action.SEARCH"
+            android:action="com.baaja.music.action.SEARCH"
             android:targetClass="com.metrolist.music.MainActivity"
             android:targetPackage="com.baaja.music" />
     </shortcut>
@@ -16,7 +16,7 @@
         android:shortcutId="library"
         android:shortcutShortLabel="@string/filter_library">
         <intent
-            android:action="com.metrolist.music.action.LIBRARY"
+            android:action="com.baaja.music.action.LIBRARY"
             android:targetClass="com.metrolist.music.MainActivity"
             android:targetPackage="com.baaja.music" />
     </shortcut>

@@ -96,13 +96,9 @@ fun AboutScreen(
                     .padding(24.dp),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.small_icon),
+                    painter = painterResource(R.drawable.baaja_logo),
                     contentDescription = stringResource(R.string.baaja_about_app_name),
-                    colorFilter = ColorFilter.tint(
-                        color = MaterialTheme.colorScheme.primary,
-                        blendMode = BlendMode.SrcIn,
-                    ),
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier.size(96.dp),
                 )
 
                 Spacer(Modifier.width(20.dp))

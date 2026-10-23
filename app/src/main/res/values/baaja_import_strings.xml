@@ -98,5 +98,4 @@
     <string name="baaja_imp_open_playlist">Open playlist</string>
     <string name="baaja_imp_start_over">Import another</string>
     <string name="baaja_imp_skipped">%1$d items skipped (podcast episodes or empty rows)</string>
-    <string name="baaja_imp_match_desc">Matched with %1$s by %2$s</string>
 </resources>
