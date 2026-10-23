@@ -58,6 +58,7 @@ object InnerTubeXPlayer {
         playlistId: String? = null,
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
+        mobileAudioQuality: AudioQuality = audioQuality,
         contentHints: ContentHints = ContentHints(),
         allowBoundedRange: Boolean = true,
     ): Result<PlaybackData> =
@@ -80,7 +81,7 @@ object InnerTubeXPlayer {
                         videoId = videoId,
                         hints = hints,
                         excludedClients = excludedClients,
-                        audioQuality = audioQuality.toInnerTubeX(connectivityManager),
+                        audioQuality = resolveAudioQuality(audioQuality, mobileAudioQuality, connectivityManager),
                         clientPlaybackNonce = generateClientPlaybackNonce(),
                     ),
                 ) { "InnerTubeX returned no playable stream" }
@@ -279,17 +280,19 @@ object InnerTubeXPlayer {
                 }
         }
 
-    private fun AudioQuality.toInnerTubeX(connectivityManager: ConnectivityManager): InnerTubeXAudioQuality =
-        when (this) {
+    /** Uses [wifiQuality] on unmetered networks and [mobileQuality] on metered ones; AUTO saves data when metered. */
+    private fun resolveAudioQuality(
+        wifiQuality: AudioQuality,
+        mobileQuality: AudioQuality,
+        connectivityManager: ConnectivityManager,
+    ): InnerTubeXAudioQuality {
+        val metered = connectivityManager.isActiveNetworkMetered
+        return when (if (metered) mobileQuality else wifiQuality) {
             AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH
             AudioQuality.LOW -> InnerTubeXAudioQuality.LOW
-            AudioQuality.AUTO ->
-                if (connectivityManager.isActiveNetworkMetered) {
-                    InnerTubeXAudioQuality.LOW
-                } else {
-                    InnerTubeXAudioQuality.AUTO
-                }
+            AudioQuality.AUTO -> if (metered) InnerTubeXAudioQuality.LOW else InnerTubeXAudioQuality.AUTO
         }
+    }
 
     private fun ExtractedStream.toPlaybackData(): PlaybackData {
         val metadata = mediaMetadata

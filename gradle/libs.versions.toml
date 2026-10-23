@@ -1,6 +1,8 @@
 [versions]
 androidGradlePlugin = "9.4.1"
 browser = "1.10.0"
+work = "2.10.0"
+documentfile = "1.0.1"
 robolectric = "4.17"
 androidxTestCore = "1.7.0"
 json = "20260814"
@@ -36,6 +38,8 @@ tinypinyin = "2.0.3"
 protobuf = "4.36.2"
 
 [libraries]
+work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesGuava" }
 

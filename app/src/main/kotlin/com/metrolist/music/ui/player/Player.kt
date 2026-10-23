@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.player
 
+import com.metrolist.music.constants.AnimatedPlayerGlowKey
 import androidx.activity.compose.BackHandler
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -139,6 +140,7 @@ import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
 import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.HidePlayerThumbnailKey
@@ -171,6 +173,8 @@ import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.Lyrics
 import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.ResizableIconButton
+import com.metrolist.music.ui.component.heartBurst
+import com.metrolist.music.ui.component.rememberHeartBurst
 import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
 import com.metrolist.music.ui.component.rememberBottomSheetState
@@ -259,6 +263,10 @@ fun BottomSheetPlayer(
         }
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
+    val showAudioFormat by rememberPreference(ShowAudioFormatOnPlayerKey, defaultValue = true)
+    val animatedPlayerGlow by rememberPreference(AnimatedPlayerGlowKey, defaultValue = false)
+    val currentFormat by playerConnection.currentFormat.collectAsState()
+    val audioFormatLabel = remember(currentFormat) { currentFormat?.audioFormatLabel() }
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
     val keepScreenOn = isPlaying && isKeepScreenOn
 
@@ -900,13 +908,21 @@ fun BottomSheetPlayer(
                                             1.0f to Color.Black,
                                         )
                                     }
-                                Box(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .alpha(backgroundAlpha)
-                                        .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                        .background(Color.Black.copy(alpha = 0.2f)),
-                                )
+                                if (animatedPlayerGlow) {
+                                    AmbientGlowBackground(
+                                        colors = colors,
+                                        playing = isPlaying,
+                                        modifier = Modifier.fillMaxSize().alpha(backgroundAlpha),
+                                    )
+                                } else {
+                                    Box(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .alpha(backgroundAlpha)
+                                            .background(Brush.verticalGradient(colorStops = gradientColorStops))
+                                            .background(Color.Black.copy(alpha = 0.2f)),
+                                    )
+                                }
                             }
                         }
                     }
@@ -1235,6 +1251,7 @@ fun BottomSheetPlayer(
                                 // For episodes, show saved state (inLibrary); for songs, show liked state
                                 val isEpisode = currentSong?.song?.isEpisode == true
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
+                                val heartBurst = rememberHeartBurst(liked = isFavorite, key = currentSong?.song?.id)
                                 FilledIconButton(
                                     onClick = playerConnection::toggleLike,
                                     shape = favShape,
@@ -1243,7 +1260,9 @@ fun BottomSheetPlayer(
                                             containerColor = textButtonColor,
                                             contentColor = iconButtonColor,
                                         ),
-                                    modifier = Modifier.size(42.dp),
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .heartBurst(heartBurst, MaterialTheme.colorScheme.error),
                                 ) {
                                     Icon(
                                         painter =
@@ -1506,6 +1525,19 @@ fun BottomSheetPlayer(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+
+                if (showAudioFormat) {
+                    audioFormatLabel?.let { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextBackgroundColor.copy(alpha = 0.75f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp),
+                        )
+                    }
+                }
 
                 Text(
                     text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
@@ -1824,12 +1856,14 @@ fun BottomSheetPlayer(
                                 // For episodes, show saved state (inLibrary); for songs, show liked state
                                 val isEpisode = currentSong?.song?.isEpisode == true
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
+                                val heartBurst = rememberHeartBurst(liked = isFavorite, key = currentSong?.song?.id)
                                 ResizableIconButton(
                                     icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
                                     color = if (isFavorite) MaterialTheme.colorScheme.error else TextBackgroundColor,
                                     modifier =
                                         Modifier
                                             .size(32.dp)
+                                            .heartBurst(heartBurst, MaterialTheme.colorScheme.error)
                                             .padding(4.dp)
                                             .align(Alignment.Center),
                                     onClick = playerConnection::toggleLike,

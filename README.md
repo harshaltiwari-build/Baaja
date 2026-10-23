@@ -38,6 +38,9 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 - Stream any song or video from YouTube Music, with background playback
 - Download and cache for offline listening
 - Equalizer, audio normalization, crossfade, skip silence, tempo and pitch control
+- Sound shaping: stereo width, left/right balance, bass and treble
+- Separate quality for Wi-Fi, mobile data and downloads, with the codec and bitrate shown on the player
+- Optional SponsorBlock skipping of non-music segments
 - Sleep timer
 
 **Lyrics & discovery**
@@ -49,15 +52,17 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 **Library & account**
 - Sign in with your YouTube Music account and sync your library
 - Local playlists, playlist import, and drag-to-reorder queues
+- Automatic daily or weekly backups to a folder you choose
 
 **Social**
 - Listen together with friends in real time
-- Last.fm scrobbling and Discord Rich Presence
+- Last.fm and ListenBrainz scrobbling, and Discord Rich Presence
 
 **Design**
 - Baaja's own look: white surfaces, ink outlines, offset shadows and a purple accent
 - Floating navigation bar and outlined mini player
-- Album-art colours tint the app while music plays
+- Album-art colours tint the app while music plays, with an optional animated glow and spinning album art
+- A heart-burst animation when you like a song
 - Light, dark and pure-black modes, plus preset colour palettes
 - Home-screen widgets
 

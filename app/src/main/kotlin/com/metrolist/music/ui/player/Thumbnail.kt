@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.player
 
+import androidx.compose.foundation.shape.CircleShape
+import com.metrolist.music.constants.SpinningAlbumArtKey
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -504,6 +506,10 @@ private fun ThumbnailItem(
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val spinningAlbumArt by rememberPreference(SpinningAlbumArtKey, defaultValue = false)
+    val isPlaying by playerConnection.isPlaying.collectAsState()
+    val spinThis = spinningAlbumArt && !hidePlayerThumbnail && item.mediaId == currentMediaId
+    val vinylRotation = rememberVinylRotation(spinning = spinThis && isPlaying)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
 
@@ -559,7 +565,8 @@ private fun ThumbnailItem(
         Box(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
-                .clip(RoundedCornerShape(dimensions.cornerRadius))
+                .graphicsLayer { if (spinThis) rotationZ = vinylRotation.value }
+                .clip(if (spinThis) CircleShape else RoundedCornerShape(dimensions.cornerRadius))
         ) {
             if (hidePlayerThumbnail) {
                 HiddenThumbnailPlaceholder(textBackgroundColor = textBackgroundColor)

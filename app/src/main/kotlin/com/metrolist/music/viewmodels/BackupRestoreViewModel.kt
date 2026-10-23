@@ -43,6 +43,7 @@ import com.metrolist.music.playback.MusicService.Companion.PERSISTENT_PLAYER_STA
 import com.metrolist.music.playback.MusicService.Companion.PERSISTENT_QUEUE_FILE
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.utils.ArtistNameAliases
+import com.metrolist.music.utils.BackupWriter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -81,39 +82,7 @@ class BackupRestoreViewModel @Inject constructor(
     fun backup(context: Context, uri: Uri) {
         runCatching {
             context.applicationContext.contentResolver.openOutputStream(uri)?.use {
-                it.buffered().zipOutputStream().use { outputStream ->
-                    (context.filesDir / "datastore" / SETTINGS_FILENAME).inputStream().buffered()
-                        .use { inputStream ->
-                            outputStream.putNextEntry(ZipEntry(SETTINGS_FILENAME))
-                            inputStream.copyTo(outputStream)
-                        }
-                    outputStream.putNextEntry(ZipEntry(ArtistNameAliases.BACKUP_FILENAME))
-                    outputStream.write(ArtistNameAliases.serialize().encodeToByteArray())
-                    runBlocking(Dispatchers.IO) {
-                        database.checkpoint()
-                    }
-                    val dbPath = database.openHelper.writableDatabase.path
-                    if (dbPath != null) {
-                        FileInputStream(dbPath).use { inputStream ->
-                            outputStream.putNextEntry(ZipEntry(InternalDatabase.DB_NAME))
-                            inputStream.copyTo(outputStream)
-                        }
-                        val walFile = File("$dbPath-wal")
-                        if (walFile.exists()) {
-                            FileInputStream(walFile).use { inputStream ->
-                                outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-wal"))
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                        val shmFile = File("$dbPath-shm")
-                        if (shmFile.exists()) {
-                            FileInputStream(shmFile).use { inputStream ->
-                                outputStream.putNextEntry(ZipEntry("${InternalDatabase.DB_NAME}-shm"))
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                    }
-                }
+                BackupWriter.write(context, database, it)
             }
         }.onSuccess {
             Toast.makeText(context, R.string.backup_create_success, Toast.LENGTH_SHORT).show()

@@ -5,6 +5,16 @@
 
 package com.metrolist.music.ui.screens.settings
 
+import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.utils.rememberEnumPreference
+import com.metrolist.music.utils.AutoBackup
+import com.metrolist.music.ui.component.EnumDialog
+import com.metrolist.music.constants.AutoBackupFrequencyKey
+import com.metrolist.music.constants.AutoBackupFrequency
+import com.metrolist.music.constants.AutoBackupFolderKey
+import androidx.documentfile.provider.DocumentFile
+import androidx.core.net.toUri
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -110,6 +120,52 @@ fun BackupAndRestore(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    val (autoBackupFrequency, onAutoBackupFrequencyChange) =
+        rememberEnumPreference(AutoBackupFrequencyKey, defaultValue = AutoBackupFrequency.OFF)
+    val (autoBackupFolder, onAutoBackupFolderChange) = rememberPreference(AutoBackupFolderKey, defaultValue = "")
+    val autoBackupFolderName = remember(autoBackupFolder) {
+        autoBackupFolder.takeIf { it.isNotBlank() }?.let { DocumentFile.fromTreeUri(context, it.toUri())?.name }
+    }
+    var pendingAutoBackupFrequency by remember { mutableStateOf<AutoBackupFrequency?>(null) }
+    var showAutoBackupDialog by remember { mutableStateOf(false) }
+    val autoBackupFolderLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            val pending = pendingAutoBackupFrequency
+            pendingAutoBackupFrequency = null
+            if (uri == null) return@rememberLauncherForActivityResult
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+            onAutoBackupFolderChange(uri.toString())
+            if (pending != null) {
+                onAutoBackupFrequencyChange(pending)
+                AutoBackup.schedule(context, pending)
+            }
+        }
+    val setAutoBackupFrequency: (AutoBackupFrequency) -> Unit = { frequency ->
+        if (frequency != AutoBackupFrequency.OFF && autoBackupFolder.isBlank()) {
+            pendingAutoBackupFrequency = frequency
+            autoBackupFolderLauncher.launch(null)
+        } else {
+            onAutoBackupFrequencyChange(frequency)
+            AutoBackup.schedule(context, frequency)
+        }
+    }
+    if (showAutoBackupDialog) {
+        EnumDialog(
+            onDismiss = { showAutoBackupDialog = false },
+            onSelect = {
+                showAutoBackupDialog = false
+                setAutoBackupFrequency(it)
+            },
+            title = stringResource(R.string.auto_backup),
+            current = autoBackupFrequency,
+            values = AutoBackupFrequency.entries.toList(),
+            valueText = { autoBackupFrequencyLabel(it) },
+        )
+    }
+
     val backupLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
             if (uri != null) {
@@ -214,6 +270,36 @@ fun BackupAndRestore(
                         },
                     ),
                 ),
+        )
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.auto_backup),
+            items =
+                listOf(
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.auto_backup)) },
+                        description = { Text(autoBackupFrequencyLabel(autoBackupFrequency)) },
+                        icon = painterResource(R.drawable.backup),
+                        onClick = { showAutoBackupDialog = true },
+                    ),
+                    Material3SettingsItem(
+                        title = { Text(stringResource(R.string.auto_backup_folder)) },
+                        description = {
+                            Text(
+                                autoBackupFolderName
+                                    ?: stringResource(R.string.auto_backup_folder_not_set)
+                            )
+                        },
+                        icon = painterResource(R.drawable.restore),
+                        onClick = { autoBackupFolderLauncher.launch(null) },
+                    ),
+                ),
+        )
+        Text(
+            text = stringResource(R.string.auto_backup_desc, AutoBackup.KEEP_LATEST),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 
@@ -468,3 +554,13 @@ fun BackupAndRestore(
         }
     }
 }
+
+@Composable
+private fun autoBackupFrequencyLabel(frequency: AutoBackupFrequency): String =
+    stringResource(
+        when (frequency) {
+            AutoBackupFrequency.OFF -> R.string.auto_backup_off
+            AutoBackupFrequency.DAILY -> R.string.auto_backup_daily
+            AutoBackupFrequency.WEEKLY -> R.string.auto_backup_weekly
+        }
+    )

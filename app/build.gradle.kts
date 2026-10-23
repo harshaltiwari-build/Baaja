@@ -297,6 +297,8 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.hilt)
+    implementation(libs.work.runtime)
+    implementation(libs.documentfile)
     ksp(libs.hilt.compiler)
 
     implementation(project(":innertube"))

@@ -107,6 +107,7 @@ import com.metrolist.music.constants.AndroidAutoTargetPlaylistKey
 import com.metrolist.music.constants.AudioNormalizationKey
 import com.metrolist.music.constants.AudioOffload
 import com.metrolist.music.constants.AudioQualityKey
+import com.metrolist.music.constants.MobileAudioQualityKey
 import com.metrolist.music.constants.AudioTrackPlaybackParamsKey
 import com.metrolist.music.constants.AutoDownloadOnLikeKey
 import com.metrolist.music.constants.AutoLoadMoreKey
@@ -165,6 +166,13 @@ import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
+import com.metrolist.music.constants.SoundBalanceKey
+import com.metrolist.music.constants.SoundBassKey
+import com.metrolist.music.constants.SoundTrebleKey
+import com.metrolist.music.constants.SoundWidthKey
+import com.metrolist.music.constants.SponsorBlockEnabledKey
+import com.metrolist.music.constants.ListenBrainzEnabledKey
+import com.metrolist.music.constants.ListenBrainzTokenKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Event
@@ -197,6 +205,9 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.alarm.MusicAlarmScheduler
 import com.metrolist.music.playback.alarm.MusicAlarmStore
 import com.metrolist.music.playback.audio.SilenceDetectorAudioProcessor
+import com.metrolist.music.playback.audio.SoundShaperAudioProcessor
+import com.metrolist.music.playback.audio.SoundShaperSettings
+import com.metrolist.music.playback.sponsorblock.SponsorBlockSkipper
 import com.metrolist.music.playback.queues.EmptyQueue
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.Queue
@@ -208,6 +219,7 @@ import com.metrolist.music.constants.LoudnessLevel
 import com.metrolist.music.constants.LoudnessLevelKey
 import com.metrolist.music.utils.CoilBitmapLoader
 import com.metrolist.music.utils.NetworkConnectivityObserver
+import com.metrolist.music.utils.ListenBrainzScrobbleTarget
 import com.metrolist.music.utils.ScrobbleManager
 import com.metrolist.music.utils.SyncUtils
 import com.metrolist.music.utils.getArtistSeparator
@@ -342,6 +354,7 @@ class MusicService :
     val currentStreamClient = MutableStateFlow<String?>(null)
 
     private lateinit var audioQuality: com.metrolist.music.constants.AudioQuality
+    @Volatile private var mobileAudioQuality = com.metrolist.music.constants.AudioQuality.AUTO
 
     private var currentQueue: Queue = EmptyQueue
     var queueTitle: String? = null
@@ -430,6 +443,9 @@ class MusicService :
     private val historyReporters = HashMap<Player, YouTubeHistoryReporter>()
     private val playerNormalizationProcessors = HashMap<Player, VolumeNormalizationAudioProcessor>()
     private val playerEqualizerProcessors = HashMap<Player, CustomEqualizerAudioProcessor>()
+    private val playerSoundShaperProcessors = HashMap<Player, SoundShaperAudioProcessor>()
+    @Volatile private var soundShaperSettings = SoundShaperSettings()
+    private val sponsorBlockSkipper by lazy { SponsorBlockSkipper(this, scope) }
 
     private var loudnessSetupJob: Job? = null
     private var loudnessSetupGeneration: Long = 0L
@@ -473,6 +489,7 @@ class MusicService :
     private var latestMediaNotification: Notification? = null
 
     private var scrobbleManager: ScrobbleManager? = null
+    private var listenBrainzManager: ScrobbleManager? = null
 
     val automixItems = MutableStateFlow<List<MediaItem>>(emptyList())
 
@@ -748,6 +765,14 @@ class MusicService :
             else com.metrolist.music.constants.AudioQuality.entries.find { it.name == value }
         } ?: com.metrolist.music.constants.AudioQuality.AUTO
         playerVolume = MutableStateFlow((startupPrefs!![PlayerVolumeKey] ?: 1f).coerceIn(0f, 1f))
+        mobileAudioQuality = com.metrolist.music.constants.AudioQuality.entries
+            .find { it.name == startupPrefs!![MobileAudioQualityKey] } ?: com.metrolist.music.constants.AudioQuality.AUTO
+        dataStore.data
+            .map { prefs ->
+                com.metrolist.music.constants.AudioQuality.entries
+                    .find { it.name == prefs[MobileAudioQualityKey] } ?: com.metrolist.music.constants.AudioQuality.AUTO
+            }.distinctUntilChanged()
+            .collectLatest(scope) { mobileAudioQuality = it }
 
         initializeCast()
 
@@ -891,6 +916,31 @@ class MusicService :
                 }
             }
         }
+
+        combine(
+            dataStore.data.map { it[SponsorBlockEnabledKey] ?: false },
+            listenTogetherManager.roomState,
+        ) { enabled, roomState -> enabled && roomState == null }
+            .distinctUntilChanged()
+            .collectLatest(scope) { enabled ->
+                sponsorBlockSkipper.enabled = enabled
+                if (enabled) sponsorBlockSkipper.onTrackChanged(player, player.currentMediaItem?.mediaId)
+            }
+
+        dataStore.data
+            .map {
+                SoundShaperSettings(
+                    width = it[SoundWidthKey] ?: 1f,
+                    balance = it[SoundBalanceKey] ?: 0f,
+                    bassDb = it[SoundBassKey] ?: 0f,
+                    trebleDb = it[SoundTrebleKey] ?: 0f,
+                )
+            }
+            .distinctUntilChanged()
+            .collectLatest(scope) { settings ->
+                soundShaperSettings = settings
+                playerSoundShaperProcessors.values.forEach { it.update(settings) }
+            }
 
         dataStore.data
             .map { (it[SkipSilenceKey] ?: false) to (it[SkipSilenceInstantKey] ?: false) }
@@ -1123,6 +1173,18 @@ class MusicService :
             }
 
         dataStore.data
+            .map { prefs ->
+                prefs[ListenBrainzTokenKey]?.trim()?.takeIf { (prefs[ListenBrainzEnabledKey] ?: false) && it.isNotEmpty() }
+            }.distinctUntilChanged()
+            .collect(scope) { token ->
+                listenBrainzManager?.destroy()
+                // ListenBrainz asks clients to submit after half the track or 4 minutes, whichever comes first.
+                listenBrainzManager = token?.let {
+                    ScrobbleManager(scope, scrobbleDelaySeconds = 240, target = ListenBrainzScrobbleTarget(it))
+                }
+            }
+
+        dataStore.data
             .map { it[LastFMUseNowPlaying] ?: false }
             .distinctUntilChanged()
             .collectLatest(scope) {
@@ -1293,6 +1355,7 @@ class MusicService :
     private fun createExoPlayer(prefs: Preferences? = null): ExoPlayer {
         val normalizationProcessor = VolumeNormalizationAudioProcessor()
         val eqProcessor = CustomEqualizerAudioProcessor()
+        val soundShaperProcessor = SoundShaperAudioProcessor().apply { update(soundShaperSettings) }
 
         val silenceProcessor = SilenceDetectorAudioProcessor { handleLongSilenceDetected() }
 
@@ -1318,7 +1381,7 @@ class MusicService :
                 .setMediaSourceFactory(
                     createMediaSourceFactory(normalizationProcessor) { createdPlayer },
                 )
-                .setRenderersFactory(createRenderersFactory(normalizationProcessor, eqProcessor, silenceProcessor, useAudioTrackPlaybackParams))
+                .setRenderersFactory(createRenderersFactory(normalizationProcessor, eqProcessor, soundShaperProcessor, silenceProcessor, useAudioTrackPlaybackParams))
                 .setLoadControl(
                     // Start playback once ~750ms is buffered (media3's default is 1000ms) so first
                     // audio is audible a touch sooner. min/max/after-rebuffer match the media3 1.x
@@ -1346,6 +1409,7 @@ class MusicService :
         playerNormalizationProcessors[player] = normalizationProcessor
         playerSilenceProcessors[player] = silenceProcessor
         playerEqualizerProcessors[player] = eqProcessor
+        playerSoundShaperProcessors[player] = soundShaperProcessor
         equalizerService.addAudioProcessor(eqProcessor)
 
         if (prefs != null) {
@@ -2532,6 +2596,7 @@ class MusicService :
         mediaItem: MediaItem?,
         reason: Int,
     ) {
+        sponsorBlockSkipper.onTrackChanged(player, mediaItem?.mediaId)
         // Only natural completion transitions mark the previous track as fully cached,
         // never a manual skip or seek. Read lastTransitionedMediaId before replacing it.
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
@@ -2582,8 +2647,11 @@ class MusicService :
         setupAudioNormalization()
 
         scrobbleManager?.onSongStop()
+
+        listenBrainzManager?.onSongStop()
         if (player.playWhenReady && player.playbackState == Player.STATE_READY) {
             scrobbleManager?.onSongStart(player.currentMetadata, duration = player.duration)
+            listenBrainzManager?.onSongStart(player.currentMetadata, duration = player.duration)
         }
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
@@ -2691,6 +2759,7 @@ class MusicService :
 
         if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
             scrobbleManager?.onSongStop()
+            listenBrainzManager?.onSongStop()
         }
     }
 
@@ -2828,6 +2897,7 @@ class MusicService :
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
             scrobbleManager?.onPlayerStateChanged(player.isPlaying, player.currentMetadata, duration = player.duration)
+            listenBrainzManager?.onPlayerStateChanged(player.isPlaying, player.currentMetadata, duration = player.duration)
         }
     }
 
@@ -3866,6 +3936,7 @@ class MusicService :
                         mediaId,
                         audioQuality = audioQuality,
                         connectivityManager = connectivityManager,
+                        mobileAudioQuality = mobileAudioQuality,
                         contentHints = ContentHints(
                             isExplicit = song?.explicit,
                             isUploaded = song?.isUploaded,
@@ -3998,6 +4069,7 @@ class MusicService :
     private fun createRenderersFactory(
         normalizationProcessor: VolumeNormalizationAudioProcessor,
         eqProcessor: CustomEqualizerAudioProcessor,
+        soundShaperProcessor: SoundShaperAudioProcessor,
         silenceProcessor: SilenceDetectorAudioProcessor,
         useAudioTrackPlaybackParams: Boolean,
     ) = object : DefaultRenderersFactory(this) {
@@ -4058,6 +4130,7 @@ class MusicService :
                     arrayOf(
                         normalizationProcessor,
                         eqProcessor,
+                        soundShaperProcessor,
                         silenceProcessor,
                     ),
                     SilenceSkippingAudioProcessor(2_000_000, 20_000, 256),
@@ -4778,6 +4851,7 @@ class MusicService :
                             videoId = mediaId,
                             audioQuality = audioQuality,
                             connectivityManager = connectivityManager,
+                            mobileAudioQuality = mobileAudioQuality,
                             contentHints = ContentHints(
                                 isExplicit = song?.explicit,
                                 isUploaded = song?.isUploaded,
@@ -4940,6 +5014,7 @@ class MusicService :
 
         nextPlayer.removeListener(secondaryPlayerListener)
         nextPlayer.addListener(this)
+        sponsorBlockSkipper.onTrackChanged(player, player.currentMediaItem?.mediaId)
         sleepTimer?.let { nextPlayer.addListener(it) }
 
         sleepTimer?.player = player
@@ -5027,6 +5102,7 @@ class MusicService :
         playerNormalizationProcessors.remove(player)
         playerSilenceProcessors.remove(player)
         playerEqualizerProcessors.remove(player)?.let(equalizerService::removeAudioProcessor)
+        playerSoundShaperProcessors.remove(player)
         player.release()
     }
 

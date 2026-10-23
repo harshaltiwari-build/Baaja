@@ -123,6 +123,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.metrolist.music.ui.theme.PlayerColorExtractor
 import com.metrolist.music.ui.theme.baajaOutline
+import com.metrolist.music.ui.component.heartBurst
+import com.metrolist.music.ui.component.rememberHeartBurst
 
 /**
  * Stable wrapper for progress state - reads values only during draw phase
@@ -1097,12 +1099,14 @@ private fun FavoriteButton(
     // For episodes, show saved state (inLibrary); for songs, show liked state
     val isEpisode = librarySong?.song?.isEpisode == true
     val isLiked = if (isEpisode) librarySong?.song?.inLibrary != null else librarySong?.song?.liked == true
+    val heartBurst = rememberHeartBurst(liked = isLiked, key = librarySong?.song?.id)
 
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(40.dp)
+                .heartBurst(heartBurst, errorColor)
                 .clip(CircleShape)
                 .border(
                     width = 1.dp,

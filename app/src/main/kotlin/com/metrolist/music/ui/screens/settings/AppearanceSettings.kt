@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.settings
 
+import com.metrolist.music.constants.SpinningAlbumArtKey
+import com.metrolist.music.constants.AnimatedPlayerGlowKey
 import android.os.Build
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -192,6 +194,8 @@ fun AppearanceSettings(
             CropAlbumArtKey,
             defaultValue = false,
         )
+    val (animatedPlayerGlow, onAnimatedPlayerGlowChange) = rememberPreference(AnimatedPlayerGlowKey, defaultValue = false)
+    val (spinningAlbumArt, onSpinningAlbumArtChange) = rememberPreference(SpinningAlbumArtKey, defaultValue = false)
     val (playerBackground, onPlayerBackgroundChange) =
         rememberEnumPreference(
             PlayerBackgroundStyleKey,
@@ -1138,6 +1142,46 @@ fun AppearanceSettings(
                             )
                         },
                         onClick = { showPlayerBackgroundDialog = true },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.gradient),
+                        title = { Text(stringResource(R.string.animated_player_glow)) },
+                        description = { Text(stringResource(R.string.animated_player_glow_desc)) },
+                        enabled = playerBackground == PlayerBackgroundStyle.GRADIENT,
+                        trailingContent = {
+                            Switch(
+                                checked = animatedPlayerGlow,
+                                onCheckedChange = onAnimatedPlayerGlowChange,
+                                enabled = playerBackground == PlayerBackgroundStyle.GRADIENT,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(id = if (animatedPlayerGlow) R.drawable.check else R.drawable.close),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                },
+                            )
+                        },
+                        onClick = { onAnimatedPlayerGlowChange(!animatedPlayerGlow) },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.album),
+                        title = { Text(stringResource(R.string.spinning_album_art)) },
+                        description = { Text(stringResource(R.string.spinning_album_art_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = spinningAlbumArt,
+                                onCheckedChange = onSpinningAlbumArtChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(id = if (spinningAlbumArt) R.drawable.check else R.drawable.close),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                },
+                            )
+                        },
+                        onClick = { onSpinningAlbumArtChange(!spinningAlbumArt) },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.hide_image),

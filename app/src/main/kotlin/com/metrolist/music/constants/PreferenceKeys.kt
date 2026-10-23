@@ -108,6 +108,8 @@ val DismissedKmpUpdateKey = stringPreferencesKey("dismissedKmpUpdate")
 val UpdateNotificationsEnabledKey = booleanPreferencesKey("updateNotifications")
 
 val AudioQualityKey = stringPreferencesKey("audioQuality")
+val MobileAudioQualityKey = stringPreferencesKey("mobileAudioQuality")
+val DownloadAudioQualityKey = stringPreferencesKey("downloadAudioQuality")
 
 enum class AudioQuality {
     AUTO,
@@ -151,6 +153,17 @@ val ShufflePlaylistFirstKey = booleanPreferencesKey("shufflePlaylistFirst")
 val PreventDuplicateTracksInQueueKey = booleanPreferencesKey("preventDuplicateTracksInQueue")
 val CrossfadeEnabledKey = booleanPreferencesKey("crossfadeEnabled")
 val CrossfadeDurationKey = floatPreferencesKey("crossfadeDurationFloat")
+val SoundWidthKey = floatPreferencesKey("soundShaperWidth")
+val SponsorBlockEnabledKey = booleanPreferencesKey("sponsorBlockEnabled")
+val ListenBrainzEnabledKey = booleanPreferencesKey("listenBrainzEnabled")
+val ListenBrainzTokenKey = stringPreferencesKey("listenBrainzToken")
+val AutoBackupFrequencyKey = stringPreferencesKey("autoBackupFrequency")
+val AutoBackupFolderKey = stringPreferencesKey("autoBackupFolder")
+
+enum class AutoBackupFrequency { OFF, DAILY, WEEKLY }
+val SoundBalanceKey = floatPreferencesKey("soundShaperBalance")
+val SoundBassKey = floatPreferencesKey("soundShaperBassDb")
+val SoundTrebleKey = floatPreferencesKey("soundShaperTrebleDb")
 val CrossfadeGaplessKey = booleanPreferencesKey("crossfadeGapless")
 
 val MaxImageCacheSizeKey = intPreferencesKey("maxImageCacheSize")
@@ -435,7 +448,10 @@ val HistoryDuration = floatPreferencesKey("historyDuration")
 
 val PlayerButtonsStyleKey = stringPreferencesKey("player_buttons_style")
 val PlayerBackgroundStyleKey = stringPreferencesKey("playerBackgroundStyle")
+val AnimatedPlayerGlowKey = booleanPreferencesKey("animatedPlayerGlow")
+val SpinningAlbumArtKey = booleanPreferencesKey("spinningAlbumArt")
 val ShowLyricsKey = booleanPreferencesKey("showLyrics")
+val ShowAudioFormatOnPlayerKey = booleanPreferencesKey("showAudioFormatOnPlayer")
 val LyricsTextPositionKey = stringPreferencesKey("lyricsTextPosition")
 val LyricsClickKey = booleanPreferencesKey("lyricsClick")
 val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")

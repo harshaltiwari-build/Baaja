@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens.settings
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -36,6 +38,14 @@ import androidx.navigation.NavController
 import com.metrolist.music.BuildConfig
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.constants.SponsorBlockEnabledKey
+import com.metrolist.music.constants.DownloadAudioQualityKey
+import com.metrolist.music.constants.MobileAudioQualityKey
+import com.metrolist.music.constants.SoundBalanceKey
+import com.metrolist.music.constants.SoundBassKey
+import com.metrolist.music.constants.SoundTrebleKey
+import com.metrolist.music.constants.SoundWidthKey
+import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
 import com.metrolist.music.constants.AudioNormalizationKey
 import com.metrolist.music.constants.AudioOffload
 import com.metrolist.music.constants.AudioTrackPlaybackParamsKey
@@ -95,6 +105,14 @@ import com.metrolist.music.ui.utils.getLoudnessLevelLabel
 fun PlayerSettings(
     navController: NavController
 ) {
+    val (mobileAudioQuality, onMobileAudioQualityChange) = rememberEnumPreference(
+        MobileAudioQualityKey,
+        defaultValue = AudioQuality.AUTO
+    )
+    val (downloadAudioQuality, onDownloadAudioQualityChange) = rememberEnumPreference(
+        DownloadAudioQualityKey,
+        defaultValue = AudioQuality.AUTO
+    )
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
         defaultValue = AudioQuality.AUTO
@@ -113,6 +131,15 @@ fun PlayerSettings(
     )
     val (persistentQueue, onPersistentQueueChange) = rememberPreference(
         PersistentQueueKey,
+        defaultValue = true
+    )
+    val (soundWidth, onSoundWidthChange) = rememberPreference(SoundWidthKey, defaultValue = 1f)
+    val (soundBalance, onSoundBalanceChange) = rememberPreference(SoundBalanceKey, defaultValue = 0f)
+    val (soundBass, onSoundBassChange) = rememberPreference(SoundBassKey, defaultValue = 0f)
+    val (soundTreble, onSoundTrebleChange) = rememberPreference(SoundTrebleKey, defaultValue = 0f)
+    val (sponsorBlockEnabled, onSponsorBlockEnabledChange) = rememberPreference(SponsorBlockEnabledKey, defaultValue = false)
+    val (showAudioFormat, onShowAudioFormatChange) = rememberPreference(
+        ShowAudioFormatOnPlayerKey,
         defaultValue = true
     )
     val (skipSilence, onSkipSilenceChange) = rememberPreference(
@@ -226,6 +253,27 @@ fun PlayerSettings(
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
     }
+    var showMobileQualityDialog by remember { mutableStateOf(false) }
+    var showDownloadQualityDialog by remember { mutableStateOf(false) }
+
+    if (showMobileQualityDialog) {
+        AudioQualityDialog(
+            title = stringResource(R.string.audio_quality_mobile),
+            current = mobileAudioQuality,
+            autoLabel = stringResource(R.string.audio_quality_auto_save_data),
+            onSelect = { onMobileAudioQualityChange(it); showMobileQualityDialog = false },
+            onDismiss = { showMobileQualityDialog = false },
+        )
+    }
+    if (showDownloadQualityDialog) {
+        AudioQualityDialog(
+            title = stringResource(R.string.audio_quality_download),
+            current = downloadAudioQuality,
+            autoLabel = stringResource(R.string.audio_quality_auto),
+            onSelect = { onDownloadAudioQualityChange(it); showDownloadQualityDialog = false },
+            onDismiss = { showDownloadQualityDialog = false },
+        )
+    }
 
     var showLoudnessLevelDialog by remember {
         mutableStateOf(false)
@@ -301,6 +349,23 @@ fun PlayerSettings(
                     onClick = { showAudioQualityDialog = true }
                 ))
                 add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.graphic_eq),
+                    title = { Text(stringResource(R.string.audio_quality_mobile)) },
+                    description = {
+                        Text(
+                            if (mobileAudioQuality == AudioQuality.AUTO) stringResource(R.string.audio_quality_auto_save_data)
+                            else audioQualityLabel(mobileAudioQuality)
+                        )
+                    },
+                    onClick = { showMobileQualityDialog = true }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.download),
+                    title = { Text(stringResource(R.string.audio_quality_download)) },
+                    description = { Text(audioQualityLabel(downloadAudioQuality)) },
+                    onClick = { showDownloadQualityDialog = true }
+                ))
+                add(Material3SettingsItem(
                     icon = painterResource(R.drawable.linear_scale),
                     title = { Text(stringResource(R.string.crossfade)) },
                     description = { Text(stringResource(R.string.crossfade_desc)) },
@@ -372,6 +437,48 @@ fun PlayerSettings(
                             )
                         }
                     }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.info),
+                    title = { Text(stringResource(R.string.show_audio_format_on_player)) },
+                    description = { Text(stringResource(R.string.show_audio_format_on_player_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = showAudioFormat,
+                            onCheckedChange = onShowAudioFormatChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (showAudioFormat) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onShowAudioFormatChange(!showAudioFormat) }
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.skip_next),
+                    title = { Text(stringResource(R.string.sponsorblock)) },
+                    description = { Text(stringResource(R.string.sponsorblock_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = sponsorBlockEnabled,
+                            onCheckedChange = onSponsorBlockEnabledChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (sponsorBlockEnabled) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onSponsorBlockEnabledChange(!sponsorBlockEnabled) }
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.fast_forward),
@@ -629,6 +736,64 @@ fun PlayerSettings(
                 initialDayTimes = dayTimesMap
             )
         }
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.sound_shaping),
+            items = buildList {
+                add(soundShaperSliderItem(
+                    icon = R.drawable.graphic_eq,
+                    title = R.string.sound_width,
+                    valueText = "${(soundWidth * 100).roundToInt()}%",
+                    value = soundWidth,
+                    range = 0f..2f,
+                    steps = 19,
+                    onValueChange = onSoundWidthChange,
+                ))
+                add(soundShaperSliderItem(
+                    icon = R.drawable.tune,
+                    title = R.string.sound_balance,
+                    valueText = when {
+                        soundBalance < -0.005f -> stringResource(R.string.sound_balance_left, (-soundBalance * 100).roundToInt())
+                        soundBalance > 0.005f -> stringResource(R.string.sound_balance_right, (soundBalance * 100).roundToInt())
+                        else -> stringResource(R.string.sound_balance_center)
+                    },
+                    value = soundBalance,
+                    range = -1f..1f,
+                    steps = 19,
+                    onValueChange = onSoundBalanceChange,
+                ))
+                add(soundShaperSliderItem(
+                    icon = R.drawable.equalizer,
+                    title = R.string.sound_bass,
+                    valueText = formatDb(soundBass),
+                    value = soundBass,
+                    range = -12f..12f,
+                    steps = 23,
+                    onValueChange = onSoundBassChange,
+                ))
+                add(soundShaperSliderItem(
+                    icon = R.drawable.equalizer,
+                    title = R.string.sound_treble,
+                    valueText = formatDb(soundTreble),
+                    value = soundTreble,
+                    range = -12f..12f,
+                    steps = 23,
+                    onValueChange = onSoundTrebleChange,
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.close),
+                    title = { Text(stringResource(R.string.sound_reset)) },
+                    description = { Text(stringResource(R.string.sound_reset_desc)) },
+                    enabled = soundWidth != 1f || soundBalance != 0f || soundBass != 0f || soundTreble != 0f,
+                    onClick = {
+                        onSoundWidthChange(1f)
+                        onSoundBalanceChange(0f)
+                        onSoundBassChange(0f)
+                        onSoundTrebleChange(0f)
+                    }
+                ))
+            }
+        )
 
         Material3SettingsGroup(
             title = stringResource(R.string.sleep_timer),
@@ -1104,5 +1269,62 @@ fun PlayerSettings(
                 )
             }
         }
+    )
+}
+
+private fun soundShaperSliderItem(
+    @DrawableRes icon: Int,
+    @StringRes title: Int,
+    valueText: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+) = Material3SettingsItem(
+    leadingContent = { Icon(painterResource(icon), contentDescription = null) },
+    title = { Text(stringResource(title)) },
+    description = {
+        Column {
+            Text(valueText)
+            Slider(
+                value = value,
+                onValueChange = { onValueChange((it * 10f).roundToInt() / 10f) },
+                valueRange = range,
+                steps = steps,
+            )
+        }
+    },
+)
+
+private fun formatDb(value: Float): String =
+    when {
+        value > 0.05f -> "+${value.roundToInt()} dB"
+        value < -0.05f -> "${value.roundToInt()} dB"
+        else -> "0 dB"
+    }
+
+@Composable
+private fun audioQualityLabel(quality: AudioQuality): String =
+    when (quality) {
+        AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
+        AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
+        AudioQuality.LOW -> stringResource(R.string.audio_quality_low)
+    }
+
+@Composable
+private fun AudioQualityDialog(
+    title: String,
+    current: AudioQuality,
+    autoLabel: String,
+    onSelect: (AudioQuality) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    EnumDialog(
+        onDismiss = onDismiss,
+        onSelect = onSelect,
+        title = title,
+        current = current,
+        values = AudioQuality.entries.toList(),
+        valueText = { if (it == AudioQuality.AUTO) autoLabel else audioQualityLabel(it) },
     )
 }

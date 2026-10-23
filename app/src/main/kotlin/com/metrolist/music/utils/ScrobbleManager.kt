@@ -13,11 +13,47 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.min
 
+/** Where a [ScrobbleManager] reports listens. */
+interface ScrobbleTarget {
+    suspend fun nowPlaying(metadata: MediaMetadata)
+
+    suspend fun scrobble(metadata: MediaMetadata, startedAtSeconds: Long)
+}
+
+object LastFmScrobbleTarget : ScrobbleTarget {
+    override suspend fun nowPlaying(metadata: MediaMetadata) {
+        LastFM.updateNowPlaying(
+            artist = metadata.artists.joinToString { it.name },
+            track = metadata.title,
+            album = metadata.album?.title,
+            duration = metadata.duration
+        )
+    }
+
+    override suspend fun scrobble(metadata: MediaMetadata, startedAtSeconds: Long) {
+        LastFM.scrobble(
+            artist = metadata.artists.joinToString { it.name },
+            track = metadata.title,
+            duration = metadata.duration,
+            timestamp = startedAtSeconds,
+            album = metadata.album?.title,
+        )
+    }
+}
+
+class ListenBrainzScrobbleTarget(private val token: String) : ScrobbleTarget {
+    override suspend fun nowPlaying(metadata: MediaMetadata) = ListenBrainz.playingNow(token, metadata)
+
+    override suspend fun scrobble(metadata: MediaMetadata, startedAtSeconds: Long) =
+        ListenBrainz.listened(token, metadata, startedAtSeconds)
+}
+
 class ScrobbleManager(
     private val scope: CoroutineScope,
     var minSongDuration: Int = 30,
     var scrobbleDelayPercent: Float = 0.5f,
-    var scrobbleDelaySeconds: Int = 50
+    var scrobbleDelaySeconds: Int = 50,
+    private val target: ScrobbleTarget = LastFmScrobbleTarget,
 ) {
     private var scrobbleJob: Job? = null
     private var scrobbleRemainingMillis: Long = 0L
@@ -107,26 +143,12 @@ class ScrobbleManager(
     }
 
     private fun scrobbleSong(metadata: MediaMetadata) {
-        scope.launch {
-            LastFM.scrobble(
-                artist = metadata.artists.joinToString { it.name },
-                track = metadata.title,
-                duration = metadata.duration,
-                timestamp = songStartedAt,
-                album = metadata.album?.title,
-            )
-        }
+        val startedAt = songStartedAt
+        scope.launch { target.scrobble(metadata, startedAt) }
     }
 
     private fun updateNowPlaying(metadata: MediaMetadata) {
-        scope.launch {
-            LastFM.updateNowPlaying(
-                artist = metadata.artists.joinToString { it.name },
-                track = metadata.title,
-                album = metadata.album?.title,
-                duration = metadata.duration
-            )
-        }
+        scope.launch { target.nowPlaying(metadata) }
     }
 
     fun onPlayerStateChanged(isPlaying: Boolean, metadata: MediaMetadata?, duration: Long? = null) {
