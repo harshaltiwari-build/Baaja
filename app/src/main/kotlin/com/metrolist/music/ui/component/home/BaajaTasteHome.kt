@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -119,7 +120,7 @@ fun BaajaArtistMixTile(
     val ink = baajaInk
     Column(
         modifier
-            .height(112.dp)
+            .heightIn(min = 112.dp)
             .baajaSurface(ink, tint, RoundedCornerShape(22.dp), shadowOffset = 3.dp, borderWidth = 2.5.dp)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(12.dp),

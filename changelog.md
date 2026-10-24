@@ -1,3 +1,22 @@
+---v1.3.0
+# Baaja 1.3.0
+Widgets that do real jobs, in Baaja's own look.
+
+## New features
+- Eight home screen widgets: Now playing, Resume, Sleep timer, Music alarm, Up next, Search and Identify, Quick play and Listen together
+- Now playing shows the song, how far you are, a heart, previous, play, next and a sleep button, in light and dark
+- Resume picks up the last song with one tap
+- Sleep timer: tap 15, 30 or 60 minutes or the end of the song, see what is left, add 15 minutes or cancel
+- Music alarm: see the next alarm and switch it on or off without opening the app
+- Up next lists the next songs and a tap jumps to one
+- Search and Identify opens search, or starts naming a song playing around you
+- Quick play starts your liked songs, your downloads or your top songs in one tap
+- Listen together shows your room code and lets you share it
+
+## Changes
+- The older player widgets now use the Baaja look too
+- The artist picker and mixes fit small phones and large text sizes
+
 ---v1.2.0
 # Baaja 1.2.0
 Home now learns your taste, starting from the moment you open the app.

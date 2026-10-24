@@ -4,4 +4,17 @@
     <color name="widget_text_primary">#E6E1E5</color>
     <color name="widget_text_secondary">#CAC4D0</color>
     <color name="baaja_window_background">#121016</color>
+    <!-- Baaja widgets -->
+    <color name="bw_ink">#F4F1FF</color>
+    <color name="bw_card">#1F1B2B</color>
+    <color name="bw_shadow">#000000</color>
+    <color name="bw_purple">#9B7BFF</color>
+    <color name="bw_on_purple">#17151F</color>
+    <color name="bw_track">#3A3550</color>
+    <color name="bw_muted">#A9A2C2</color>
+    <color name="bw_yellow">#FFE066</color>
+    <color name="bw_lilac">#3B3068</color>
+    <color name="bw_pink">#72333B</color>
+    <color name="bw_mint">#0F4D48</color>
+    <color name="bw_on_yellow">#17151F</color>
 </resources>

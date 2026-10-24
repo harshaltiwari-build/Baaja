@@ -203,6 +203,7 @@ import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.widget.BaajaWidgetManager
+import com.metrolist.music.widget.BaajaWidgetRenderer
 import com.metrolist.music.widget.MusicWidgetReceiver
 import com.metrolist.music.widget.PlaylistWidgetReceiver
 import com.metrolist.music.ui.utils.resize
@@ -4083,6 +4084,38 @@ class MusicService :
             PlaylistWidgetReceiver.ACTION_PLAY_TARGET -> {
                 handlePlaylistWidgetPlay(intent)
             }
+
+            BaajaWidgetRenderer.ACTION_SLEEP_SET -> {
+                sleepTimer?.start(intent.getIntExtra(BaajaWidgetRenderer.EXTRA_MINUTES, 30))
+                updateExtraWidgets()
+            }
+
+            BaajaWidgetRenderer.ACTION_SLEEP_ADD -> {
+                sleepTimer?.let { timer ->
+                    val leftMs = if (timer.triggerTime > 0) timer.triggerTime - System.currentTimeMillis() else 0L
+                    timer.start(((leftMs.coerceAtLeast(0L) + 59_999L) / 60_000L).toInt() + 15)
+                }
+                updateExtraWidgets()
+            }
+
+            BaajaWidgetRenderer.ACTION_SLEEP_CANCEL -> {
+                sleepTimer?.clear()
+                updateExtraWidgets()
+            }
+
+            BaajaWidgetRenderer.ACTION_SLEEP_TOGGLE -> {
+                sleepTimer?.let { timer -> if (timer.isActive) timer.clear() else timer.start(30) }
+                updateExtraWidgets()
+            }
+
+            BaajaWidgetRenderer.ACTION_JUMP -> {
+                val index = player.currentMediaItemIndex + intent.getIntExtra(BaajaWidgetRenderer.EXTRA_OFFSET, 0)
+                if (index in 0 until player.mediaItemCount) {
+                    player.seekTo(index, 0L)
+                    player.play()
+                }
+                updateWidgetUI(player.isPlaying)
+            }
         }
 
         return super.onStartCommand(intent, flags, startId)
@@ -4352,10 +4385,43 @@ class MusicService :
                         duration = if (player.duration != C.TIME_UNSET) player.duration else 0,
                         currentPosition = player.currentPosition,
                     )
+                    updateExtraWidgets()
                 }
             } catch (e: Exception) {
             } finally {
                 widgetUpdateInFlight = false
+            }
+        }
+    }
+
+    /** Refreshes the sleep timer, Up next, Listen together and Quick play widgets. */
+    private fun updateExtraWidgets() {
+        scope.launch {
+            try {
+                val timer = sleepTimer
+                val rows = mutableListOf<BaajaWidgetManager.UpNextRow>()
+                val start = player.currentMediaItemIndex.coerceAtLeast(0)
+                for (i in start until minOf(player.mediaItemCount, start + 4)) {
+                    val meta = player.getMediaItemAt(i).mediaMetadata
+                    rows +=
+                        BaajaWidgetManager.UpNextRow(
+                            title = meta.title?.toString().orEmpty(),
+                            artist = (meta.artist ?: meta.subtitle)?.toString().orEmpty(),
+                            artworkUri = meta.artworkUri?.toString(),
+                        )
+                }
+                val inRoom = listenTogetherManager.isInRoom
+                val room = if (inRoom) listenTogetherManager.roomState.value else null
+                widgetManager.updateExtras(
+                    sleepEndAt = timer?.triggerTime ?: -1L,
+                    sleepUntilSongEnd = timer?.pauseWhenSongEnd == true,
+                    rows = rows,
+                    queueTotal = player.mediaItemCount,
+                    togetherCode = room?.roomCode.orEmpty(),
+                    togetherCount = room?.usersCount ?: 0,
+                )
+            } catch (e: Exception) {
+                Timber.tag(TAG).w(e, "Failed to update extra widgets")
             }
         }
     }
@@ -4370,8 +4436,11 @@ class MusicService :
         }
         widgetUpdateJob =
             scope.launch {
+                var ticks = 0
                 while (isActive) {
                     delay(1.seconds)
+                    ticks++
+                    if (ticks % 15 == 0) updateExtraWidgets()
                     if (player.isPlaying) {
                         widgetManager.updateProgress(
                             duration = if (player.duration != C.TIME_UNSET) player.duration else 0,

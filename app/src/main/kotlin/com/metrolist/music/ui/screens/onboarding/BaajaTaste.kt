@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -511,7 +513,7 @@ fun BaajaArtistStep(
             }
             Spacer(Modifier.height(10.dp))
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+                columns = GridCells.Adaptive(minSize = 96.dp),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 130.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -579,10 +581,10 @@ private fun ArtistTile(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Box(Modifier.size(100.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.widthIn(max = 104.dp).fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) {
             Box(
                 Modifier
-                    .size(92.dp)
+                    .fillMaxSize(0.92f)
                     .baajaOutline(ring, CircleShape, borderWidth = if (selected) 4.dp else 2.5.dp, shadowOffset = if (selected) 3.dp else 0.dp)
                     .clip(CircleShape)
                     .background(baajaPastelFor(artist.name)),

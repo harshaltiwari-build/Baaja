@@ -85,7 +85,7 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Light, dark and pure-black themes
 - Floating navigation bar, outlined mini player and smooth launch animation
 - A heart-burst animation when you like a song
-- Home-screen widgets
+- Eight home-screen widgets in the Baaja look, light and dark: Now playing (seek position, heart, sleep), Resume, Sleep timer (15, 30, 60 minutes or end of song), Music alarm (switch it on or off), Up next (tap a song to jump to it), Search and Identify, Quick play (liked, downloads, your top songs) and Listen together (share your room code)
 - Stays upright in portrait on every screen
 
 ## Screenshots

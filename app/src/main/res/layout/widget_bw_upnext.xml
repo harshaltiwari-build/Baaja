@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bw_card"
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="15dp"
+    android:paddingBottom="13dp"
+    android:theme="@style/Theme.Widget.Baaja">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/bw_up_next" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/bw_ink" />
+        <TextView android:id="@+id/bw_un_meta" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/bw_muted" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/bw_un_row1" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="2dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp">
+        <ImageView android:id="@+id/bw_un_art1" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="centerCrop" android:src="@mipmap/ic_launcher" android:contentDescription="@string/album_art" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:orientation="vertical">
+            <TextView android:id="@+id/bw_un_title1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/bw_ink" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/bw_un_artist1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/bw_muted" android:maxLines="1" android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/bw_un_row2" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="2dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp">
+        <ImageView android:id="@+id/bw_un_art2" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="centerCrop" android:src="@mipmap/ic_launcher" android:contentDescription="@string/album_art" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:orientation="vertical">
+            <TextView android:id="@+id/bw_un_title2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/bw_ink" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/bw_un_artist2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/bw_muted" android:maxLines="1" android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/bw_un_row3" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="2dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp">
+        <ImageView android:id="@+id/bw_un_art3" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="centerCrop" android:src="@mipmap/ic_launcher" android:contentDescription="@string/album_art" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:orientation="vertical">
+            <TextView android:id="@+id/bw_un_title3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/bw_ink" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/bw_un_artist3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/bw_muted" android:maxLines="1" android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/bw_un_row4" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="2dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="4dp" android:paddingEnd="4dp">
+        <ImageView android:id="@+id/bw_un_art4" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="centerCrop" android:src="@mipmap/ic_launcher" android:contentDescription="@string/album_art" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:orientation="vertical">
+            <TextView android:id="@+id/bw_un_title4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textStyle="bold" android:textColor="@color/bw_ink" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/bw_un_artist4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/bw_muted" android:maxLines="1" android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView android:id="@+id/bw_un_empty" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="@string/bw_queue_empty" android:textSize="13sp" android:textColor="@color/bw_muted" android:visibility="gone" />
+</LinearLayout>

@@ -28,6 +28,7 @@ import com.metrolist.music.R
 import com.metrolist.music.db.MusicDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -110,6 +111,8 @@ class BaajaWidgetManager @Inject constructor(
             }
         }
 
+        saveLastPlayed(title, artist, albumArt, isPlaying, duration, currentPosition)
+
         playlistWidgetManager.updateWidgets(
             title = title,
             artist = artist,
@@ -119,6 +122,58 @@ class BaajaWidgetManager @Inject constructor(
             duration = duration,
             currentPosition = currentPosition,
         )
+    }
+
+    private fun saveLastPlayed(
+        title: String,
+        artist: String,
+        albumArt: Bitmap?,
+        isPlaying: Boolean,
+        duration: Long,
+        currentPosition: Long,
+    ) {
+        val hasSong = title != context.getString(R.string.no_song_playing)
+        if (hasSong) {
+            BaajaWidgetState.saveLast(context, title, artist, currentPosition, duration, isPlaying)
+            albumArt?.let { writeCover("last", it) }
+        } else {
+            BaajaWidgetState.saveLast(context, BaajaWidgetState.lastTitle(context) ?: "", BaajaWidgetState.lastArtist(context), BaajaWidgetState.lastPos(context), BaajaWidgetState.lastDur(context), false)
+        }
+        runCatching { BaajaWidgetRenderer.renderResume(context) }
+    }
+
+    private fun writeCover(name: String, bitmap: Bitmap) {
+        runCatching {
+            val size = minOf(bitmap.width, bitmap.height)
+            val square = Bitmap.createBitmap(bitmap, (bitmap.width - size) / 2, (bitmap.height - size) / 2, size, size)
+            val scaled = Bitmap.createScaledBitmap(square, 160, 160, true)
+            BaajaWidgetState.coverFile(context, name).outputStream().use { scaled.compress(Bitmap.CompressFormat.PNG, 90, it) }
+        }
+    }
+
+    /** One row of the Up next widget. */
+    data class UpNextRow(val title: String, val artist: String, val artworkUri: String?)
+
+    /** Refreshes the sleep timer, queue, Listen Together and Quick play widgets from the service's current state. */
+    suspend fun updateExtras(
+        sleepEndAt: Long,
+        sleepUntilSongEnd: Boolean,
+        rows: List<UpNextRow>,
+        queueTotal: Int,
+        togetherCode: String,
+        togetherCount: Int,
+    ) {
+        BaajaWidgetState.saveSleep(context, sleepEndAt, sleepUntilSongEnd)
+        BaajaWidgetState.saveTogether(context, togetherCode, togetherCount)
+        BaajaWidgetState.saveQueue(context, rows.map { it.title }, rows.map { it.artist }, queueTotal)
+        runCatching { BaajaWidgetState.saveLiked(context, database.likedSongsCount().first()) }
+        rows.forEachIndexed { index, row ->
+            row.artworkUri?.let { uri -> loadAlbumArt(uri, 160)?.let { writeCover("q$index", it) } }
+        }
+        runCatching { BaajaWidgetRenderer.renderSleep(context) }
+        runCatching { BaajaWidgetRenderer.renderUpNext(context) }
+        runCatching { BaajaWidgetRenderer.renderTogether(context) }
+        runCatching { BaajaWidgetRenderer.renderQuick(context) }
     }
 
     fun updateProgress(
@@ -142,6 +197,8 @@ class BaajaWidgetManager @Inject constructor(
             }
             val views = RemoteViews(context.packageName, R.layout.widget_music_player)
             views.setInt(R.id.widget_progress_fill, "setImageLevel", level)
+            views.setTextViewText(R.id.widget_time_now, BaajaWidgetRenderer.formatClock(currentPosition))
+            views.setTextViewText(R.id.widget_time_total, BaajaWidgetRenderer.formatClock(duration))
             appWidgetManager.partiallyUpdateAppWidget(widgetIds, views)
         }
 
@@ -205,11 +262,11 @@ class BaajaWidgetManager @Inject constructor(
         }
 
         // Set play/pause icon
-        val playPauseIcon = if (isPlaying) R.drawable.ic_widget_pause else R.drawable.ic_widget_play
+        val playPauseIcon = if (isPlaying) R.drawable.ic_bw_pause_on else R.drawable.ic_bw_play_on
         views.setImageViewResource(R.id.widget_play_pause, playPauseIcon)
 
         // Set like icon - using nav style (purple) for main widget
-        val likeIcon = if (isLiked) R.drawable.ic_widget_heart_nav else R.drawable.ic_widget_heart_outline_nav
+        val likeIcon = if (isLiked) R.drawable.ic_bw_heart_on else R.drawable.ic_bw_heart
         views.setImageViewResource(R.id.widget_like_button, likeIcon)
 
         // Set Progress Level
@@ -224,8 +281,31 @@ class BaajaWidgetManager @Inject constructor(
         views.setOnClickPendingIntent(R.id.widget_album_art, getOpenAppIntent())
         views.setOnClickPendingIntent(R.id.widget_play_pause_container, getPlayPauseIntent())
         views.setOnClickPendingIntent(R.id.widget_like_button, getLikeIntent())
+        views.setOnClickPendingIntent(R.id.widget_prev, broadcastAction(MusicWidgetReceiver.ACTION_PREVIOUS, 6))
+        views.setOnClickPendingIntent(R.id.widget_next, broadcastAction(MusicWidgetReceiver.ACTION_NEXT, 7))
+        views.setOnClickPendingIntent(R.id.widget_sleep, serviceAction(BaajaWidgetRenderer.ACTION_SLEEP_TOGGLE, 8))
+        views.setTextViewText(R.id.widget_time_now, BaajaWidgetRenderer.formatClock(currentPosition))
+        views.setTextViewText(R.id.widget_time_total, BaajaWidgetRenderer.formatClock(duration))
 
         return views
+    }
+
+    private fun broadcastAction(action: String, code: Int): PendingIntent =
+        PendingIntent.getBroadcast(
+            context,
+            code,
+            Intent(context, MusicWidgetReceiver::class.java).setAction(action),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+    private fun serviceAction(action: String, code: Int): PendingIntent {
+        val intent = Intent(context, com.metrolist.music.playback.MusicService::class.java).setAction(action)
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(context, code, intent, flags)
+        } else {
+            PendingIntent.getService(context, code, intent, flags)
+        }
     }
 
     private suspend fun loadAlbumArt(artworkUri: String, size: Int = 200): Bitmap? {
@@ -309,7 +389,7 @@ class BaajaWidgetManager @Inject constructor(
         }
 
         // Set play/pause icon - using low style icons
-        val playPauseIcon = if (isPlaying) R.drawable.ic_widget_pause_low else R.drawable.ic_widget_play_low
+        val playPauseIcon = if (isPlaying) R.drawable.ic_bw_pause_on else R.drawable.ic_bw_play_on
         views.setImageViewResource(R.id.widget_compact_play_pause, playPauseIcon)
 
         // Set click intents
@@ -342,11 +422,11 @@ class BaajaWidgetManager @Inject constructor(
         }
 
         // Set play/pause icon - using low style icons
-        val playPauseIcon = if (isPlaying) R.drawable.ic_widget_pause_low else R.drawable.ic_widget_play_low
+        val playPauseIcon = if (isPlaying) R.drawable.ic_bw_pause_on else R.drawable.ic_bw_play_on
         views.setImageViewResource(R.id.widget_wide_play_pause, playPauseIcon)
 
         // Set like icon - using navigation style (purple)
-        val likeIcon = if (isLiked) R.drawable.ic_widget_heart_nav else R.drawable.ic_widget_heart_outline_nav
+        val likeIcon = if (isLiked) R.drawable.ic_bw_heart_on else R.drawable.ic_bw_heart
         views.setImageViewResource(R.id.widget_wide_like_button, likeIcon)
 
         // Set click intents
