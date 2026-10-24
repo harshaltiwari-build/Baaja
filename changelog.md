@@ -25,6 +25,7 @@ Updates now install from inside the app, plus a round of fixes.
 - Behind the song has a Go to artist button
 - About says Baaja is designed and built by Harshal Tiwari and credits Metrolist, InnerTune and OuterTune
 - Hide explicit content, hide video songs and hide YouTube Shorts are on by default (change them any time in Settings > Content)
+- Every screen stays upright, whatever your phone's auto-rotate is set to
 - Removed Import from Spotify, since it could not be made reliable
 
 ---v1.1.1
