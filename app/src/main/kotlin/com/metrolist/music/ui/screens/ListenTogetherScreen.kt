@@ -326,14 +326,20 @@ fun ListenTogetherScreen(
                 TogetherHero(savedUsername = savedUsername)
             }
 
-            // Connection status card
-            item(key = "connection") {
-                ConnectionStatusCard(
-                    connectionState = connectionState,
-                    onConnect = { listenTogetherManager.connect() },
-                    onDisconnect = { listenTogetherManager.disconnect() },
-                    onReconnect = { listenTogetherManager.forceReconnect() },
-                )
+            item(key = "how") {
+                HowItWorksCard()
+            }
+
+            // Connecting happens by itself when a room is started or joined, so the card only shows once it matters.
+            if (connectionState != ConnectionState.DISCONNECTED) {
+                item(key = "connection") {
+                    ConnectionStatusCard(
+                        connectionState = connectionState,
+                        onConnect = { listenTogetherManager.connect() },
+                        onDisconnect = { listenTogetherManager.disconnect() },
+                        onReconnect = { listenTogetherManager.forceReconnect() },
+                    )
+                }
             }
 
             if (connectionState == ConnectionState.CONNECTED) {
@@ -402,10 +408,6 @@ fun ListenTogetherScreen(
                     },
                 )
             }
-
-            item(key = "how") {
-                HowItWorksCard()
-            }
         }
 
         // Settings link
@@ -467,7 +469,7 @@ private fun TogetherHero(savedUsername: String) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(130.dp)
             .baajaSurface(baajaInk, MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(28.dp), shadowOffset = 4.dp, borderWidth = 2.5.dp),
         contentAlignment = Alignment.Center,
     ) {

@@ -15,6 +15,14 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.ui.text.font.FontWeight
+import com.metrolist.music.ui.theme.BaajaIconButton
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,12 +42,10 @@ import androidx.compose.foundation.verticalScroll
 import com.metrolist.music.ui.component.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +68,6 @@ import coil3.compose.AsyncImage
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.YouTubeAccount
 import com.metrolist.innertube.utils.parseCookieString
-import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.AccountChannelHandleKey
 import com.metrolist.music.constants.AccountEmailKey
@@ -71,10 +76,8 @@ import com.metrolist.music.constants.DataSyncIdKey
 import com.metrolist.music.constants.InnerTubeAuthUserKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.VisitorDataKey
-import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.screens.onboarding.BaajaLoginIntro
 import com.metrolist.music.ui.theme.BaajaCard
-import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.reportException
 import com.metrolist.music.utils.safeDataStoreEdit
 import kotlinx.coroutines.CompletableDeferred
@@ -122,7 +125,6 @@ fun LoginScreen(
 }
 
 @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoginWebFlow(
     navController: NavController,
@@ -317,95 +319,107 @@ private fun LoginWebFlow(
         }
     }
 
-    Box(
+    Column(
         modifier =
             Modifier
-                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
     ) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { webViewContext ->
-                WebView(webViewContext).apply {
-                    webViewClient =
-                        object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(
-                                view: WebView,
-                                request: WebResourceRequest,
-                            ): Boolean {
-                                val scheme = request.url.scheme
-                                if (scheme == "http" || scheme == "https") return false
-
-                                if (scheme == "intent") {
-                                    runCatching {
-                                        Intent.parseUri(request.url.toString(), Intent.URI_INTENT_SCHEME)
-                                            .apply {
-                                                addCategory(Intent.CATEGORY_BROWSABLE)
-                                                component = null
-                                                selector = null
-                                            }.let(context::startActivity)
-                                    }
-                                }
-                                return true
-                            }
-
-                            override fun onPageFinished(
-                                view: WebView,
-                                url: String?,
-                            ) {
-                                val pageUri = url?.let(Uri::parse)
-                                if (pageUri?.scheme == "https" && pageUri.host == "music.youtube.com") {
-                                    handleAuthenticatedPage()
-                                }
-                            }
-                        }
-                    settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        setSupportZoom(true)
-                        builtInZoomControls = true
-                        displayZoomControls = false
-                    }
-                    addJavascriptInterface(jsInterface, "Android")
-                    webViewRef = this
-                    if (isSwitchingChannel) {
-                        restoreYouTubeCookies(YouTube.cookie)
-                    }
-                    loadUrl(
-                        if (isSwitchingChannel) {
-                            "https://music.youtube.com"
-                        } else {
-                            "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
-                        },
-                    )
-                }
-            },
-        )
-
-        if (loginStage == LoginStage.CheckingAccounts || loginStage == LoginStage.Completing) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BaajaIconButton(
+                icon = R.drawable.arrow_back,
+                contentDescription = null,
+                onClick = navController::navigateUp,
+            )
+            Spacer(Modifier.width(14.dp))
+            Text(
+                stringResource(
+                    if (isSwitchingChannel) R.string.switch_youtube_channel else R.string.login,
+                ),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
 
-        TopAppBar(
-            title = {
-                Text(
-                    stringResource(
-                        if (isSwitchingChannel) R.string.switch_youtube_channel else R.string.login,
-                    ),
-                )
-            },
-            navigationIcon = {
-                IconButton(
-                    onClick = navController::navigateUp,
-                    onLongClick = navController::backToMain,
-                ) {
-                    Icon(
-                        painterResource(R.drawable.arrow_back),
-                        contentDescription = null,
-                    )
-                }
-            },
-        )
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime)),
+        ) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { webViewContext ->
+                    WebView(webViewContext).apply {
+                        webViewClient =
+                            object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView,
+                                    request: WebResourceRequest,
+                                ): Boolean {
+                                    val scheme = request.url.scheme
+                                    if (scheme == "http" || scheme == "https") return false
+
+                                    if (scheme == "intent") {
+                                        runCatching {
+                                            Intent.parseUri(request.url.toString(), Intent.URI_INTENT_SCHEME)
+                                                .apply {
+                                                    addCategory(Intent.CATEGORY_BROWSABLE)
+                                                    component = null
+                                                    selector = null
+                                                }.let(context::startActivity)
+                                        }
+                                    }
+                                    return true
+                                }
+
+                                override fun onPageFinished(
+                                    view: WebView,
+                                    url: String?,
+                                ) {
+                                    val pageUri = url?.let(Uri::parse)
+                                    if (pageUri?.scheme == "https" && pageUri.host == "music.youtube.com") {
+                                        handleAuthenticatedPage()
+                                    }
+                                }
+                            }
+                        settings.apply {
+                            javaScriptEnabled = true
+                            domStorageEnabled = true
+                            setSupportZoom(true)
+                            builtInZoomControls = true
+                            displayZoomControls = false
+                        }
+                        addJavascriptInterface(jsInterface, "Android")
+                        webViewRef = this
+                        if (isSwitchingChannel) {
+                            restoreYouTubeCookies(YouTube.cookie)
+                        }
+                        loadUrl(
+                            if (isSwitchingChannel) {
+                                "https://music.youtube.com"
+                            } else {
+                                "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmusic.youtube.com"
+                            },
+                        )
+                    }
+                },
+            )
+
+            if (loginStage == LoginStage.CheckingAccounts || loginStage == LoginStage.Completing) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+        }
     }
 
     if (loginStage == LoginStage.SelectingAccount) {

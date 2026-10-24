@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -670,6 +671,18 @@ fun LibraryMixScreen(
                     ) {
                         item(key = "empty_search_result") {
                             LibrarySearchEmptyPlaceholder(modifier = Modifier.animateItem())
+                        }
+                    }
+
+                    if (filteredItems.isEmpty() && searchQuery.isBlank()) {
+                        item(key = "empty_library_hint") {
+                            Text(
+                                text = stringResource(R.string.baaja_library_empty_hint),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 28.dp).animateItem(),
+                            )
                         }
                     }
                 }

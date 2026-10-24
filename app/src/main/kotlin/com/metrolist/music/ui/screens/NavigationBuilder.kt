@@ -347,6 +347,10 @@ fun NavGraphBuilder.navigationBuilder(
         AppearanceSettings(navController, snackbarHostState)
     }
 
+    composable("settings/appearance/lyrics") {
+        AppearanceSettings(navController, snackbarHostState, lyricsPage = true)
+    }
+
 
     composable("settings/content") {
         ContentSettings(navController)

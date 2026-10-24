@@ -846,7 +846,7 @@ class MainActivity : FragmentActivity() {
                                         isHome = navBackStackEntry?.destination?.route == Screens.Home.route,
                                         title = currentTitleRes?.let { stringResource(it) } ?: "",
                                         accountImageUrl = accountImageUrl,
-                                        showUpdateBadge = latestVersionName != BuildConfig.BASE_VERSION_NAME,
+                                        showUpdateBadge = isNewerVersion(latestVersionName, BuildConfig.BASE_VERSION_NAME),
                                         onProfileClick = { navController.navigate("profile") },
                                         onSettingsClick = { navController.navigate("settings") },
                                         scrollBehavior = topAppBarScrollBehavior,
@@ -1411,3 +1411,19 @@ val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils p
 val LocalListenTogetherManager = staticCompositionLocalOf<com.metrolist.music.listentogether.ListenTogetherManager?> { null }
 val LocalArtistNameAliases = staticCompositionLocalOf<Map<String, String>> { emptyMap() }
 val LocalIsPlayerExpanded = compositionLocalOf { false }
+
+/** True when [latest] is a higher dotted version than [current], so an older release never raises the badge. */
+private fun isNewerVersion(
+    latest: String,
+    current: String,
+): Boolean {
+    fun parts(version: String) = version.trim().removePrefix("v").split('.').map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+    val a = parts(latest)
+    val b = parts(current)
+    for (i in 0 until maxOf(a.size, b.size)) {
+        val x = a.getOrElse(i) { 0 }
+        val y = b.getOrElse(i) { 0 }
+        if (x != y) return x > y
+    }
+    return false
+}

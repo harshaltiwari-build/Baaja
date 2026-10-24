@@ -90,6 +90,7 @@ import java.time.LocalDateTime
 private const val STAGE_NONE = 0
 private const val STAGE_WELCOME = 1
 private const val STAGE_LOGIN = 2
+private const val UPDATE_GRACE_MILLIS = 60_000L
 
 /**
  * First-run flow laid over [content]: splash (once per cold start), then Welcome, then the Login intro.
@@ -109,7 +110,13 @@ fun BaajaWelcomeGate(
         // One synchronous read on first composition so returning users never see a flash of the welcome screen.
         val seen = context.dataStore.get(BaajaHasSeenWelcomeKey, false)
         val signedIn = "SAPISID" in runCatching { parseCookieString(context.dataStore.get(InnerTubeCookieKey, "")) }.getOrDefault(emptyMap())
-        mutableStateOf(if (!seen && !signedIn) STAGE_WELCOME else STAGE_NONE)
+        // An app that was updated over an older install already knows its user, so it skips the welcome.
+        val updated =
+            runCatching {
+                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                info.lastUpdateTime - info.firstInstallTime > UPDATE_GRACE_MILLIS
+            }.getOrDefault(false)
+        mutableStateOf(if (!seen && !signedIn && !updated) STAGE_WELCOME else STAGE_NONE)
     }
     var splashVisible by remember {
         mutableStateOf(!BaajaSplashState.shown && (context as? Activity).isPlainLauncherStart())

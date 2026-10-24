@@ -706,4 +706,6 @@
     <!-- Stream sources -->
     <string name="top_result">Top result</string>
     <string name="other">Other</string>
+    <string name="baaja_library_empty_hint">Playlists, albums and artists you save will show up here. Copy a playlist from YouTube or Spotify above, or tap + to make a new one.</string>
+    <string name="baaja_appearance_lyrics_desc">Text position, tap and scroll behaviour</string>
 </resources>
