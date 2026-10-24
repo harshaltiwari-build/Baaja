@@ -15,7 +15,7 @@
 
 ---
 
-Baaja is a free and open-source YouTube Music client for Android, made and maintained by [harshaltiwari47-dot](https://github.com/harshaltiwari47-dot). It is built on the open-source [Metrolist](https://github.com/MetrolistGroup/Metrolist) project and other forks (see [Credits](#credits)), with its own identity: a light and dark design with bold ink outlines, offset shadows and a purple accent.
+Baaja is a free and open-source YouTube Music client for Android, designed, built and maintained by [Harshal Tiwari](https://github.com/harshaltiwari47-dot). It is built on the open-source [Metrolist](https://github.com/MetrolistGroup/Metrolist) project and other forks (see [Credits](#credits)), with its own identity: a light and dark design with bold ink outlines, offset shadows and a purple accent.
 
 > [!WARNING]
 > **Regional restriction:** if YouTube Music isn't available in your region, Baaja won't work without a VPN or proxy that connects through a supported region.

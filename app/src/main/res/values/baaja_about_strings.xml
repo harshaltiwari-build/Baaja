@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="baaja_about_app_name">Baaja</string>
-    <string name="baaja_about_made_by">Made by harshaltiwari47-dot</string>
+    <string name="baaja_about_made_by">Designed and built by Harshal Tiwari</string>
     <string name="baaja_about_based_on_title">Built on open source (GPL-3.0)</string>
-    <string name="baaja_about_based_on_desc">Baaja is made and maintained by harshaltiwari47-dot. It is built on the open-source Metrolist, InnerTune and OuterTune projects and their forks, and thanks their authors. Free software under the GPL-3.0.</string>
+    <string name="baaja_about_based_on_desc">Baaja is designed, built and maintained by Harshal Tiwari, on top of the open-source Metrolist, InnerTune and OuterTune projects. Free software under the GPL-3.0.</string>
     <string name="baaja_about_metrolist_repo">Metrolist on GitHub</string>
     <string name="baaja_about_innertune_repo">InnerTune on GitHub</string>
     <string name="baaja_about_outertune_repo">OuterTune on GitHub</string>

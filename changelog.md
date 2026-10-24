@@ -23,7 +23,7 @@ Updates now install from inside the app, plus a round of fixes.
 - No white flash behind screens while they change, in dark mode too
 - The volume slider is a bold outlined bar with a speaker button and the level shown, and the Identify song and Behind the song pages no longer start with a big gap
 - Behind the song has a Go to artist button
-- About says Baaja is made by harshaltiwari47-dot and credits Metrolist, InnerTune and OuterTune
+- About says Baaja is designed and built by Harshal Tiwari and credits Metrolist, InnerTune and OuterTune
 - Removed Import from Spotify, since it could not be made reliable
 
 ---v1.1.1
