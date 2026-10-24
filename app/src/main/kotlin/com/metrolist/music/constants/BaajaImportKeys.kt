@@ -8,7 +8,7 @@ package com.metrolist.music.constants
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
-/** The user's own Spotify developer app keys, used only for the playlist import. */
+/** Spotify developer keys saved by earlier builds; no longer used, but still stripped from backups. */
 val SpotifyClientIdKey = stringPreferencesKey("baaja_spotify_client_id")
 val SpotifyClientSecretKey = stringPreferencesKey("baaja_spotify_client_secret")
 

@@ -70,7 +70,6 @@ internal object BaajaLibraryRoutes {
     const val UPLOADED = "auto_playlist/uploaded"
     const val CACHED = "cache_playlist/cached"
     const val LOCAL_MUSIC = "local_music"
-    const val IMPORT_SPOTIFY = "import_spotify"
     const val IMPORT_YOUTUBE = "import_youtube"
 
     fun top(size: Int) = "top_playlist/$size"
@@ -216,7 +215,7 @@ internal fun BaajaLibraryToolbar(
 
 /**
  * The collection tiles at the top of the Library: two big tiles (Liked songs, Downloaded) and
- * compact tiles for the other auto playlists plus device music and Spotify import.
+ * compact tiles for the other auto playlists plus device music and YouTube import.
  */
 @Composable
 internal fun BaajaLibraryCollections(
@@ -250,15 +249,6 @@ internal fun BaajaLibraryCollections(
                         stringResource(R.string.baaja_library_local_music_desc),
                         BaajaLibraryRoutes.LOCAL_MUSIC,
                         BaajaTileColors.lilac(),
-                    ),
-                )
-                add(
-                    SmallTile(
-                        R.drawable.playlist_add,
-                        stringResource(R.string.baaja_library_import_spotify),
-                        stringResource(R.string.baaja_library_import_spotify_desc),
-                        BaajaLibraryRoutes.IMPORT_SPOTIFY,
-                        BaajaTileColors.mint(),
                     ),
                 )
                 add(

@@ -27,9 +27,9 @@ private const val CHARTS_TIMEOUT_MS = 20_000L
  * Builds a charts-shaped page from the YouTube Music home feed, keeping only sections that
  * contain songs. Used when the real charts endpoint is empty (e.g. region without charts).
  */
-internal fun HomePage.toTrendingChartsPage(): ChartsPage? {
+internal fun HomePage.toTrendingChartsPage(more: List<HomePage.Section> = emptyList()): ChartsPage? {
     val sections =
-        sections
+        (sections + more)
             .mapNotNull { section ->
                 val songs = section.items.filterIsInstance<SongItem>().distinctBy { it.id }
                 if (songs.size < 2) {
@@ -42,7 +42,7 @@ internal fun HomePage.toTrendingChartsPage(): ChartsPage? {
                     )
                 }
             }.distinctBy { it.title }
-            .take(4)
+            .take(8)
     return if (sections.isEmpty()) null else ChartsPage(sections = sections, continuation = null)
 }
 
@@ -84,7 +84,17 @@ class ChartsViewModel @Inject constructor() : ViewModel() {
                             YouTube
                                 .home()
                                 .onSuccess { home ->
-                                    home.toTrendingChartsPage()?.let {
+                                    // The first home page often holds a single song list, so read a few more pages to fill the screen.
+                                    val more = mutableListOf<HomePage.Section>()
+                                    var next = home.continuation
+                                    var pages = 0
+                                    while (next != null && pages < 3) {
+                                        val extra = YouTube.home(continuation = next).getOrNull() ?: break
+                                        more += extra.sections
+                                        next = extra.continuation
+                                        pages++
+                                    }
+                                    home.toTrendingChartsPage(more)?.let {
                                         page = it
                                         _isFallback.value = true
                                     }

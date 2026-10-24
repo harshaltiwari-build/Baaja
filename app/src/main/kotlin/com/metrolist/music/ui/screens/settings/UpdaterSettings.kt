@@ -64,10 +64,13 @@ fun UpdaterScreen(
     var updateAvailable by remember { mutableStateOf(false) }
     var latestVersion by remember { mutableStateOf<String?>(null) }
     var downloadUrl by remember { mutableStateOf<String?>(null) }
+    var latestRelease by remember { mutableStateOf<com.metrolist.music.utils.ReleaseInfo?>(null) }
     var checkError by remember { mutableStateOf<String?>(null) }
     val failedToCheckUpdatesTemplate = stringResource(R.string.failed_to_check_updates)
 
     val coroutineScope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val installer = remember { com.metrolist.music.utils.UpdateInstaller(context, coroutineScope) }
 
     fun performManualCheck() {
         coroutineScope.launch {
@@ -78,7 +81,8 @@ fun UpdaterScreen(
                     .checkForUpdate(forceRefresh = true)
                     .onSuccess { (releaseInfo, hasUpdate) ->
                         if (releaseInfo != null) {
-                            latestVersion = releaseInfo.versionName
+                            latestVersion = releaseInfo.tagName.removePrefix("v")
+                            latestRelease = releaseInfo
                             updateAvailable = hasUpdate
                             downloadUrl = Updater.getDownloadUrlForCurrentVariant(releaseInfo)
                         }
@@ -218,13 +222,26 @@ fun UpdaterScreen(
             if (url != null) {
                 Spacer(Modifier.height(16.dp))
                 Button(
-                    onClick = { uriHandler.openUri(url) },
+                    enabled = installer.phase != com.metrolist.music.utils.UpdateInstaller.Phase.Downloading,
+                    onClick = {
+                        val release = latestRelease
+                        if (release != null) installer.start(release) else uriHandler.openUri(url)
+                    },
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                 ) {
-                    Text(stringResource(R.string.new_version_available) + " · " + latestVersion)
+                    Text(
+                        if (installer.phase == com.metrolist.music.utils.UpdateInstaller.Phase.Downloading) {
+                            stringResource(R.string.downloading) + " " + (installer.progress * 100).toInt() + "%"
+                        } else {
+                            stringResource(R.string.new_version_available) + " · " + latestVersion
+                        },
+                    )
+                }
+                installer.errorMessage?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }

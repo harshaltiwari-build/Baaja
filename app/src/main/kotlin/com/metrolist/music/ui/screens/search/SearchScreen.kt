@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -75,6 +77,7 @@ import com.metrolist.music.ui.component.home.BaajaHomeGutter
 import com.metrolist.music.ui.component.home.BaajaPlainIconButton
 import com.metrolist.music.ui.component.home.BaajaProfileAvatar
 import com.metrolist.music.ui.component.home.BaajaSearchField
+import com.metrolist.music.ui.theme.BaajaIconButton
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaSurface
 import com.metrolist.music.utils.SearchRoutes
@@ -230,6 +233,13 @@ fun SearchScreen(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
+                BaajaIconButton(
+                    icon = R.drawable.settings,
+                    contentDescription = stringResource(R.string.settings),
+                    onClick = { navController.navigate("settings") },
+                    size = 44.dp,
+                )
+                Spacer(Modifier.width(10.dp))
                 BaajaProfileAvatar(
                     imageUrl = accountImageUrl,
                     onClick = { navController.navigate("profile") },

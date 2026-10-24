@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash icon: the Baaja logo, inset so it stays inside the splash's circular mask. -->
+<!-- Splash icon: the Baaja logo tile, scaled to sit fully inside the splash's circular mask so its corners are never cut off. -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/baaja_logo"
-    android:insetLeft="22dp"
-    android:insetTop="22dp"
-    android:insetRight="22dp"
-    android:insetBottom="22dp" />
+    android:insetLeft="26%"
+    android:insetTop="26%"
+    android:insetRight="26%"
+    android:insetBottom="26%" />

@@ -192,12 +192,12 @@ object Updater {
     /**
      * Get the download URL for the correct app variant
      */
-    fun getDownloadUrlForCurrentVariant(releaseInfo: ReleaseInfo): String? {
+    fun getDownloadUrlForCurrentVariant(releaseInfo: ReleaseInfo): String? =
+        getAssetForCurrentVariant(releaseInfo)?.downloadUrl
+
+    fun getAssetForCurrentVariant(releaseInfo: ReleaseInfo): ReleaseAsset? {
         val (currentArch, currentVariant) = getCurrentAppVariant()
-        
-        return releaseInfo.assets
-            .find { it.architecture == currentArch && it.variant == currentVariant }
-            ?.downloadUrl
+        return releaseInfo.assets.find { it.architecture == currentArch && it.variant == currentVariant }
     }
 
     /**
@@ -213,7 +213,7 @@ object Updater {
                 if (!shouldFetch && cachedReleaseInfo != null) {
                     val hasUpdate = isUpdateAvailable(
                         BuildConfig.BASE_VERSION_NAME,
-                        cachedReleaseInfo!!.versionName
+                        cachedReleaseInfo!!.tagName
                     )
                     return@runCatching cachedReleaseInfo!! to hasUpdate
                 }
@@ -223,7 +223,7 @@ object Updater {
                     val releaseInfo = result.getOrThrow()
                     val hasUpdate = isUpdateAvailable(
                         BuildConfig.BASE_VERSION_NAME,
-                        releaseInfo.versionName
+                        releaseInfo.tagName
                     )
                     releaseInfo to hasUpdate
                 } else {

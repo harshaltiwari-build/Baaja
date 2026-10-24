@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +46,7 @@ import coil3.compose.AsyncImage
 import com.metrolist.music.ui.screens.onboarding.profileInitial
 import com.metrolist.music.ui.screens.onboarding.rememberBaajaProfile
 import com.metrolist.music.R
+import com.metrolist.music.ui.theme.BaajaIconButton
 import com.metrolist.music.ui.theme.BaajaLogo
 import com.metrolist.music.ui.theme.baajaInk
 
@@ -84,29 +84,21 @@ fun BaajaMainTopBar(
     }
     val settingsDescription = stringResource(R.string.settings)
     val settingsButton: @Composable () -> Unit = {
-        Box(
-            modifier =
-                Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onSettingsClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.settings),
-                contentDescription = settingsDescription,
-                modifier = Modifier.size(26.dp),
-            )
-        }
+        BaajaIconButton(
+            icon = R.drawable.settings,
+            contentDescription = settingsDescription,
+            onClick = onSettingsClick,
+            size = 44.dp,
+        )
     }
     if (isHome) {
-        CenterAlignedTopAppBar(
+        TopAppBar(
             title = { BaajaWordmark() },
             actions = {
                 Row(
-                    modifier = Modifier.padding(end = 12.dp),
+                    modifier = Modifier.padding(end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     settingsButton()
                     avatar()
@@ -129,9 +121,9 @@ fun BaajaMainTopBar(
             },
             actions = {
                 Row(
-                    modifier = Modifier.padding(end = 12.dp),
+                    modifier = Modifier.padding(end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     settingsButton()
                     avatar()

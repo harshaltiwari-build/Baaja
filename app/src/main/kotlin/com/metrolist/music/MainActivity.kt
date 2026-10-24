@@ -60,6 +60,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import com.metrolist.music.ui.component.SnackbarHost
@@ -190,6 +191,7 @@ import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.music.utils.SyncUtils
 import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.Updater
+import com.metrolist.music.utils.UpdateInstaller
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
 import com.metrolist.music.utils.get
@@ -445,6 +447,8 @@ class MainActivity : FragmentActivity() {
     ) {
         val checkForUpdates by rememberPreference(CheckForUpdatesKey, defaultValue = true)
         var availableUpdate by remember { mutableStateOf<AvailableUpdate?>(null) }
+        val updateScope = rememberCoroutineScope()
+        val updateInstaller = remember { UpdateInstaller(this@MainActivity, updateScope) }
 
         if (BuildConfig.UPDATER_AVAILABLE) {
             LaunchedEffect(checkForUpdates) {
@@ -452,7 +456,7 @@ class MainActivity : FragmentActivity() {
                     val preferences = dataStore.data.first()
                     val notificationsEnabled = preferences[UpdateNotificationsEnabledKey] ?: true
                     val (releaseInfo, hasUpdate) = Updater.checkForUpdate().getOrNull() ?: (null to false)
-                    releaseInfo?.let { onLatestVersionNameChange(it.versionName) }
+                    releaseInfo?.let { onLatestVersionNameChange(it.tagName.removePrefix("v")) }
 
                     val standaloneUpdate =
                         releaseInfo
@@ -1163,8 +1167,11 @@ class MainActivity : FragmentActivity() {
                                     }
                                 }
                             }
+                            LaunchedEffect(updateInstaller.phase) {
+                                if (updateInstaller.phase == UpdateInstaller.Phase.ReadyToInstall) dismissUpdate()
+                            }
                             AlertDialog(
-                                onDismissRequest = dismissUpdate,
+                                onDismissRequest = { if (updateInstaller.phase != UpdateInstaller.Phase.Downloading) dismissUpdate() },
                                 title = { Text(stringResource(R.string.update_available_title)) },
                                 text = {
                                     Column(
@@ -1177,6 +1184,20 @@ class MainActivity : FragmentActivity() {
                                             text = stringResource(R.string.update_available_message, update.release.versionName),
                                             style = MaterialTheme.typography.bodyMedium,
                                         )
+                                        if (updateInstaller.phase == UpdateInstaller.Phase.Downloading) {
+                                            LinearProgressIndicator(
+                                                progress = { updateInstaller.progress },
+                                                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                                            )
+                                        }
+                                        updateInstaller.errorMessage?.let {
+                                            Text(
+                                                text = it,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.padding(top = 8.dp),
+                                            )
+                                        }
                                         Text(
                                             text = stringResource(R.string.changelog),
                                             style = MaterialTheme.typography.titleSmall,
@@ -1190,12 +1211,20 @@ class MainActivity : FragmentActivity() {
                                 },
                                 confirmButton = {
                                     TextButton(
+                                        enabled = updateInstaller.phase != UpdateInstaller.Phase.Downloading,
                                         onClick = {
-                                            dismissUpdate()
-                                            startActivity(Intent(Intent.ACTION_VIEW, update.downloadUrl.toUri()))
+                                            if (updateInstaller.phase == UpdateInstaller.Phase.NeedsPermission) {
+                                                updateInstaller.retryInstall()
+                                            } else {
+                                                updateInstaller.start(update.release)
+                                            }
                                         },
                                     ) {
-                                        Text(stringResource(R.string.update_action))
+                                        Text(
+                                            stringResource(
+                                                if (updateInstaller.phase == UpdateInstaller.Phase.Downloading) R.string.downloading else R.string.update_action,
+                                            ),
+                                        )
                                     }
                                 },
                                 dismissButton = {

@@ -10,16 +10,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 
 const val LOCAL_MUSIC_ROUTE = "local_music"
-const val IMPORT_SPOTIFY_ROUTE = "import_spotify"
 const val IMPORT_YOUTUBE_ROUTE = "import_youtube"
 
-/** Routes for audio output, Spotify import and local music screens. */
+/** Routes for the local music and YouTube import screens. */
 fun NavGraphBuilder.featureRoutes(navController: NavHostController) {
     composable(LOCAL_MUSIC_ROUTE) {
         LocalMusicScreen(navController)
-    }
-    composable(IMPORT_SPOTIFY_ROUTE) {
-        SpotifyImportScreen(navController)
     }
     composable(IMPORT_YOUTUBE_ROUTE) {
         YouTubeImportScreen(navController)

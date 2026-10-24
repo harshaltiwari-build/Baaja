@@ -54,7 +54,7 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 **Library & account**
 - Sign in with your YouTube Music account and sync your library
 - Local music from your device
-- Import playlists from YouTube Music (by link, or your own playlists when signed in) and from Spotify, local playlists and drag-to-reorder queues
+- Import playlists from YouTube Music (by link, or your own playlists when signed in), local playlists and drag-to-reorder queues
 - Automatic daily or weekly backups to a folder you choose
 - Editable profile
 

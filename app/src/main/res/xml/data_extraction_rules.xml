@@ -5,6 +5,10 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
+        <!-- The settings store holds the YouTube sign-in cookie, so it never goes to cloud backup. -->
+        <exclude
+            domain="file"
+            path="datastore" />
         <exclude
             domain="file"
             path="./exoplayer" />
