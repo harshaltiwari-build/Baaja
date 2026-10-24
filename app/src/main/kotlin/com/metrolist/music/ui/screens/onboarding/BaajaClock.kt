@@ -27,7 +27,7 @@ class BaajaClock(
     private val state: State<Float>,
     val enabled: Boolean,
 ) {
-    private val seconds: Float get() = state.value
+    val seconds: Float get() = state.value
 
     /** 0..1 progress of a one-shot animation that starts after [delay] and lasts [duration] seconds. */
     fun enter(

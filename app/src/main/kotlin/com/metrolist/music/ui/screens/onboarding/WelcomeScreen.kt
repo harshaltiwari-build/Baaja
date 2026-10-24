@@ -179,7 +179,7 @@ fun BaajaWelcomeGate(
         AnimatedVisibility(
             visible = splashVisible,
             enter = fadeIn(tween(0)),
-            exit = fadeOut(tween(300)),
+            exit = androidx.compose.animation.ExitTransition.None,
         ) {
             BaajaSplash(
                 Modifier.pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },
