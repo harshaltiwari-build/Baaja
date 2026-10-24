@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Baaja - free YouTube Music client for Android</title>
-<meta name="description" content="Baaja is a free, ad-free and open-source YouTube Music client for Android with a bold light and dark design. Designed and built by Harshal Tiwari.">
+<meta name="description" content="Baaja is a free, ad-free and open-source YouTube Music client for Android. Designed and built by Harshal Tiwari.">
 <meta property="og:title" content="Baaja - बाजा बजाओ">
 <meta property="og:description" content="A free, ad-free, open-source YouTube Music client for Android.">
 <meta property="og:image" content="img/home.png">
@@ -14,290 +14,341 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400..800&family=Baloo+2:wght@700;800&display=swap">
 <style>
-:root{--ink:#17151F;--paper:#FFFFFF;--soft:#F4F2FA;--muted:#5E5A6B;--purple:#7B4DFF;--onpurple:#FFFFFF;--yellow:#FFE066;--pink:#FFD3DE;--mint:#BDEFE6;--peach:#FFD9B8;--shadow:#17151F}
-:root[data-theme="dark"]{--ink:#F4F2FA;--paper:#121016;--soft:#1C1A22;--muted:#C9C5D3;--purple:#A58BFF;--onpurple:#17151F;--yellow:#FFE066;--pink:#6B2A3E;--mint:#0F4D48;--peach:#4A2A12;--shadow:#CFC9DC}
-*{box-sizing:border-box}
+:root{--line:#17151F;--page:#FFFFFF;--card:#FFFFFF;--text:#17151F;--text2:#2B2838;--hero:#7B4DFF}
+:root[data-theme="dark"]{--line:#CFC9DC;--page:#121016;--card:#1C1A22;--text:#F4F2FA;--text2:#C9C5D3;--hero:#2A1B6B}
+.tbtn{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);background:#FFFFFF;color:#17151F;box-shadow:3px 4px 0 var(--line);cursor:pointer;display:grid;place-items:center;margin-left:8px;padding:0}
+.tbtn svg{width:22px;height:22px}
+.tbtn .sun{display:none}
+:root[data-theme="dark"] .tbtn .sun{display:block}
+:root[data-theme="dark"] .tbtn .moon{display:none}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .55s,transform .55s}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
 html{scroll-behavior:smooth}
-body{margin:0;font-family:Outfit,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);line-height:1.55;overflow-x:hidden}
-a{color:inherit}
-:focus-visible{outline:3px solid var(--purple);outline-offset:3px;border-radius:8px}
-.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+body{margin:0;background:var(--page)}
+a{color:inherit;text-decoration:none}
+.bj{font-family:Outfit,system-ui,sans-serif;color:var(--text);background:var(--page);overflow:hidden;position:relative}
+.bj *{box-sizing:border-box}
+.bj h1,.bj h2,.bj h3,.bj p{margin:0}
+.bj .disp{font-family:'Baloo 2',Outfit,sans-serif;font-weight:800}
+.bj .wrap{max-width:1180px;margin:0 auto;padding:0 24px;width:100%}
+.bj .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:3px solid var(--line);box-shadow:4px 5px 0 var(--line);font-weight:700;font-size:17px;cursor:pointer;font-family:inherit;color:#17151F;background:#FFE066;transition:transform .15s,box-shadow .15s}
+.bj .btn:hover{transform:translate(2px,2px);box-shadow:2px 3px 0 var(--line)}
+.bj .btn:focus-visible,.bj a:focus-visible,.bj summary:focus-visible{outline:3px solid var(--line);outline-offset:3px}
+.bj .card{color:#17151F;border:3px solid var(--line);border-radius:28px;box-shadow:4px 5px 0 var(--line);padding:28px;position:relative;overflow:hidden}
+.bj .nav a.nl{font-weight:600;font-size:16px;padding:12px 8px;color:#FFFFFF}
+.bj .nav a.nl:hover{text-decoration:underline}
+.bj .eyebrow{color:#17151F;display:inline-block;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;border:2.5px solid var(--line);border-radius:999px;background:#FFFFFF;box-shadow:3px 4px 0 var(--line)}
+.bj .hero{background:var(--hero);color:#FFFFFF;position:relative;overflow:hidden;border-bottom:3px solid var(--line)}
+.bj .heroGrid{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:center;padding-top:40px;padding-bottom:96px}
+.bj .h1{font-size:clamp(46px,7.4vw,92px);line-height:.98;text-shadow:4px 5px 0 #17151F}
+.bj .phone{width:230px;height:470px;border:3px solid var(--line);border-radius:38px;background:#FFFFFF;box-shadow:6px 8px 0 var(--line);padding:12px;position:relative;flex:none;color:#17151F;display:flex;flex-direction:column;gap:10px}
+.bj .phone .notch{width:70px;height:8px;border-radius:6px;background:#17151F;margin:2px auto 4px}
+.bj .art{border:2.5px solid var(--line);border-radius:18px}
+.bj .row{display:flex;align-items:center;gap:10px;border:2.5px solid var(--line);border-radius:14px;padding:6px;background:#FFFFFF}
+.bj .row i{display:block;width:34px;height:34px;border-radius:9px;border:2px solid var(--line);flex:none}
+.bj .row b{display:block;height:8px;border-radius:4px;background:#17151F}
+.bj .row u{display:block;height:6px;border-radius:4px;background:#D9D5E6;margin-top:6px;text-decoration:none}
+.bj .pill{height:12px;border-radius:8px;border:2px solid var(--line)}
+.bj .tickerWrap{border-bottom:3px solid var(--line);background:#FFE066;overflow:hidden;white-space:nowrap}
+.bj .ticker{display:inline-flex;gap:0;animation:bjTick 32s linear infinite}
+.bj .ticker span{font-family:'Baloo 2',Outfit,sans-serif;font-weight:800;font-size:26px;padding:10px 28px;display:inline-flex;align-items:center;gap:28px}
+.bj .ticker span::after{content:"";width:14px;height:14px;border-radius:50%;background:#7B4DFF;border:2.5px solid var(--line)}
+.bj .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:22px}
+.bj .bento .card h3{font-family:'Baloo 2',Outfit,sans-serif;font-weight:800;font-size:28px;line-height:1.05;margin-bottom:10px}
+.bj .bento .card p{font-size:17px;line-height:1.45}
+.bj .c1{grid-column:span 4;grid-row:span 2}
+.bj .c2{grid-column:span 2}
+.bj .c3{grid-column:span 2}
+.bj .c4{grid-column:span 3}
+.bj .c5{grid-column:span 3}
+.bj .c6{grid-column:span 3}
+.bj .c7{grid-column:span 3}
+.bj .shots{display:flex;gap:36px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.bj .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.bj .num{width:56px;height:56px;border-radius:50%;border:3px solid var(--line);background:#FFE066;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',Outfit,sans-serif;font-weight:800;font-size:28px;box-shadow:3px 4px 0 var(--line);margin-bottom:16px}
+.bj .dl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.bj .dlb{display:flex;flex-direction:column;gap:6px;background:#FFFFFF;color:#17151F;border:3px solid var(--line);border-radius:22px;box-shadow:4px 5px 0 var(--line);padding:18px 20px;min-height:44px;transition:transform .15s,box-shadow .15s}
+.bj .dlb:hover{transform:translate(2px,2px);box-shadow:2px 3px 0 var(--line)}
+.bj .dlb strong{font-size:18px}
+.bj .dlb span{font-size:15px;line-height:1.35;color:#3D3950}
+.bj details{border:3px solid var(--line);border-radius:20px;background:var(--card);box-shadow:4px 5px 0 var(--line);margin-bottom:16px}
+.bj summary{color:var(--text);list-style:none;cursor:pointer;padding:20px 24px;font-weight:700;font-size:19px;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:44px}
+.bj summary::-webkit-details-marker{display:none}
+.bj summary::after{content:"+";font-family:'Baloo 2',Outfit,sans-serif;font-size:30px;line-height:1;width:36px;height:36px;border-radius:50%;border:2.5px solid var(--line);background:#FFE066;display:flex;align-items:center;justify-content:center;flex:none}
+.bj details[open] summary::after{content:"\2212";background:#BDEFE6}
+.bj details p{padding:0 24px 22px;font-size:17px;line-height:1.55;color:var(--text2)}
+.bj .foot{background:#17151F;color:#FFFFFF;border-top:3px solid var(--line)}
+.bj .foot a{color:#FFFFFF;text-decoration:underline;text-underline-offset:3px}
+@keyframes bjTick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes bjFloat{0%,100%{transform:translate(0,0) rotate(var(--r,0deg))}50%{transform:translate(0,-16px) rotate(calc(var(--r,0deg) + 10deg))}}
+@keyframes bjBob{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-12px) rotate(var(--r,0deg))}}
+@keyframes bjBar{0%,100%{transform:scaleY(.25)}50%{transform:scaleY(1)}}
+@keyframes bjDash{to{stroke-dashoffset:-64}}
+@keyframes bjSpin{to{transform:rotate(360deg)}}
+@media (max-width:900px){
+.bj .heroGrid{grid-template-columns:1fr;padding-bottom:64px}
+.bj .bento{grid-template-columns:1fr 1fr}
+.bj .c1,.bj .c2,.bj .c3,.bj .c4,.bj .c5,.bj .c6,.bj .c7{grid-column:span 2;grid-row:auto}
+.bj .steps,.bj .dl{grid-template-columns:1fr}
+.bj .nav .nlw{display:none}
+}
+@media (prefers-reduced-motion: reduce){.bj *{animation:none !important}}
 
-/* top bar */
-.bar{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:20;width:min(940px,calc(100% - 24px));height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 16px;border-radius:30px;background:var(--paper);border:2.5px solid var(--shadow);box-shadow:4px 5px 0 var(--shadow)}
-.brand{display:flex;align-items:center;gap:9px;font-family:"Baloo 2",Outfit,sans-serif;font-weight:800;font-size:25px;text-decoration:none;letter-spacing:-.3px}
-.brand img{width:34px;height:34px}
-.bar nav{display:flex;align-items:center;gap:4px}
-.bar nav a{padding:8px 14px;border-radius:20px;font-weight:600;text-decoration:none}
-.bar nav a:hover{background:var(--soft)}
-.tbtn{width:42px;height:42px;border-radius:50%;border:2.5px solid var(--shadow);background:var(--soft);color:var(--ink);cursor:pointer;display:grid;place-items:center;margin-left:6px}
-.tbtn svg{width:20px;height:20px}
-.cta-s{height:42px;padding:0 18px;border-radius:21px;background:var(--purple);color:var(--onpurple);font-weight:700;display:inline-flex;align-items:center;text-decoration:none;border:2.5px solid var(--shadow);margin-left:6px}
-@media (max-width:720px){.bar nav a.hide-s{display:none}}
-
-/* hero */
-.hero{position:relative;background:#7B4DFF;color:#fff;overflow:hidden;padding:130px 0 90px;border-bottom:3px solid #17151F}
-:root[data-theme="dark"] .hero{background:#2A1B6B}
-.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:center;position:relative;z-index:2}
-.kicker{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:17px;background:#FFE066;color:#17151F;font-weight:700;font-size:14px;border:2.5px solid #17151F;box-shadow:3px 4px 0 #17151F}
-h1{font-family:"Baloo 2",Outfit,sans-serif;font-weight:800;font-size:clamp(46px,8vw,92px);line-height:.98;letter-spacing:-.02em;margin:18px 0 16px;text-shadow:4px 5px 0 #17151F}
-.lead{font-size:20px;max-width:520px;color:#F1EBFF}
-.row{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:58px;padding:0 28px;border-radius:29px;font-weight:700;font-size:18px;text-decoration:none;border:3px solid #17151F;box-shadow:5px 6px 0 #17151F;background:#FFE066;color:#17151F;transition:transform .12s,box-shadow .12s}
-.btn:hover{transform:translate(-1px,-2px);box-shadow:6px 8px 0 #17151F}
-.btn:active{transform:translate(3px,4px);box-shadow:2px 2px 0 #17151F}
-.btn.ghost{background:#fff}
-.meta{margin-top:16px;font-size:14px;color:#E4D9FF}
-.stage{position:relative;height:560px}
-.phone{position:absolute;width:250px;border-radius:34px;border:3px solid #17151F;box-shadow:7px 9px 0 #17151F;background:#fff;overflow:hidden}
-.phone img{display:block;width:100%}
-.p1{left:2%;top:40px;transform:rotate(-6deg);animation:bob 5.5s ease-in-out infinite}
-.p2{right:2%;top:0;transform:rotate(5deg);animation:bob 6.5s ease-in-out -2s infinite}
-@keyframes bob{50%{translate:0 -14px}}
-.sticker{position:absolute;border:3px solid #17151F;box-shadow:3px 4px 0 #17151F}
-.s1{width:58px;height:58px;border-radius:50%;background:#FFE066;left:6%;top:6%;animation:float 4.2s ease-in-out infinite}
-.s2{width:46px;height:46px;border-radius:12px;background:#FFD3DE;right:6%;bottom:18%;transform:rotate(18deg);animation:float 3.6s ease-in-out -1s infinite}
-.s3{width:82px;height:82px;border-radius:50%;box-shadow:none;border-color:#17151F;right:40%;bottom:2%;animation:pulse 2.6s ease-in-out infinite}
-.s4{width:34px;height:34px;border-radius:50%;background:#BDEFE6;left:44%;top:3%;animation:float 5s ease-in-out -2s infinite}
-@keyframes float{50%{translate:0 -16px;rotate:10deg}}
-@keyframes pulse{50%{scale:1.2}}
-.rings{position:absolute;left:50%;top:50%;width:640px;height:640px;translate:-50% -50%;pointer-events:none;z-index:1}
-.rings i{position:absolute;inset:0;border-radius:44%;border:3px solid rgba(255,255,255,.35);animation:ring 5s ease-out infinite}
-.rings i:nth-child(2){animation-delay:1.6s}.rings i:nth-child(3){animation-delay:3.2s}
-@keyframes ring{from{scale:.3;opacity:.8}to{scale:1.4;opacity:0}}
-
-/* equaliser strip */
-.strip{background:#FFE066;color:#17151F;border-bottom:3px solid #17151F;overflow:hidden;white-space:nowrap}
-.strip div{display:inline-flex;gap:34px;padding:14px 0;font-family:"Baloo 2",Outfit,sans-serif;font-weight:800;font-size:26px;animation:slide 28s linear infinite}
-.strip span::after{content:"♪";margin-left:34px;opacity:.55}
-@keyframes slide{to{transform:translateX(-50%)}}
-
-section{padding:76px 0}
-.eyebrow{font-weight:700;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;font-size:13px}
-h2{font-family:"Baloo 2",Outfit,sans-serif;font-weight:800;font-size:clamp(32px,5vw,52px);line-height:1.05;margin:8px 0 14px;letter-spacing:-.01em}
-.sub{color:var(--muted);font-size:18px;max-width:620px;margin:0 0 34px}
-
-/* bento */
-.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
-.cell{border:3px solid var(--shadow);border-radius:26px;padding:22px 24px;box-shadow:5px 6px 0 var(--shadow);background:var(--soft);transition:transform .15s}
-.cell:hover{transform:translate(-2px,-3px)}
-.cell h3{margin:0 0 6px;font-size:22px}
-.cell p{margin:0;color:var(--muted);font-size:16px}
-.cell .ico{width:48px;height:48px;border-radius:14px;border:2.5px solid var(--shadow);display:grid;place-items:center;margin-bottom:14px;background:var(--paper)}
-.cell .ico svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
-.c-a{grid-column:span 3;background:var(--purple);color:var(--onpurple)}.c-a p{color:inherit;opacity:.92}.c-a .ico{background:#FFE066}.c-a .ico svg{stroke:#17151F}
-.c-b{grid-column:span 3;background:var(--yellow);color:#17151F}.c-b p{color:#3F3B4C}.c-b .ico svg{stroke:#17151F}
-.c-c,.c-d,.c-e{grid-column:span 2}
-.c-c{background:var(--pink)}.c-d{background:var(--mint)}.c-e{background:var(--peach)}
-.c-f{grid-column:span 3}.c-g{grid-column:span 3}
-@media (max-width:820px){.bento>*{grid-column:span 6!important}}
-
-/* gallery */
-.gallery{display:flex;gap:22px;overflow-x:auto;padding:10px 22px 30px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.gallery::-webkit-scrollbar{display:none}
-.gallery figure{margin:0;flex:0 0 auto;scroll-snap-align:center;width:min(250px,64vw)}
-.gallery img{width:100%;display:block;border-radius:30px;border:3px solid var(--shadow);box-shadow:6px 8px 0 var(--shadow);background:var(--soft)}
-.gallery figcaption{text-align:center;margin-top:16px;font-weight:700}
-
-/* update */
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;counter-reset:s}
-.step{border:3px solid var(--shadow);border-radius:24px;padding:20px 22px;background:var(--soft);box-shadow:4px 5px 0 var(--shadow);counter-increment:s}
-.step::before{content:counter(s);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--yellow);color:#17151F;font-weight:800;border:2.5px solid var(--shadow);margin-bottom:12px}
-.step h3{margin:0 0 4px;font-size:20px}.step p{margin:0;color:var(--muted)}
-
-/* download */
-.dlbox{background:#7B4DFF;color:#fff;border:3px solid #17151F;border-radius:34px;box-shadow:7px 9px 0 #17151F;padding:44px 34px}
-:root[data-theme="dark"] .dlbox{background:#2A1B6B}
-.dlbox h2{text-shadow:3px 4px 0 #17151F}
-.dlbox .sub{color:#E4D9FF}
-.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:8px}
-.dl .item{background:#fff;color:#17151F;border:3px solid #17151F;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:4px 5px 0 #17151F}
-.dl h3{margin:0;font-size:21px}.dl p{margin:0;color:#5E5A6B;font-size:15px;flex:1}
-.dl .btn{height:50px;font-size:16px;box-shadow:3px 4px 0 #17151F;background:#7B4DFF;color:#fff;width:100%}
-
-/* faq */
-details{border:3px solid var(--shadow);border-radius:20px;background:var(--soft);padding:16px 20px;margin-bottom:12px;box-shadow:3px 4px 0 var(--shadow)}
-summary{cursor:pointer;font-weight:700;font-size:18px;list-style:none;display:flex;justify-content:space-between;gap:12px}
-summary::after{content:"+";font-size:26px;line-height:1;transition:rotate .2s}
-details[open] summary::after{rotate:45deg}
-details p{margin:10px 0 0;color:var(--muted)}
-
-footer{border-top:3px solid var(--shadow);padding:34px 0 60px;color:var(--muted);font-size:14px}
-footer .wrap{display:grid;gap:10px}
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s,transform .6s}
-.reveal.in{opacity:1;transform:none}
-@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.stage{height:470px}.phone{width:200px}.hero{padding-top:110px}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 </style>
 </head>
 <body>
-<header class="bar">
-  <a class="brand" href="./"><img src="img/logo.png" alt="">baaja</a>
-  <nav>
-    <a class="hide-s" href="#features">Features</a>
-    <a class="hide-s" href="#updates">Updates</a>
-    <a class="hide-s" href="#faq">FAQ</a>
-    <button class="tbtn" id="theme" aria-label="Switch light and dark theme" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
-    </button>
-    <a class="cta-s" href="#download">Download</a>
-  </nav>
-</header>
+<div class="bj">
 
-<main>
-<div class="hero">
-  <div class="rings" aria-hidden="true"><i></i><i></i><i></i></div>
-  <div class="wrap">
-    <div>
-      <span class="kicker">Free · Ad-free · Open source</span>
-      <h1>बाजा बजाओ.<br>Music for every mood.</h1>
-      <p class="lead">Baaja is a YouTube Music client for Android with a bold light and dark design, synced lyrics, listen-together rooms and one-tap updates.</p>
-      <div class="row">
-        <a class="btn" id="hero-dl" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest">Download Baaja</a>
-        <a class="btn ghost" href="#features">See what's inside</a>
-      </div>
-      <p class="meta" id="hero-meta">Android 8.0 or newer · GPL-3.0 · No account needed</p>
-    </div>
-    <div class="stage">
-      <span class="sticker s1" aria-hidden="true"></span><span class="sticker s2" aria-hidden="true"></span>
-      <span class="sticker s3" aria-hidden="true"></span><span class="sticker s4" aria-hidden="true"></span>
-      <div class="phone p1"><img src="img/home.png" alt="Baaja home with speed dial" width="640" height="1422"></div>
-      <div class="phone p2"><img src="img/player.png" alt="Baaja now playing screen" width="640" height="1422"></div>
-    </div>
-  </div>
+<section class="hero">
+<span aria-hidden="true" style="--r:0deg;position:absolute;left:4%;top:150px;width:54px;height:54px;border-radius:50%;background:#FFE066;border:2.5px solid var(--line);box-shadow:3px 4px 0 var(--line);animation:bjFloat 4.2s ease-in-out infinite"></span>
+<span aria-hidden="true" style="--r:18deg;position:absolute;left:46%;top:96px;width:44px;height:44px;border-radius:10px;transform:rotate(18deg);background:#FFD3DE;border:2.5px solid var(--line);box-shadow:3px 4px 0 var(--line);animation:bjFloat 3.6s ease-in-out .6s infinite"></span>
+<span aria-hidden="true" style="position:absolute;left:38%;bottom:40px;width:78px;height:78px;border-radius:50%;border:3px solid var(--line)"></span>
+<span aria-hidden="true" style="position:absolute;right:3%;bottom:60px;width:34px;height:34px;border-radius:50%;background:#BDEFE6;border:2.5px solid var(--line);box-shadow:2px 3px 0 var(--line);animation:bjFloat 5s ease-in-out infinite"></span>
+<svg aria-hidden="true" width="64" height="40" viewBox="0 0 64 40" fill="none" stroke-width="3" stroke-linecap="round" style="stroke:var(--line);position:absolute;left:3%;bottom:120px"><path d="M2 20c6-14 12-14 18 0s12 14 18 0 12-14 18 0" stroke-dasharray="10 6" style="animation:bjDash 1.6s linear infinite"></path></svg>
+
+<div class="wrap nav" style="position:relative;display:flex;align-items:center;justify-content:space-between;padding-top:22px;padding-bottom:6px">
+<a href="#top" aria-label="Baaja home" style="display:flex;align-items:center;gap:10px">
+<span aria-hidden="true" style="width:46px;height:46px;border-radius:14px;background:#FFFFFF;border:3px solid var(--line);box-shadow:3px 4px 0 var(--line);display:flex;align-items:center;justify-content:center">
+<svg width="36" height="36" viewBox="0 0 100 100"><g fill="#7B4DFF"><path d="M32.8 66V20.5C32.8 17 35.5 15.6 38.5 15.8C43.5 16.5 48.7 21 48.7 27V66Z"></path><circle cx="29" cy="74.7" r="10.8"></circle><circle cx="60.4" cy="60.8" r="22"></circle></g><path d="M56 55.5V67L67 61.3Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"></path></svg>
+</span>
+<span class="disp" style="font-size:32px;color:#FFFFFF;text-shadow:2px 3px 0 #17151F">baaja</span>
+</a>
+<div style="display:flex;align-items:center;gap:6px">
+<span class="nlw" style="display:flex;gap:10px">
+<a class="nl" href="#features">Features</a>
+<a class="nl" href="#updates">Updates</a>
+<a class="nl" href="#faq">FAQ</a>
+</span>
+<button class="tbtn" id="theme" type="button" aria-label="Switch between light and dark theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></button>
+<a class="btn" href="#download" style="min-height:44px;padding:0 18px;font-size:16px;margin-left:8px">Download</a>
+</div>
 </div>
 
-<div class="strip" aria-hidden="true"><div>
-  <span>Speed dial</span><span>Synced lyrics</span><span>Listen together</span><span>Dark mode</span><span>Equalizer</span><span>One-tap updates</span><span>Import playlists</span><span>No ads</span>
-  <span>Speed dial</span><span>Synced lyrics</span><span>Listen together</span><span>Dark mode</span><span>Equalizer</span><span>One-tap updates</span><span>Import playlists</span><span>No ads</span>
-</div></div>
+<div class="wrap heroGrid" id="top" style="position:relative">
+<div style="display:flex;flex-direction:column;gap:24px;align-items:flex-start">
+<span class="eyebrow">Free. Ad-free. Open source.</span>
+<h1 class="disp h1">बाजा बजाओ.<br>Music for every mood.</h1>
+<p style="font-size:21px;line-height:1.45;max-width:520px;font-weight:500">Free, ad-free, open-source YouTube Music client for Android.</p>
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+<a class="btn" id="hero-dl" href="#download" style="min-height:56px;font-size:19px;padding:0 28px">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17151F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"></path></svg>
+<span id="hero-ver">Download v1.1.2</span></a>
+<a class="btn" href="https://github.com/harshaltiwari47-dot/Baaja" style="min-height:56px;font-size:19px;padding:0 28px;background:#FFFFFF">View on GitHub</a>
+</div>
+</div>
 
-<section id="features">
-  <div class="wrap">
-    <div class="reveal">
-      <span class="eyebrow">What you get</span>
-      <h2>Everything you play, none of the noise.</h2>
-      <p class="sub">Baaja keeps the parts of a music app you actually use and makes them feel good to touch.</p>
-    </div>
-    <div class="bento">
-      <div class="cell c-a reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4.5 4.5-6.5 8-6.5s6.5 2 8 6.5"></path></svg></div><h3>Your YouTube Music</h3><p>Sign in with Google to bring likes, playlists and subscriptions along, or continue as a guest. Sign-in happens on Google's own page.</p></div>
-      <div class="cell c-b reveal"><div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"></rect><path d="M17.25 14v7M13.75 17.5h7"></path></svg></div><h3>Speed dial</h3><p>Your favourite mixes one tap away, plus a "Surprise me" card when you can't decide.</p></div>
-      <div class="cell c-c reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h11M4 18h7"></path></svg></div><h3>Lyrics</h3><p>Synced lyrics that follow the song, with a share card.</p></div>
-      <div class="cell c-d reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.5 3.3-5 6.5-5s5.7 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.3 2.2 3.8 5"></path></svg></div><h3>Listen together</h3><p>Start a room, share the code, hear the same song in sync.</p></div>
-      <div class="cell c-e reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 20V10M10 20V4M15 20v-7M20 20V8"></path></svg></div><h3>Your sound</h3><p>Equalizer, normalization, skip silence and smooth transitions.</p></div>
-      <div class="cell c-f reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"></path></svg></div><h3>Import a playlist</h3><p>Paste any YouTube Music playlist link and Baaja copies it into your Library.</p></div>
-      <div class="cell c-g reveal"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l3 2"></path></svg></div><h3>Timers and alarms</h3><p>Fall asleep to music and wake up to it, with a sleep timer and music alarms.</p></div>
-    </div>
-  </div>
+<div aria-hidden="true" style="position:relative;height:540px;display:flex;justify-content:center;align-items:center">
+<div class="phone" style="position:absolute;left:2%;top:50px;--r:-8deg;transform:rotate(-8deg);animation:bjBob 4.4s ease-in-out infinite">
+<div class="notch"></div>
+<div class="art" style="height:190px;background:linear-gradient(135deg,#FF8A5B,#FFD3DE);display:flex;align-items:flex-end;padding:10px"><span class="pill" style="width:60%;background:#FFFFFF"></span></div>
+<div class="pill" style="width:80%;background:#17151F"></div>
+<div class="pill" style="width:50%;background:#D9D5E6;border-color:#D9D5E6"></div>
+<div style="display:flex;gap:6px;height:44px;align-items:flex-end;justify-content:center">
+<span style="width:8px;height:44px;background:#7B4DFF;border-radius:5px;transform-origin:bottom;animation:bjBar .9s ease-in-out infinite"></span>
+<span style="width:8px;height:44px;background:#FFE066;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar 1.1s ease-in-out .2s infinite"></span>
+<span style="width:8px;height:44px;background:#BDEFE6;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar .8s ease-in-out .3s infinite"></span>
+<span style="width:8px;height:44px;background:#7B4DFF;border-radius:5px;transform-origin:bottom;animation:bjBar 1.2s ease-in-out .1s infinite"></span>
+<span style="width:8px;height:44px;background:#FFD3DE;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar 1s ease-in-out .4s infinite"></span>
+</div>
+<div style="display:flex;justify-content:center;gap:14px;align-items:center;margin-top:auto">
+<span style="width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line)"></span>
+<span style="width:54px;height:54px;border-radius:50%;background:#7B4DFF;border:3px solid var(--line);box-shadow:2px 3px 0 var(--line)"></span>
+<span style="width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line)"></span>
+</div>
+</div>
+<div class="phone" style="position:absolute;right:0;top:0;--r:7deg;transform:rotate(7deg);animation:bjBob 5s ease-in-out .5s infinite;background:#FFF7D1">
+<div class="notch"></div>
+<div class="pill" style="width:45%;background:#17151F"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<div class="art" style="height:92px;background:linear-gradient(135deg,#7B4DFF,#BDEFE6)"></div>
+<div class="art" style="height:92px;background:linear-gradient(135deg,#FFE066,#FF8A5B)"></div>
+<div class="art" style="height:92px;background:linear-gradient(135deg,#FFD3DE,#7B4DFF)"></div>
+<div class="art" style="height:92px;background:linear-gradient(135deg,#BDEFE6,#FFE066)"></div>
+</div>
+<div class="row"><i style="background:#FFD9B8"></i><div style="flex:1"><b style="width:70%"></b><u style="width:45%"></u></div></div>
+<div class="row"><i style="background:#BDEFE6"></i><div style="flex:1"><b style="width:55%"></b><u style="width:60%"></u></div></div>
+<div class="row"><i style="background:#FFD3DE"></i><div style="flex:1"><b style="width:80%"></b><u style="width:35%"></u></div></div>
+</div>
+</div>
+</div>
 </section>
 
-<section style="padding-top:10px">
-  <div class="wrap reveal">
-    <span class="eyebrow">A look inside</span>
-    <h2>Made to be touched.</h2>
-  </div>
-  <div class="gallery" role="list">
-    <figure role="listitem"><img src="img/home.png" alt="Home screen" loading="lazy" width="640" height="1422"><figcaption>Home</figcaption></figure>
-    <figure role="listitem"><img src="img/player.png" alt="Player" loading="lazy" width="640" height="1422"><figcaption>Now playing</figcaption></figure>
-    <figure role="listitem"><img src="img/library.png" alt="Library" loading="lazy" width="640" height="1422"><figcaption>Library</figcaption></figure>
-    <figure role="listitem"><img src="img/launch.png" alt="Launch screen" loading="lazy" width="640" height="1422"><figcaption>Launch</figcaption></figure>
-  </div>
+<div class="tickerWrap" aria-hidden="true">
+<div class="ticker">
+<span>Free</span><span>Ad-free</span><span>Open source</span><span>Synced lyrics</span><span>Listen together</span><span>Sleep timer</span><span>Equalizer</span><span>Music alarms</span>
+<span>Free</span><span>Ad-free</span><span>Open source</span><span>Synced lyrics</span><span>Listen together</span><span>Sleep timer</span><span>Equalizer</span><span>Music alarms</span>
+</div>
+</div>
+
+<section id="features" style="padding:96px 0 40px">
+<div class="wrap">
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;margin-bottom:40px">
+<span class="eyebrow" style="background:#FFD3DE">Features</span>
+<h2 class="disp" style="font-size:clamp(36px,5vw,56px);line-height:1.02">Everything for your next song.</h2>
+</div>
+<div class="bento">
+<div class="card rv c1" style="background:#E4D9FF;display:flex;flex-direction:column;justify-content:space-between;gap:28px">
+<div>
+<h3 style="font-size:40px">Your YouTube Music</h3>
+<p style="font-size:20px;max-width:460px">Sign in with Google to bring your library along, or continue as a guest and start listening right away.</p>
+</div>
+<div aria-hidden="true" style="display:flex;gap:14px;flex-wrap:wrap">
+<span class="art" style="width:110px;height:110px;background:linear-gradient(135deg,#7B4DFF,#FFD3DE)"></span>
+<span class="art" style="width:110px;height:110px;background:linear-gradient(135deg,#FFE066,#FF8A5B)"></span>
+<span class="art" style="width:110px;height:110px;background:linear-gradient(135deg,#BDEFE6,#7B4DFF)"></span>
+<span class="art" style="width:110px;height:110px;background:linear-gradient(135deg,#FFD9B8,#FFE066)"></span>
+</div>
+</div>
+<div class="card rv c2" style="background:#FFE066">
+<h3>Speed dial + Surprise me</h3>
+<p>Your favourites a tap away, and a random pick when you cannot decide.</p>
+</div>
+<div class="card rv c3" style="background:#FFD3DE">
+<h3>Synced lyrics + share card</h3>
+<p>Follow along line by line, then share a lyric card with friends.</p>
+</div>
+<div class="card rv c4" style="background:#BDEFE6">
+<h3>Listen together rooms</h3>
+<p>Join a room and hear the same music at the same time.</p>
+</div>
+<div class="card rv c5" style="background:#FFD9B8">
+<h3>Equalizer, normalization, skip silence</h3>
+<p>Shape the sound and even out the volume between tracks.</p>
+</div>
+<div class="card rv c6" style="background:var(--card);color:var(--text)">
+<h3>Import a playlist by link</h3>
+<p>Paste a YouTube Music playlist link and it lands in your library.</p>
+</div>
+<div class="card rv c7" style="background:#E4D9FF">
+<h3>Sleep timer and music alarms</h3>
+<p>Drift off to music, then wake up to it.</p>
+</div>
+</div>
+</div>
 </section>
 
-<section id="updates" style="padding-top:20px">
-  <div class="wrap">
-    <div class="reveal">
-      <span class="eyebrow">Stay current</span>
-      <h2>Updates in one tap.</h2>
-      <p class="sub">No store needed. Baaja checks for a new version, downloads it inside the app and checks the file is really Baaja's before it installs.</p>
-    </div>
-    <div class="steps">
-      <div class="step reveal"><h3>You get a heads-up</h3><p>A dialog and a small dot on your profile show up when a new version is out.</p></div>
-      <div class="step reveal"><h3>Tap Update</h3><p>The file downloads with a progress bar, straight from this project's releases.</p></div>
-      <div class="step reveal"><h3>Install</h3><p>The signature is verified, then Android's installer opens. Your data stays.</p></div>
-    </div>
-  </div>
+<section style="padding:56px 0">
+<div class="wrap">
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;margin-bottom:40px">
+<span class="eyebrow" style="background:#BDEFE6">Take a look</span>
+<h2 class="disp" style="font-size:clamp(36px,5vw,56px);line-height:1.02">Made to be played with.</h2>
+</div>
+<div class="shots" aria-hidden="true">
+<div class="phone" style="background:#E4D9FF">
+<div class="notch"></div>
+<div class="art" style="height:230px;background:linear-gradient(135deg,#7B4DFF,#FFD3DE)"></div>
+<div class="pill" style="width:75%;background:#17151F"></div>
+<div class="pill" style="width:45%;background:#FFFFFF"></div>
+<div class="pill" style="width:100%;background:#FFFFFF;height:10px"><span style="display:block;width:40%;height:100%;background:#7B4DFF;border-radius:8px"></span></div>
+<div style="display:flex;justify-content:center;gap:14px;align-items:center;margin-top:auto"><span style="width:28px;height:28px;border-radius:50%;border:2.5px solid var(--line)"></span><span style="width:52px;height:52px;border-radius:50%;background:#FFE066;border:3px solid var(--line);box-shadow:2px 3px 0 var(--line)"></span><span style="width:28px;height:28px;border-radius:50%;border:2.5px solid var(--line)"></span></div>
+</div>
+<div class="phone" style="background:#FFF7D1;margin-top:40px">
+<div class="notch"></div>
+<div class="pill" style="width:50%;background:#17151F"></div>
+<div class="row"><i style="background:#FFD3DE"></i><div style="flex:1"><b style="width:70%"></b><u style="width:40%"></u></div></div>
+<div class="row" style="background:#FFE066"><i style="background:#FFFFFF"></i><div style="flex:1"><b style="width:60%"></b><u style="width:50%;background:#17151F"></u></div></div>
+<div class="row"><i style="background:#BDEFE6"></i><div style="flex:1"><b style="width:80%"></b><u style="width:30%"></u></div></div>
+<div class="row"><i style="background:#FFD9B8"></i><div style="flex:1"><b style="width:55%"></b><u style="width:55%"></u></div></div>
+<div class="row"><i style="background:#E4D9FF"></i><div style="flex:1"><b style="width:65%"></b><u style="width:35%"></u></div></div>
+</div>
+<div class="phone" style="background:#BDEFE6">
+<div class="notch"></div>
+<div class="pill" style="width:60%;background:#17151F"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<div class="art" style="height:100px;background:linear-gradient(135deg,#FFE066,#7B4DFF)"></div>
+<div class="art" style="height:100px;background:linear-gradient(135deg,#FF8A5B,#FFD3DE)"></div>
+<div class="art" style="height:100px;background:linear-gradient(135deg,#FFD3DE,#BDEFE6)"></div>
+<div class="art" style="height:100px;background:linear-gradient(135deg,#7B4DFF,#FFD9B8)"></div>
+</div>
+<div class="pill" style="width:90%;background:#FFFFFF"></div>
+<div class="pill" style="width:65%;background:#FFFFFF"></div>
+<div class="pill" style="width:80%;background:#FFFFFF"></div>
+</div>
+</div>
+</div>
 </section>
 
-<section id="download">
-  <div class="wrap">
-    <div class="dlbox reveal">
-      <span class="eyebrow" style="color:#FFE066">Download</span>
-      <h2>Get Baaja.</h2>
-      <p class="sub" id="release-line">Fetching the latest version…</p>
-      <div class="dl" id="dl-list">
-        <div class="item"><h3>Baaja</h3><p>The standard build.</p><a class="btn" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest">Open releases</a></div>
-      </div>
-      <p class="meta">If Android blocks the install, allow "install unknown apps" for your browser. All files use the same signing key, so new versions install over old ones.</p>
-    </div>
-  </div>
+<section id="updates" style="padding:56px 0">
+<div class="wrap">
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;margin-bottom:40px">
+<span class="eyebrow" style="background:#FFE066">Updates</span>
+<h2 class="disp" style="font-size:clamp(36px,5vw,56px);line-height:1.02">Updates in one tap.</h2>
+</div>
+<div class="steps">
+<div class="card rv" style="background:#FFD3DE"><div class="num">1</div><h3 class="disp" style="font-size:28px;margin-bottom:8px">Open Baaja</h3><p style="font-size:17px;line-height:1.45">The app checks for a new release on its own.</p></div>
+<div class="card rv" style="background:#BDEFE6"><div class="num">2</div><h3 class="disp" style="font-size:28px;margin-bottom:8px">Tap update</h3><p style="font-size:17px;line-height:1.45">One tap downloads the new version.</p></div>
+<div class="card rv" style="background:#FFD9B8"><div class="num">3</div><h3 class="disp" style="font-size:28px;margin-bottom:8px">Keep listening</h3><p style="font-size:17px;line-height:1.45">Install it and carry on with your music.</p></div>
+</div>
+</div>
 </section>
 
-<section id="faq">
-  <div class="wrap" style="max-width:780px">
-    <div class="reveal"><span class="eyebrow">Questions</span><h2>Good to know.</h2></div>
-    <details><summary>Is Baaja really free?</summary><p>Yes. It is free software under the GNU GPL v3, with no ads and no tracking of you by Baaja. The source code is public.</p></details>
-    <details><summary>Do I need to sign in?</summary><p>No. You can play music as a guest. Signing in with Google brings your YouTube Music library, and it happens on Google's own page, so Baaja never sees your password.</p></details>
-    <details><summary>Which build should I download?</summary><p>Most people want Baaja.apk. Pick "with Google Cast" if you cast to a Chromecast or similar device.</p></details>
-    <details><summary>Does it work where I live?</summary><p>Baaja needs YouTube Music to be available in your region. If it isn't, a VPN or proxy through a supported region is required.</p></details>
-    <details><summary>Who makes Baaja?</summary><p>Baaja is designed and built by Harshal Tiwari, on top of the open-source Metrolist, InnerTune and OuterTune projects. Thank you to everyone behind them.</p></details>
-    <details><summary>Is it affiliated with YouTube or Google?</summary><p>No. Baaja is not affiliated with, endorsed by or associated with YouTube, Google LLC or Metrolist Group LLC. All trademarks belong to their owners.</p></details>
-  </div>
+<section id="download" style="padding:56px 0 72px">
+<div class="wrap">
+<div class="card" style="background:var(--hero);color:#FFFFFF;padding:48px 36px;border-radius:36px;box-shadow:6px 8px 0 var(--line)">
+<span aria-hidden="true" style="position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:#FFE066;border:3px solid var(--line)"></span>
+<span aria-hidden="true" style="--r:20deg;position:absolute;right:120px;bottom:-24px;width:64px;height:64px;border-radius:14px;background:#FFD3DE;border:3px solid var(--line);transform:rotate(20deg);animation:bjFloat 4s ease-in-out infinite"></span>
+<span class="eyebrow" style="color:#17151F">Latest release v1.1.2</span>
+<h2 class="disp" style="font-size:clamp(36px,5vw,60px);line-height:1.02;margin-top:18px;text-shadow:3px 4px 0 #17151F">Get Baaja v1.1.2</h2>
+<p style="font-size:19px;line-height:1.45;margin-top:12px;max-width:560px">Most people want Baaja.apk. Pick Google Cast if you cast to a Chromecast or similar device.</p>
+<div class="dl">
+<a class="dlb" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest/download/Baaja.apk"><strong>Baaja.apk</strong><span>The standard build. Best for most phones.</span></a>
+<a class="dlb" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest/download/Baaja-with-Google-Cast.apk"><strong>Baaja-with-Google-Cast.apk</strong><span>Adds casting to Chromecast and other Cast devices.</span></a>
+<a class="dlb" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest/download/Baaja-izzy.apk"><strong>Baaja-izzy.apk</strong><span>Same app without the in-app updater, for store use.</span></a>
+</div>
+</div>
+</div>
 </section>
-</main>
 
-<footer>
-  <div class="wrap">
-    <div><strong>baaja</strong> · designed and built by <a href="https://github.com/harshaltiwari47-dot">Harshal Tiwari</a></div>
-    <div><a href="https://github.com/harshaltiwari47-dot/Baaja">Source code</a> · <a href="https://github.com/harshaltiwari47-dot/Baaja/releases">All releases</a> · <a href="https://github.com/harshaltiwari47-dot/Baaja/issues">Report a problem</a> · <a href="https://github.com/harshaltiwari47-dot/Baaja/blob/main/LICENSE">GPL-3.0</a></div>
-    <div>Built on <a href="https://github.com/MetrolistGroup/Metrolist">Metrolist</a>, <a href="https://github.com/z-huang/InnerTune">InnerTune</a> and <a href="https://github.com/DD3Boh/OuterTune">OuterTune</a>.</div>
-  </div>
+<section id="faq" style="padding:0 0 96px">
+<div class="wrap" style="max-width:860px">
+<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;margin-bottom:36px">
+<span class="eyebrow" style="background:#FFD9B8">FAQ</span>
+<h2 class="disp" style="font-size:clamp(36px,5vw,56px);line-height:1.02">Questions, answered.</h2>
+</div>
+<details open><summary>Is Baaja free?</summary><p>Yes. Baaja is free, ad-free and open source.</p></details>
+<details><summary>Do I need to sign in?</summary><p>No. You can sign in with Google to use your YouTube Music library, or continue as a guest.</p></details>
+<details><summary>Which build should I download?</summary><p>Most people want Baaja.apk. Pick the Google Cast build if you cast to a Chromecast or similar device.</p></details>
+<details><summary>Does it work in my region?</summary><p>Baaja works wherever YouTube Music is available in your region.</p></details>
+<details><summary>Who makes Baaja?</summary><p>Baaja is designed and built by Harshal Tiwari, on top of the open-source Metrolist, InnerTune and OuterTune projects.</p></details>
+<details><summary>Is Baaja affiliated with YouTube or Google?</summary><p>No. Baaja is an independent project and is not affiliated with YouTube or Google.</p></details>
+</div>
+</section>
+
+<footer class="foot" style="padding:48px 0">
+<div class="wrap" style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+<span class="disp" style="font-size:34px;color:#FFE066">baaja</span>
+<nav aria-label="Footer" style="display:flex;gap:22px;flex-wrap:wrap;font-size:16px">
+<a href="https://github.com/harshaltiwari47-dot/Baaja">GitHub</a>
+<a href="https://github.com/harshaltiwari47-dot/Baaja/releases">Releases</a>
+<a href="https://github.com/harshaltiwari47-dot/Baaja/issues">Issues</a>
+<a href="https://github.com/harshaltiwari47-dot/Baaja/blob/main/LICENSE">License</a>
+</nav>
+</div>
+<p style="font-size:15px;line-height:1.6;max-width:720px;color:#E4E1EE">Designed and built by <a href="https://github.com/harshaltiwari47-dot">Harshal Tiwari</a>, on top of the open-source <a href="https://github.com/MetrolistGroup/Metrolist">Metrolist</a>, <a href="https://github.com/z-huang/InnerTune">InnerTune</a> and <a href="https://github.com/DD3Boh/OuterTune">OuterTune</a> projects. Not affiliated with YouTube or Google.</p>
+</div>
 </footer>
 
+</div>
 <script>
-(function () {
-  var root = document.documentElement, key = "baaja-theme";
-  function apply(t) { root.setAttribute("data-theme", t); }
-  var saved = null; try { saved = localStorage.getItem(key); } catch (e) {}
-  apply(saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-  document.getElementById("theme").addEventListener("click", function () {
-    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    apply(next); try { localStorage.setItem(key, next); } catch (e) {}
-  });
-
-  var io = "IntersectionObserver" in window ? new IntersectionObserver(function (es) {
-    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-  }, { threshold: 0.12 }) : null;
-  document.querySelectorAll(".reveal").forEach(function (el) { if (io) io.observe(el); else el.classList.add("in"); });
-
-  var NAMES = {
-    "Baaja.apk": ["Baaja", "The standard build. Best for most phones."],
-    "Baaja-with-Google-Cast.apk": ["Baaja with Google Cast", "Adds casting to Chromecast and other Cast devices."],
-    "Baaja-izzy.apk": ["Baaja for IzzyOnDroid", "Same app without the in-app updater, for store use."]
-  };
-  function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
-  fetch("https://api.github.com/repos/harshaltiwari47-dot/Baaja/releases/latest")
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (rel) {
-      var list = document.getElementById("dl-list"); list.textContent = "";
-      var first = null;
-      (rel.assets || []).forEach(function (a) {
-        var info = NAMES[a.name]; if (!info) return;
-        if (!first) first = a;
-        var card = document.createElement("div"); card.className = "item";
-        var h = document.createElement("h3"); h.textContent = info[0];
-        var p = document.createElement("p"); p.textContent = info[1] + " " + mb(a.size) + ".";
-        var l = document.createElement("a"); l.className = "btn"; l.href = a.browser_download_url; l.textContent = "Download " + rel.tag_name;
-        card.appendChild(h); card.appendChild(p); card.appendChild(l); list.appendChild(card);
-      });
-      var when = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
-      document.getElementById("release-line").textContent = "Latest version " + rel.tag_name + (when ? " · " + when : "");
-      if (first) {
-        var b = document.getElementById("hero-dl");
-        b.href = first.browser_download_url; b.textContent = "Download " + rel.tag_name;
-      }
-    })
-    .catch(function () { document.getElementById("release-line").textContent = "Open the releases page to download the latest version."; });
+(function(){
+var root=document.documentElement,key="baaja-theme";
+var saved=null;try{saved=localStorage.getItem(key);}catch(e){}
+root.setAttribute("data-theme",saved==="dark"?"dark":"light");
+document.getElementById("theme").addEventListener("click",function(){
+  var next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+  root.setAttribute("data-theme",next);try{localStorage.setItem(key,next);}catch(e){}
+});
+var io="IntersectionObserver" in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:.12}):null;
+document.querySelectorAll(".rv").forEach(function(el){if(io)io.observe(el);else el.classList.add("in");});
+fetch("https://api.github.com/repos/harshaltiwari47-dot/Baaja/releases/latest").then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(rel){
+  var tag=rel.tag_name||"";
+  document.querySelectorAll("#download .eyebrow").forEach(function(el){el.textContent="Latest release "+tag;});
+  document.querySelectorAll("#download h2").forEach(function(el){el.textContent="Get Baaja "+tag;});
+  var v=document.getElementById("hero-ver");if(v)v.textContent="Download "+tag;
+}).catch(function(){});
 })();
 </script>
 </body>
