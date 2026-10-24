@@ -15,9 +15,9 @@
 
 <br>
 
-<img src="docs/img/home.png" alt="Baaja home with speed dial" width="200" />&nbsp;&nbsp;
-<img src="docs/img/player.png" alt="Baaja now playing" width="200" />&nbsp;&nbsp;
-<img src="docs/img/library.png" alt="Baaja library" width="200" />
+<img src="docs/img/app/home-light.jpg" alt="Baaja home with speed dial" width="200" />&nbsp;&nbsp;
+<img src="docs/img/app/player-light.jpg" alt="Baaja now playing" width="200" />&nbsp;&nbsp;
+<img src="docs/img/app/home-dark.jpg" alt="Baaja home in dark mode" width="200" />
 
 </div>
 
@@ -90,10 +90,23 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 ## Screenshots
 
 <div align="center">
-<img src="docs/img/home.png" alt="Home" width="190" />&nbsp;
-<img src="docs/img/player.png" alt="Now playing" width="190" />&nbsp;
-<img src="docs/img/library.png" alt="Library" width="190" />&nbsp;
-<img src="docs/img/launch.png" alt="Launch animation" width="190" />
+
+**Light**
+
+<img src="docs/img/app/home-light.jpg" alt="Home" width="170" />&nbsp;
+<img src="docs/img/app/player-light.jpg" alt="Now playing" width="170" />&nbsp;
+<img src="docs/img/app/lyrics-light.jpg" alt="Synced lyrics" width="170" />&nbsp;
+<img src="docs/img/app/library-light.jpg" alt="Library" width="170" />&nbsp;
+<img src="docs/img/app/explore-light.jpg" alt="Explore" width="170" />
+
+**Dark**
+
+<img src="docs/img/app/home-dark.jpg" alt="Home" width="170" />&nbsp;
+<img src="docs/img/app/player-dark.jpg" alt="Now playing" width="170" />&nbsp;
+<img src="docs/img/app/lyrics-dark.jpg" alt="Synced lyrics" width="170" />&nbsp;
+<img src="docs/img/app/library-dark.jpg" alt="Library" width="170" />&nbsp;
+<img src="docs/img/app/explore-dark.jpg" alt="Explore" width="170" />
+
 </div>
 
 ## Build from source

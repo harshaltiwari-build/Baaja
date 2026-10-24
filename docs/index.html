@@ -7,7 +7,7 @@
 <meta name="description" content="Baaja is a free, ad-free and open-source YouTube Music client for Android. Designed and built by Harshal Tiwari.">
 <meta property="og:title" content="Baaja - बाजा बजाओ">
 <meta property="og:description" content="A free, ad-free, open-source YouTube Music client for Android.">
-<meta property="og:image" content="img/home.png">
+<meta property="og:image" content="img/app/home-light.jpg">
 <meta name="theme-color" content="#7B4DFF">
 <link rel="icon" href="img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +21,15 @@
 .tbtn .sun{display:none}
 :root[data-theme="dark"] .tbtn .sun{display:block}
 :root[data-theme="dark"] .tbtn .moon{display:none}
+
+.shot{margin:0;width:230px;border:3px solid var(--line);border-radius:34px;box-shadow:6px 8px 0 var(--line);overflow:hidden;background:var(--card);flex:none}
+.shot img{display:block;width:100%;height:auto}
+.shot .md,.shot-only-dark{display:none}
+:root[data-theme="dark"] .shot .ml{display:none}
+:root[data-theme="dark"] .shot .md{display:block}
+.cap{margin:14px 0 0;text-align:center;font-weight:700;font-size:18px}
+.gal{display:flex;gap:34px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.gal figure{margin:0}
 .rv{opacity:0;transform:translateY(26px);transition:opacity .55s,transform .55s}
 .rv.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
@@ -139,38 +148,9 @@ a{color:inherit;text-decoration:none}
 </div>
 </div>
 
-<div aria-hidden="true" style="position:relative;height:540px;display:flex;justify-content:center;align-items:center">
-<div class="phone" style="position:absolute;left:2%;top:50px;--r:-8deg;transform:rotate(-8deg);animation:bjBob 4.4s ease-in-out infinite">
-<div class="notch"></div>
-<div class="art" style="height:190px;background:linear-gradient(135deg,#FF8A5B,#FFD3DE);display:flex;align-items:flex-end;padding:10px"><span class="pill" style="width:60%;background:#FFFFFF"></span></div>
-<div class="pill" style="width:80%;background:#17151F"></div>
-<div class="pill" style="width:50%;background:#D9D5E6;border-color:#D9D5E6"></div>
-<div style="display:flex;gap:6px;height:44px;align-items:flex-end;justify-content:center">
-<span style="width:8px;height:44px;background:#7B4DFF;border-radius:5px;transform-origin:bottom;animation:bjBar .9s ease-in-out infinite"></span>
-<span style="width:8px;height:44px;background:#FFE066;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar 1.1s ease-in-out .2s infinite"></span>
-<span style="width:8px;height:44px;background:#BDEFE6;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar .8s ease-in-out .3s infinite"></span>
-<span style="width:8px;height:44px;background:#7B4DFF;border-radius:5px;transform-origin:bottom;animation:bjBar 1.2s ease-in-out .1s infinite"></span>
-<span style="width:8px;height:44px;background:#FFD3DE;border:2px solid var(--line);border-radius:5px;transform-origin:bottom;animation:bjBar 1s ease-in-out .4s infinite"></span>
-</div>
-<div style="display:flex;justify-content:center;gap:14px;align-items:center;margin-top:auto">
-<span style="width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line)"></span>
-<span style="width:54px;height:54px;border-radius:50%;background:#7B4DFF;border:3px solid var(--line);box-shadow:2px 3px 0 var(--line)"></span>
-<span style="width:30px;height:30px;border-radius:50%;border:2.5px solid var(--line)"></span>
-</div>
-</div>
-<div class="phone" style="position:absolute;right:0;top:0;--r:7deg;transform:rotate(7deg);animation:bjBob 5s ease-in-out .5s infinite;background:#FFF7D1">
-<div class="notch"></div>
-<div class="pill" style="width:45%;background:#17151F"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<div class="art" style="height:92px;background:linear-gradient(135deg,#7B4DFF,#BDEFE6)"></div>
-<div class="art" style="height:92px;background:linear-gradient(135deg,#FFE066,#FF8A5B)"></div>
-<div class="art" style="height:92px;background:linear-gradient(135deg,#FFD3DE,#7B4DFF)"></div>
-<div class="art" style="height:92px;background:linear-gradient(135deg,#BDEFE6,#FFE066)"></div>
-</div>
-<div class="row"><i style="background:#FFD9B8"></i><div style="flex:1"><b style="width:70%"></b><u style="width:45%"></u></div></div>
-<div class="row"><i style="background:#BDEFE6"></i><div style="flex:1"><b style="width:55%"></b><u style="width:60%"></u></div></div>
-<div class="row"><i style="background:#FFD3DE"></i><div style="flex:1"><b style="width:80%"></b><u style="width:35%"></u></div></div>
-</div>
+<div style="position:relative;height:560px;display:flex;justify-content:center;align-items:center">
+<figure class="shot" style="position:absolute;left:2%;top:40px;--r:-8deg;transform:rotate(-8deg);animation:bjBob 4.4s ease-in-out infinite"><img class="ml" src="img/app/home-light.jpg" alt="Baaja home screen with speed dial" width="600" height="1334"><img class="md" src="img/app/home-dark.jpg" alt="Baaja home screen with speed dial" width="600" height="1334"></figure>
+<figure class="shot" style="position:absolute;right:0;top:0;--r:7deg;transform:rotate(7deg);animation:bjBob 5s ease-in-out .5s infinite"><img class="ml" src="img/app/player-light.jpg" alt="Baaja now playing screen" width="600" height="1334"><img class="md" src="img/app/player-dark.jpg" alt="Baaja now playing screen" width="600" height="1334"></figure>
 </div>
 </div>
 </section>
@@ -235,37 +215,11 @@ a{color:inherit;text-decoration:none}
 <span class="eyebrow" style="background:#BDEFE6">Take a look</span>
 <h2 class="disp" style="font-size:clamp(36px,5vw,56px);line-height:1.02">Made to be played with.</h2>
 </div>
-<div class="shots" aria-hidden="true">
-<div class="phone" style="background:#E4D9FF">
-<div class="notch"></div>
-<div class="art" style="height:230px;background:linear-gradient(135deg,#7B4DFF,#FFD3DE)"></div>
-<div class="pill" style="width:75%;background:#17151F"></div>
-<div class="pill" style="width:45%;background:#FFFFFF"></div>
-<div class="pill" style="width:100%;background:#FFFFFF;height:10px"><span style="display:block;width:40%;height:100%;background:#7B4DFF;border-radius:8px"></span></div>
-<div style="display:flex;justify-content:center;gap:14px;align-items:center;margin-top:auto"><span style="width:28px;height:28px;border-radius:50%;border:2.5px solid var(--line)"></span><span style="width:52px;height:52px;border-radius:50%;background:#FFE066;border:3px solid var(--line);box-shadow:2px 3px 0 var(--line)"></span><span style="width:28px;height:28px;border-radius:50%;border:2.5px solid var(--line)"></span></div>
-</div>
-<div class="phone" style="background:#FFF7D1;margin-top:40px">
-<div class="notch"></div>
-<div class="pill" style="width:50%;background:#17151F"></div>
-<div class="row"><i style="background:#FFD3DE"></i><div style="flex:1"><b style="width:70%"></b><u style="width:40%"></u></div></div>
-<div class="row" style="background:#FFE066"><i style="background:#FFFFFF"></i><div style="flex:1"><b style="width:60%"></b><u style="width:50%;background:#17151F"></u></div></div>
-<div class="row"><i style="background:#BDEFE6"></i><div style="flex:1"><b style="width:80%"></b><u style="width:30%"></u></div></div>
-<div class="row"><i style="background:#FFD9B8"></i><div style="flex:1"><b style="width:55%"></b><u style="width:55%"></u></div></div>
-<div class="row"><i style="background:#E4D9FF"></i><div style="flex:1"><b style="width:65%"></b><u style="width:35%"></u></div></div>
-</div>
-<div class="phone" style="background:#BDEFE6">
-<div class="notch"></div>
-<div class="pill" style="width:60%;background:#17151F"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<div class="art" style="height:100px;background:linear-gradient(135deg,#FFE066,#7B4DFF)"></div>
-<div class="art" style="height:100px;background:linear-gradient(135deg,#FF8A5B,#FFD3DE)"></div>
-<div class="art" style="height:100px;background:linear-gradient(135deg,#FFD3DE,#BDEFE6)"></div>
-<div class="art" style="height:100px;background:linear-gradient(135deg,#7B4DFF,#FFD9B8)"></div>
-</div>
-<div class="pill" style="width:90%;background:#FFFFFF"></div>
-<div class="pill" style="width:65%;background:#FFFFFF"></div>
-<div class="pill" style="width:80%;background:#FFFFFF"></div>
-</div>
+<div class="gal">
+<figure style=""><div class="shot"><img class="ml" src="img/app/explore-light.jpg" alt="Explore screen with charts and moods" width="600" height="1334" loading="lazy"><img class="md" src="img/app/explore-dark.jpg" alt="Explore screen with charts and moods" width="600" height="1334" loading="lazy"></div><figcaption class="cap">Explore</figcaption></figure>
+<figure style="margin-top:36px"><div class="shot"><img class="ml" src="img/app/lyrics-light.jpg" alt="Synced lyrics" width="600" height="1334" loading="lazy"><img class="md" src="img/app/lyrics-dark.jpg" alt="Synced lyrics" width="600" height="1334" loading="lazy"></div><figcaption class="cap">Synced lyrics</figcaption></figure>
+<figure style=""><div class="shot"><img class="ml" src="img/app/library-light.jpg" alt="Library" width="600" height="1334" loading="lazy"><img class="md" src="img/app/library-dark.jpg" alt="Library" width="600" height="1334" loading="lazy"></div><figcaption class="cap">Library</figcaption></figure>
+<figure style="margin-top:36px"><div class="shot"><img class="ml" src="img/app/together-light.jpg" alt="Listen together" width="600" height="1334" loading="lazy"><img class="md" src="img/app/together-dark.jpg" alt="Listen together" width="600" height="1334" loading="lazy"></div><figcaption class="cap">Listen together</figcaption></figure>
 </div>
 </div>
 </section>
