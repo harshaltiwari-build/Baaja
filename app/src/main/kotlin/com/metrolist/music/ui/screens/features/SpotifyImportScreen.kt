@@ -142,7 +142,7 @@ fun SpotifyImportScreen(
                         }
                     }
                     viewModel.error?.let { err ->
-                        item(key = "error") { ErrorCard(err, viewModel.serverCode) }
+                        item(key = "error") { ErrorCard(err, viewModel.serverCode, viewModel.serverDetail) }
                     }
                     if (viewModel.mode == ImportMode.LINK) {
                         item(key = "link") { LinkCard(viewModel, defaultName) }
@@ -427,8 +427,8 @@ private fun CsvCard(onPick: () -> Unit) {
 }
 
 @Composable
-private fun ErrorCard(error: ImportError, serverCode: Int) {
-    val message =
+private fun ErrorCard(error: ImportError, serverCode: Int, serverDetail: String?) {
+    val base =
         when (error) {
             ImportError.INVALID_LINK -> stringResource(R.string.baaja_imp_err_invalid_link)
             ImportError.SHORT_LINK -> stringResource(R.string.baaja_imp_err_short_link)
@@ -443,6 +443,8 @@ private fun ErrorCard(error: ImportError, serverCode: Int) {
             ImportError.CSV_READ -> stringResource(R.string.baaja_imp_err_csv_read)
             ImportError.EMPTY -> stringResource(R.string.baaja_imp_err_empty)
         }
+    val showDetail = serverDetail != null && (error == ImportError.BAD_KEYS || error == ImportError.NOT_FOUND || error == ImportError.SERVER)
+    val message = if (showDetail) base + "\n\n" + stringResource(R.string.baaja_imp_err_spotify_says, serverDetail.orEmpty(), serverCode) else base
     Row(
         Modifier
             .fillMaxWidth()

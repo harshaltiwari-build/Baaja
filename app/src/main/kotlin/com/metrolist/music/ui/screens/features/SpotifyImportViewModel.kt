@@ -101,6 +101,7 @@ constructor(
     var error by mutableStateOf<ImportError?>(null)
         private set
     var serverCode by mutableIntStateOf(0)
+    var serverDetail by mutableStateOf<String?>(null)
         private set
     var playlistName by mutableStateOf("")
     var skipped by mutableIntStateOf(0)
@@ -178,6 +179,7 @@ constructor(
         work?.cancel()
         work =
             viewModelScope.launch {
+                serverDetail = null
                 phase = ImportPhase.Reading(0, 0)
                 try {
                     val playlist =
@@ -188,6 +190,7 @@ constructor(
                 } catch (e: SpotifyApi.SpotifyException) {
                     phase = ImportPhase.Input
                     serverCode = e.httpCode ?: 0
+                    serverDetail = e.detail
                     fail(
                         when (e.failure) {
                             SpotifyApi.Failure.BAD_KEYS -> ImportError.BAD_KEYS.also { editingKeys = true }

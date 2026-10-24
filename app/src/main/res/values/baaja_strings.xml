@@ -120,7 +120,6 @@
     <string name="playlist_position_end">End of playlist</string>
     <string name="playlist_position_end_desc">Newly added songs appear after existing songs</string>
     <string name="skip_silence_desc">Fast-forward through silent parts of songs</string>
-    <string name="show_audio_format_on_player">Show audio format on player</string>
     <string name="auto_backup">Automatic backups</string>
     <string name="auto_backup_off">Off</string>
     <string name="auto_backup_daily">Every day</string>
@@ -142,7 +141,6 @@
     <string name="sound_treble">Treble</string>
     <string name="sound_reset">Reset sound shaping</string>
     <string name="sound_reset_desc">Return width, balance, bass and treble to normal</string>
-    <string name="show_audio_format_on_player_desc">Display the codec and bitrate under the seek bar</string>
     <string name="skip_silence_instant">Instantly skip silence</string>
     <string name="skip_silence_instant_desc">Jump ahead during silent moments instead of speeding up playback</string>
 

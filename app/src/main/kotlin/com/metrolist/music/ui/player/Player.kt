@@ -140,7 +140,6 @@ import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
-import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.HideStatusBarOnFullscreenKey
 import com.metrolist.music.constants.KeepScreenOn
@@ -263,9 +262,6 @@ fun BottomSheetPlayer(
         }
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
-    val showAudioFormat by rememberPreference(ShowAudioFormatOnPlayerKey, defaultValue = true)
-    val currentFormat by playerConnection.currentFormat.collectAsState()
-    val audioFormatLabel = remember(currentFormat) { currentFormat?.audioFormatLabel() }
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
     val keepScreenOn = isPlaying && isKeepScreenOn
 
@@ -1230,18 +1226,6 @@ fun BottomSheetPlayer(
             ) {
                 val timeColor = if (onImageBackground) TextBackgroundColor.copy(alpha = 0.85f) else baajaColors.mutedContent
                 BaajaTimeText(makeTimeString(sliderPosition ?: effectivePosition), timeColor)
-
-                if (showAudioFormat) {
-                    audioFormatLabel?.let { label ->
-                        BaajaLabelChip(
-                            text = label,
-                            colors = baajaColors.copy(ink = timeColor.copy(alpha = 0.6f), content = timeColor),
-                            filled = false,
-                            height = 24.dp,
-                            modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp),
-                        )
-                    }
-                }
 
                 BaajaTimeText(if (duration != C.TIME_UNSET) makeTimeString(duration) else "", timeColor)
             }

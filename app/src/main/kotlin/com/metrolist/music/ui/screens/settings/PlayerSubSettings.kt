@@ -67,7 +67,6 @@ import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
 import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.music.constants.SeekExtraSeconds
-import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
 import com.metrolist.music.constants.ShowLyricPreviewOnPlayerKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SimilarContent
@@ -394,7 +393,6 @@ fun PlaybackSettings(navController: NavController) {
 
 @Composable
 fun PlayerPageSettings(navController: NavController) {
-    val (showAudioFormat, onShowAudioFormatChange) = rememberPreference(ShowAudioFormatOnPlayerKey, defaultValue = true)
     val (showLyricPreview, onShowLyricPreviewChange) = rememberPreference(ShowLyricPreviewOnPlayerKey, defaultValue = true)
     val (immersivePlayer, onImmersivePlayerChange) = rememberPreference(ImmersivePlayerKey, defaultValue = false)
     val (sponsorBlockEnabled, onSponsorBlockEnabledChange) = rememberPreference(SponsorBlockEnabledKey, defaultValue = false)
@@ -431,13 +429,6 @@ fun PlayerPageSettings(navController: NavController) {
         Material3SettingsGroup(
             title = stringResource(R.string.baaja_clean_menu_player_title),
             items = buildList {
-                add(switchItem(
-                    icon = R.drawable.info,
-                    title = stringResource(R.string.show_audio_format_on_player),
-                    description = stringResource(R.string.show_audio_format_on_player_desc),
-                    checked = showAudioFormat,
-                    onChange = onShowAudioFormatChange,
-                ))
                 add(switchItem(
                     icon = R.drawable.lyrics,
                     title = stringResource(R.string.baaja_player_show_lyric_preview),

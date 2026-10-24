@@ -142,7 +142,6 @@ import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
 import com.metrolist.music.constants.DisableScreenshotKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
-import com.metrolist.music.constants.LastSeenVersionKey
 import com.metrolist.music.constants.ListenTogetherNoticeAcceptedKey
 import com.metrolist.music.ui.component.ListenTogetherNoticeDialog
 import com.metrolist.music.constants.ListenTogetherUsernameKey
@@ -181,7 +180,6 @@ import com.metrolist.music.ui.player.BottomSheetPlayer
 import com.metrolist.music.ui.screens.Screens
 import com.metrolist.music.ui.screens.onboarding.BaajaWelcomeGate
 import com.metrolist.music.ui.screens.navigationBuilder
-import com.metrolist.music.ui.screens.settings.ChangelogScreen
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.NavigationTab
 import com.metrolist.music.ui.theme.BaajaTheme
@@ -194,7 +192,6 @@ import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.Updater
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
-import com.metrolist.music.utils.shouldShowChangelog
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
@@ -527,8 +524,6 @@ class MainActivity : FragmentActivity() {
                 pureBlackEnabled && useDarkTheme
             }
 
-        val showChangelog = rememberSaveable { mutableStateOf(false) }
-
         BaajaTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
@@ -547,15 +542,6 @@ class MainActivity : FragmentActivity() {
                 val bottomInsetDp = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
 
                 val navController = rememberNavController()
-
-                LaunchedEffect(Unit) {
-                    // Read the stored version before anything writes it; the new value is only
-                    // stored once the changelog has been dismissed, so an update shows it once.
-                    val lastSeenVersion = dataStore.data.first()[LastSeenVersionKey]
-                    if (shouldShowChangelog(lastSeenVersion, BuildConfig.BASE_VERSION_NAME)) {
-                        showChangelog.value = true
-                    }
-                }
 
                 val homeViewModel: HomeViewModel = hiltViewModel()
                 val accountImageUrl by homeViewModel.accountImageUrl.collectAsStateWithLifecycle()
@@ -847,19 +833,6 @@ class MainActivity : FragmentActivity() {
                     LocalArtistNameAliases provides artistNameAliases,
                 ) {
                     BaajaWelcomeGate(onSignIn = { navController.navigate("login_direct") }) {
-                    if (showChangelog.value) {
-                        ChangelogScreen(
-                            onDismiss = {
-                                showChangelog.value = false
-                                lifecycleScope.launch(Dispatchers.IO) {
-                                    safeDataStoreEdit { settings ->
-                                        settings[LastSeenVersionKey] = BuildConfig.BASE_VERSION_NAME
-                                    }
-                                }
-                            },
-                        )
-                    }
-
                     Scaffold(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
@@ -1180,7 +1153,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
 
-                    if (!showChangelog.value) {
+                    run {
                         availableUpdate?.let { update ->
                             val dismissUpdate: () -> Unit = {
                                 availableUpdate = null

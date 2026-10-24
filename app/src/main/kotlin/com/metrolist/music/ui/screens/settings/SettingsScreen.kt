@@ -21,6 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -58,6 +62,11 @@ fun SettingsScreen(
         } catch (e: Exception) {
             false
         }
+    }
+
+    var showChangelog by rememberSaveable { mutableStateOf(false) }
+    if (showChangelog) {
+        ChangelogScreen(onDismiss = { showChangelog = false })
     }
 
     Column(
@@ -218,6 +227,14 @@ fun SettingsScreen(
                         )
                     )
                 }
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.history),
+                        title = { Text(stringResource(R.string.changelog)) },
+                        trailingContent = { SettingsChevron() },
+                        onClick = { showChangelog = true }
+                    )
+                )
                 add(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.info),

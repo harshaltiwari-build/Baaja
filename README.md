@@ -39,7 +39,7 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside Metro
 - Smart downloads and offline caching
 - Equalizer, audio normalization, crossfade, skip silence, tempo and pitch control
 - Sound shaping: stereo width, left/right balance, bass and treble
-- Quality settings: separate quality for Wi-Fi, mobile data and downloads, with the codec and bitrate shown on the player
+- Quality settings: separate quality for Wi-Fi, mobile data and downloads
 - Automix keeps the queue going with similar songs
 - Audio output picker
 - Optional SponsorBlock skipping of non-music segments

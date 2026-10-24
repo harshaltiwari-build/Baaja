@@ -71,6 +71,7 @@
     <string name="baaja_imp_err_rate">Spotify is limiting requests right now. Try again in a minute.</string>
     <string name="baaja_imp_err_network">Couldn\'t reach Spotify. Check your connection.</string>
     <string name="baaja_imp_err_server">Spotify returned an error (%1$d). Try again later.</string>
+    <string name="baaja_imp_err_spotify_says">Spotify says: %1$s (error %2$d)</string>
     <string name="baaja_imp_err_csv_columns">Couldn\'t find a track name column in this file.</string>
     <string name="baaja_imp_err_csv_read">Couldn\'t read this file.</string>
     <string name="baaja_imp_err_empty">This playlist has no songs to import.</string>

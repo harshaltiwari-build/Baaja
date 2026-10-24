@@ -35,7 +35,7 @@ Every screen now follows Baaja's own look, with new features for listening and y
 
 ---v1.0.0
 # Baaja 1.0.0
-The first release of Baaja, built on Metrolist 13.7.0. Earlier history lives in the [Metrolist changelog](https://github.com/MetrolistGroup/Metrolist/blob/main/changelog.md).
+The first release of Baaja.
 
 ## Highlights
 - New name and identity: Baaja (बाजा), with its own app icon and themed icon
@@ -52,7 +52,7 @@ The first release of Baaja, built on Metrolist 13.7.0. Earlier history lives in 
 - Heart-burst animation when you like a song
 - Animated glow for the gradient player background, and optional spinning album art
 
-## Changes from Metrolist
-- Installs as its own app (`com.baaja.music`), so it can sit alongside Metrolist
+## Changes
+- Installs as its own app (`com.baaja.music`)
 - Update checks now come from this repository's releases
-- Removed the Metrolist KMP upgrade prompt and Metrolist's community links
+- Removed the old upgrade prompt and external community links

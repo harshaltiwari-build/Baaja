@@ -11,6 +11,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -29,7 +33,12 @@ class SpotifyApi(
 ) {
     enum class Failure { BAD_KEYS, NOT_FOUND, RATE_LIMITED, NETWORK, SERVER }
 
-    class SpotifyException(val failure: Failure, val httpCode: Int? = null) : IOException("Spotify request failed: $failure")
+    class SpotifyException(
+        val failure: Failure,
+        val httpCode: Int? = null,
+        /** Spotify's own explanation (its `message` / `error_description`), never any credentials. */
+        val detail: String? = null,
+    ) : IOException("Spotify request failed: $failure")
 
     private var cachedToken: String? = null
     private var cachedTokenOwner: Int = 0
@@ -124,9 +133,9 @@ class SpotifyApi(
                         delay(waitSec * 1000)
                     }
                     res.code == 429 -> throw SpotifyException(Failure.RATE_LIMITED, 429)
-                    res.code == 400 || res.code == 401 -> throw SpotifyException(Failure.BAD_KEYS, res.code)
-                    res.code == 403 || res.code == 404 || res.code == 410 -> throw SpotifyException(Failure.NOT_FOUND, res.code)
-                    else -> throw SpotifyException(Failure.SERVER, res.code)
+                    res.code == 400 || res.code == 401 -> throw SpotifyException(Failure.BAD_KEYS, res.code, errorDetail(res.body?.string()))
+                    res.code == 403 || res.code == 404 || res.code == 410 -> throw SpotifyException(Failure.NOT_FOUND, res.code, errorDetail(res.body?.string()))
+                    else -> throw SpotifyException(Failure.SERVER, res.code, errorDetail(res.body?.string()))
                 }
             }
         }
@@ -150,6 +159,21 @@ class SpotifyApi(
                 coerceInputValues = true
                 explicitNulls = false
             }
+
+        /** Reads the human-readable reason out of a Spotify error body, or null if there is none. */
+        internal fun errorDetail(body: String?): String? {
+            if (body.isNullOrBlank()) return null
+            return runCatching {
+                val root = json.parseToJsonElement(body).jsonObject
+                val error = root["error"]
+                val text =
+                    when {
+                        error is JsonObject -> error["message"]?.jsonPrimitive?.contentOrNull
+                        else -> root["error_description"]?.jsonPrimitive?.contentOrNull ?: error?.jsonPrimitive?.contentOrNull
+                    }
+                text?.trim()?.takeIf { it.isNotEmpty() }?.take(200)
+            }.getOrNull()
+        }
 
         data class TracksPage(
             val tracks: List<ImportTrack>,
