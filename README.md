@@ -97,7 +97,7 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 <img src="docs/img/app/player-light.jpg" alt="Now playing" width="170" />&nbsp;
 <img src="docs/img/app/lyrics-light.jpg" alt="Synced lyrics" width="170" />&nbsp;
 <img src="docs/img/app/library-light.jpg" alt="Library" width="170" />&nbsp;
-<img src="docs/img/app/explore-light.jpg" alt="Explore" width="170" />
+<img src="docs/img/app/together-light.jpg" alt="Listen together" width="170" />
 
 **Dark**
 
@@ -105,7 +105,8 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 <img src="docs/img/app/player-dark.jpg" alt="Now playing" width="170" />&nbsp;
 <img src="docs/img/app/lyrics-dark.jpg" alt="Synced lyrics" width="170" />&nbsp;
 <img src="docs/img/app/library-dark.jpg" alt="Library" width="170" />&nbsp;
-<img src="docs/img/app/explore-dark.jpg" alt="Explore" width="170" />
+<img src="docs/img/app/explore-dark.jpg" alt="Explore" width="170" />&nbsp;
+<img src="docs/img/app/together-dark.jpg" alt="Listen together" width="170" />
 
 </div>
 
