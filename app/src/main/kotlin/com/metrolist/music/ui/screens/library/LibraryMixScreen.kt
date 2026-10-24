@@ -867,6 +867,21 @@ fun LibraryMixScreen(
                             LibrarySearchEmptyPlaceholder(modifier = Modifier.animateItem())
                         }
                     }
+
+                    if (filteredItems.isEmpty() && searchQuery.isBlank()) {
+                        item(
+                            key = "empty_library_hint",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            Text(
+                                text = stringResource(R.string.baaja_library_empty_hint),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 28.dp).animateItem(),
+                            )
+                        }
+                    }
                 }
             }
         }
