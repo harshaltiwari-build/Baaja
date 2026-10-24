@@ -39,7 +39,7 @@ fun rememberKeepPlayingSimilar(): State<Boolean> {
         .collectAsState(initial = true)
 }
 
-/** Writes the new switch, and mirrors the old radio key that screens outside this clean-up still read. */
+/** Writes the new switch, and mirrors the old radio and similar-content keys that playback still reads. */
 @Composable
 fun rememberSetKeepPlayingSimilar(): (Boolean) -> Unit {
     val context = LocalContext.current
@@ -49,6 +49,7 @@ fun rememberSetKeepPlayingSimilar(): (Boolean) -> Unit {
             context.safeDataStoreEdit {
                 it[KeepPlayingSimilarKey] = enabled
                 it[AutoRadioQueueKey] = enabled
+                it[SimilarContent] = enabled
             }
         }
     }

@@ -1,3 +1,11 @@
+---v1.1.1
+# Baaja 1.1.1
+A small clean-up after 1.1.0.
+
+## Changes
+- Queue settings: "Keep playing similar music" now also covers similar content, so there is one switch instead of two
+- Removed the "App language" row from Settings, since Baaja is English only
+
 ---v1.1.0
 # Baaja 1.1.0
 Every screen now follows Baaja's own look, with new features for listening and your library.

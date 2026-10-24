@@ -69,7 +69,6 @@ import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.music.constants.SeekExtraSeconds
 import com.metrolist.music.constants.ShowLyricPreviewOnPlayerKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
-import com.metrolist.music.constants.SimilarContent
 import com.metrolist.music.constants.SkipSilenceInstantKey
 import com.metrolist.music.constants.SkipSilenceKey
 import com.metrolist.music.constants.SleepTimerCustomDaysKey
@@ -491,7 +490,6 @@ fun QueueSettings(navController: NavController) {
     val (persistentQueue, onPersistentQueueChange) = rememberPreference(PersistentQueueKey, defaultValue = true)
     val keepPlayingSimilar by rememberKeepPlayingSimilar()
     val setKeepPlayingSimilar = rememberSetKeepPlayingSimilar()
-    val (similarContentEnabled, similarContentEnabledChange) = rememberPreference(SimilarContent, defaultValue = true)
     val (shufflePlaylistFirst, onShufflePlaylistFirstChange) = rememberPreference(ShufflePlaylistFirstKey, defaultValue = false)
     val (rememberShuffleAndRepeat, onRememberShuffleAndRepeatChange) = rememberPreference(RememberShuffleAndRepeatKey, defaultValue = true)
     val (preventDuplicateTracksInQueue, onPreventDuplicateTracksInQueueChange) = rememberPreference(PreventDuplicateTracksInQueueKey, defaultValue = false)
@@ -518,13 +516,6 @@ fun QueueSettings(navController: NavController) {
                     description = stringResource(R.string.baaja_clean_keep_similar_desc),
                     checked = keepPlayingSimilar,
                     onChange = setKeepPlayingSimilar,
-                ))
-                add(switchItem(
-                    icon = R.drawable.similar,
-                    title = stringResource(R.string.enable_similar_content),
-                    description = stringResource(R.string.baaja_clean_similar_content_desc),
-                    checked = similarContentEnabled,
-                    onChange = similarContentEnabledChange,
                 ))
                 add(switchItem(
                     icon = R.drawable.shuffle,
