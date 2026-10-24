@@ -1,56 +1,62 @@
 /**
  * Metrolist Project (C) 2026
  * Licensed under GPL-3.0 | See git history for contributors
- * 
- * Material 3 Expressive Volume Slider
- * Based on M3 Expressive Slider specifications (Size M):
- * - Track height: 40dp
- * - Handle height: 52dp
- * - Handle width: 4dp
- * - Track corner radius: 12dp
- * - Inset icon size: 24dp
+ *
+ * Baaja volume slider: a round speaker button (tap to mute), a thick outlined bar with a big outlined handle,
+ * and the level as a percentage.
  */
 
 package com.metrolist.music.ui.component
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.rememberSliderState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaSurface
+import kotlin.math.roundToInt
 
-/**
- * Material 3 Expressive Volume Slider dimensions (Size M)
- */
-private object VolumeSliderDefaults {
-    val TrackHeight: Dp = 40.dp
-    val HandleHeight: Dp = 52.dp
-    val HandleWidth: Dp = 4.dp
-    val TrackCornerRadius: Dp = 12.dp
-    val InsetIconSize: Dp = 24.dp
-    val IconPadding: Dp = 10.dp
-    val ThumbTrackGapSize: Dp = 6.dp
-    val StopIndicatorRadius: Dp = 4.dp
-}
+/** Level restored by the speaker button when the volume is muted. */
+private const val UNMUTE_LEVEL = 0.7f
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VolumeSlider(
     value: Float,
@@ -58,117 +64,116 @@ fun VolumeSlider(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onValueChangeFinished: (() -> Unit)? = null,
-    accentColor: Color = MaterialTheme.colorScheme.primary
+    accentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val sliderState = rememberSliderState(value = value)
-    sliderState.value = value
+    val ink = baajaInk
+    val fraction = value.coerceIn(0f, 1f)
+    val percent = (fraction * 100).roundToInt()
+    var barWidthPx by remember { mutableFloatStateOf(1f) }
+    val thumbSize = 34.dp
+    val thumbPx = with(LocalDensity.current) { thumbSize.toPx() }
 
-    val volumeOffIcon = painterResource(R.drawable.volume_off)
-    val volumeMuteIcon = painterResource(R.drawable.volume_mute)
-    val volumeDownIcon = painterResource(R.drawable.volume_down)
-    val volumeUpIcon = painterResource(R.drawable.volume_up)
+    val icon =
+        when {
+            fraction <= 0f -> R.drawable.volume_off
+            fraction < 0.33f -> R.drawable.volume_mute
+            fraction < 0.66f -> R.drawable.volume_down
+            else -> R.drawable.volume_up
+        }
 
-    val currentIcon = when {
-        value <= 0f -> volumeOffIcon
-        value < 0.33f -> volumeMuteIcon
-        value < 0.66f -> volumeDownIcon
-        else -> volumeUpIcon
-    }
-
-    val colors = SliderDefaults.colors(
-        thumbColor = accentColor,
-        activeTrackColor = accentColor,
-        activeTickColor = MaterialTheme.colorScheme.onPrimary,
-        inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-        inactiveTickColor = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-    
-    val stopIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
-
-    Slider(
-        state = sliderState,
-        onValueChange = onValueChange,
+    Row(
         modifier = modifier,
-        enabled = enabled,
-        onValueChangeFinished = onValueChangeFinished,
-        colors = colors,
-        interactionSource = interactionSource,
-        track = { sliderState ->
-            val iconSize = DpSize(VolumeSliderDefaults.InsetIconSize, VolumeSliderDefaults.InsetIconSize)
-            val activeIconColor = colors.activeTickColor
-            val inactiveIconColor = colors.inactiveTickColor
-
-            SliderDefaults.Track(
-                sliderState = sliderState,
-                modifier = Modifier
-                    .height(VolumeSliderDefaults.TrackHeight)
-                    .drawWithContent {
-                        drawContent()
-                        val yOffset = size.height / 2 - iconSize.toSize().height / 2
-                        val fraction = value.coerceIn(0f, 1f)
-                        val thumbGapPx = VolumeSliderDefaults.ThumbTrackGapSize.toPx()
-                        val activeTrackEnd = size.width * fraction - thumbGapPx
-                        val inactiveTrackStart = activeTrackEnd + thumbGapPx * 2
-                        val activeTrackWidth = activeTrackEnd
-                        val inactiveTrackWidth = size.width - inactiveTrackStart
-
-                        drawVolumeIcon(
-                            icon = currentIcon,
-                            iconSize = iconSize,
-                            iconPadding = VolumeSliderDefaults.IconPadding,
-                            yOffset = yOffset,
-                            activeTrackWidth = activeTrackWidth,
-                            inactiveTrackStart = inactiveTrackStart,
-                            inactiveTrackWidth = inactiveTrackWidth,
-                            activeIconColor = activeIconColor,
-                            inactiveIconColor = inactiveIconColor,
-                            volumeOffIcon = volumeOffIcon
-                        )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .baajaSurface(ink, MaterialTheme.colorScheme.surface, CircleShape, shadowOffset = 2.dp)
+                    .clickable(enabled = enabled, role = Role.Button) {
+                        onValueChange(if (fraction > 0f) 0f else UNMUTE_LEVEL)
+                        onValueChangeFinished?.invoke()
                     },
-                colors = colors,
-                enabled = enabled,
-                thumbTrackGapSize = VolumeSliderDefaults.ThumbTrackGapSize,
-                trackCornerSize = VolumeSliderDefaults.TrackCornerRadius,
-                drawStopIndicator = if (value < 0.90f) { offset ->
-                    drawCircle(
-                        color = stopIndicatorColor,
-                        radius = VolumeSliderDefaults.StopIndicatorRadius.toPx(),
-                        center = offset
-                    )
-                } else null
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(22.dp),
             )
         }
-    )
-}
 
-private fun DrawScope.drawVolumeIcon(
-    icon: Painter,
-    iconSize: DpSize,
-    iconPadding: Dp,
-    yOffset: Float,
-    activeTrackWidth: Float,
-    inactiveTrackStart: Float,
-    inactiveTrackWidth: Float,
-    activeIconColor: Color,
-    inactiveIconColor: Color,
-    volumeOffIcon: Painter
-) {
-    val iconSizePx = iconSize.toSize()
-    val iconPaddingPx = iconPadding.toPx()
-    val minSpaceForIcon = iconSizePx.width + iconPaddingPx * 2
-
-    if (activeTrackWidth >= minSpaceForIcon) {
-        translate(iconPaddingPx, yOffset) {
-            with(icon) {
-                draw(iconSizePx, colorFilter = ColorFilter.tint(activeIconColor))
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .onSizeChanged { barWidthPx = it.width.toFloat().coerceAtLeast(1f) }
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Volume"
+                        stateDescription = "$percent%"
+                    }.pointerInput(enabled) {
+                        if (enabled) {
+                            detectTapGestures { offset ->
+                                onValueChange((offset.x / barWidthPx).coerceIn(0f, 1f))
+                                onValueChangeFinished?.invoke()
+                            }
+                        }
+                    }.pointerInput(enabled) {
+                        if (enabled) {
+                            detectHorizontalDragGestures(
+                                onDragEnd = { onValueChangeFinished?.invoke() },
+                                onDragCancel = { onValueChangeFinished?.invoke() },
+                            ) { change, _ ->
+                                change.consume()
+                                onValueChange((change.position.x / barWidthPx).coerceIn(0f, 1f))
+                            }
+                        }
+                    },
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            val barShape = RoundedCornerShape(10.dp)
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(20.dp)
+                        .clip(barShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(fraction)
+                            .height(20.dp)
+                            .background(accentColor),
+                )
+                Box(Modifier.matchParentSize().border(2.5.dp, ink, barShape))
+            }
+            Box(
+                modifier =
+                    Modifier
+                        .offset {
+                            val travel = (barWidthPx - thumbPx).coerceAtLeast(0f)
+                            IntOffset((travel * fraction).roundToInt(), 0)
+                        }.size(thumbSize)
+                        .baajaSurface(ink, MaterialTheme.colorScheme.surface, CircleShape, shadowOffset = 2.dp, borderWidth = 2.5.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.size(12.dp).background(accentColor, CircleShape))
             }
         }
-    } else if (inactiveTrackWidth >= minSpaceForIcon) {
-        translate(inactiveTrackStart + iconPaddingPx, yOffset) {
-            with(volumeOffIcon) {
-                draw(iconSizePx, colorFilter = ColorFilter.tint(inactiveIconColor))
-            }
-        }
+
+        Text(
+            text = "$percent%",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.End,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.width(46.dp),
+        )
     }
 }

@@ -46,13 +46,12 @@ fun WavySlider(
     colors: SliderColors = SliderDefaults.colors(),
     isPlaying: Boolean = true,
     enabled: Boolean = true,
-    strokeWidth: Dp = 5.dp,
-    thumbRadius: Dp = 10.dp,
+    strokeWidth: Dp = 4.dp,
+    thumbRadius: Dp = 8.dp,
     wavelength: Dp = WavyProgressIndicatorDefaults.LinearDeterminateWavelength,
     waveSpeed: Dp = wavelength
 ) {
     val density = LocalDensity.current
-    val thumbRing = androidx.compose.material3.MaterialTheme.colorScheme.outline
     val strokeWidthPx = with(density) { strokeWidth.toPx() }
     val thumbRadiusPx = with(density) { thumbRadius.toPx() }
     val stroke = remember(strokeWidthPx) { 
@@ -147,13 +146,6 @@ fun WavySlider(
                 color = thumbColor,
                 radius = thumbRadiusPx,
                 center = Offset(thumbX, thumbY)
-            )
-            // Baaja's ink ring around the thumb, so it stays visible on any track colour.
-            drawCircle(
-                color = thumbRing,
-                radius = thumbRadiusPx,
-                center = Offset(thumbX, thumbY),
-                style = Stroke(width = 2.5.dp.toPx()),
             )
         }
     }

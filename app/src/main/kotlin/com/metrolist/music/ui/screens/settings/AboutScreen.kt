@@ -63,6 +63,7 @@ private val baajaLinks = listOf(
 private val upstreamLinks = listOf(
     AboutLink(R.string.baaja_about_metrolist_repo, R.drawable.github, "https://github.com/MetrolistGroup/Metrolist"),
     AboutLink(R.string.baaja_about_innertune_repo, R.drawable.github, "https://github.com/z-huang/InnerTune"),
+    AboutLink(R.string.baaja_about_outertune_repo, R.drawable.github, "https://github.com/DD3Boh/OuterTune"),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,6 +156,12 @@ fun AboutScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.baaja_about_made_by),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Text(
                     text = stringResource(R.string.baaja_about_based_on_title),
                     style = MaterialTheme.typography.titleMedium,

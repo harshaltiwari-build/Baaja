@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -211,7 +213,7 @@ fun RecognitionScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState())
-                .padding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal).asPaddingValues())
+                .padding(WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal).asPaddingValues())
                 .padding(start = 20.dp, end = 20.dp, top = 8.dp)
                 .padding(bottom = insets.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding() + 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -436,6 +438,7 @@ private fun ResultCard(
     Column(
         Modifier
             .fillMaxWidth()
+            .padding(end = 4.dp, bottom = 6.dp)
             .baajaSurface(baajaInk, MaterialTheme.colorScheme.surface, RoundedCornerShape(26.dp), shadowOffset = 4.dp, borderWidth = 2.5.dp)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),

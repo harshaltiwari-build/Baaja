@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -58,7 +60,6 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.utils.ShowMediaInfo
-import com.metrolist.music.db.entities.FormatEntity
 import com.metrolist.music.ui.theme.BaajaArtwork
 import com.metrolist.music.ui.theme.BaajaCard
 import com.metrolist.music.ui.theme.BaajaPillButton
@@ -77,7 +78,6 @@ fun BehindTheSongScreen(
     val info by viewModel.info.collectAsStateWithLifecycle()
     val notFound by viewModel.notFound.collectAsStateWithLifecycle()
     val playCount by viewModel.playCount.collectAsStateWithLifecycle()
-    val format by viewModel.format.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
 
     val insets = LocalPlayerAwareWindowInsets.current
@@ -86,7 +86,7 @@ fun BehindTheSongScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(rememberScrollState())
-            .padding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal).asPaddingValues())
+            .padding(WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal).asPaddingValues())
             .padding(start = 20.dp, end = 20.dp, top = 12.dp)
             .padding(bottom = insets.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding() + 32.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -150,11 +150,21 @@ fun BehindTheSongScreen(
                 song.albumName?.takeIf { it.isNotBlank() }?.let { add(stringResource(R.string.baaja_bts_album) to it) }
                 if (song.durationSeconds > 0) add(stringResource(R.string.baaja_bts_length) to formatClock(song.durationSeconds))
                 add(stringResource(R.string.baaja_bts_plays) to playCount.toString())
-                format?.let { add(stringResource(R.string.baaja_bts_audio) to describeFormat(it)) }
             },
         )
 
         ListeningSection(stats, song.totalPlayTimeMs)
+
+        val artistId = song.artists.firstOrNull { it.first != null }?.first
+        if (artistId != null) {
+            BaajaPillButton(
+                text = stringResource(R.string.baaja_bts_go_to_artist),
+                onClick = { navController.navigate("artist/$artistId") },
+                primary = true,
+                icon = R.drawable.artist,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         // Technical file details (format, itag, loudness...) live in the media info sheet.
         val bottomSheetPageState = LocalBottomSheetPageState.current
@@ -252,12 +262,4 @@ private fun formatListened(ms: Long): String {
     val minutes = ms / 60_000
     val hours = minutes / 60
     return if (hours > 0) "$hours h ${minutes % 60} min" else "${minutes.coerceAtLeast(1)} min"
-}
-
-/** e.g. "opus · 160 kbps" from the stored stream format. */
-private fun describeFormat(format: FormatEntity): String {
-    val codec =
-        format.codecs.substringBefore('.').ifBlank { format.mimeType.substringAfter('/').substringBefore(';') }
-    val kbps = format.bitrate / 1000
-    return if (kbps > 0) "$codec · $kbps kbps" else codec
 }

@@ -20,8 +20,10 @@ Updates now install from inside the app, plus a round of fixes.
 - The artist page has a larger photo with the name on it, and Play, Subscribe and radio on one row
 - Plain-HTTP traffic is now blocked except to this device, and one background receiver is no longer open to other apps
 - A smoother launch: the logo is already in place when Baaja opens and then glides up as the rest of the splash arrives
-- The player progress bar has a clearer track and an outlined thumb
 - No white flash behind screens while they change, in dark mode too
+- The volume slider is a bold outlined bar with a speaker button and the level shown, and the Identify song and Behind the song pages no longer start with a big gap
+- Behind the song has a Go to artist button
+- About says Baaja is made by harshaltiwari47-dot and credits Metrolist, InnerTune and OuterTune
 - Removed Import from Spotify, since it could not be made reliable
 
 ---v1.1.1
