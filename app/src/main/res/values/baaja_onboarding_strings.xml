@@ -68,7 +68,7 @@
     <string name="baaja_onb_settings_pure_black_sub">Saves battery on OLED screens</string>
     <string name="baaja_onb_settings_more_appearance">More appearance options</string>
     <string name="baaja_onb_settings_footer_version">Baaja · version %1$s</string>
-    <string name="baaja_onb_settings_footer_credit">Based on Metrolist and InnerTune · GPL-3.0</string>
+    <string name="baaja_onb_settings_footer_credit">Free and open source · GPL-3.0</string>
 
     <!-- Listening analytics -->
     <string name="baaja_onb_stats_title">Your stats</string>
