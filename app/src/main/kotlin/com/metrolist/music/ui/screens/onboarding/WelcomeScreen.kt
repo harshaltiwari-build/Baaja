@@ -41,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,7 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -74,6 +75,7 @@ import com.metrolist.music.constants.BaajaHasSeenWelcomeKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.ui.theme.BaajaInk
 import com.metrolist.music.ui.theme.BaajaPink
+import com.metrolist.music.ui.theme.BaajaPurple
 import com.metrolist.music.ui.theme.BaajaYellow
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaSurface
@@ -81,13 +83,20 @@ import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.safeDataStoreEdit
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+private const val STAGE_NONE = 0
+private const val STAGE_WELCOME = 1
+private const val STAGE_LOGIN = 2
+
 /**
- * Shows the first-run welcome screen over [content] until the user starts as a guest or chooses to sign in.
- * [content] stays composed underneath so the app is ready the moment the welcome screen goes away.
- * Users who are already signed in (e.g. after an update) never see it.
+ * First-run flow laid over [content]: splash (once per cold start), then Welcome, then the Login intro.
+ * "Continue as guest" or a finished choice marks the welcome as seen so it never returns.
+ * [onSignIn] is called when the user taps "Sign in with Google" and should open the web sign-in.
+ * [content] stays composed underneath so the app is ready the moment the overlay goes away.
+ * Users who already saw the welcome or are signed in skip straight to [content].
  */
 @Composable
 fun BaajaWelcomeGate(
@@ -96,44 +105,77 @@ fun BaajaWelcomeGate(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showWelcome by rememberSaveable {
+    var stage by rememberSaveable {
         // One synchronous read on first composition so returning users never see a flash of the welcome screen.
         val seen = context.dataStore.get(BaajaHasSeenWelcomeKey, false)
         val signedIn = "SAPISID" in runCatching { parseCookieString(context.dataStore.get(InnerTubeCookieKey, "")) }.getOrDefault(emptyMap())
-        mutableStateOf(!seen && !signedIn)
+        mutableStateOf(if (!seen && !signedIn) STAGE_WELCOME else STAGE_NONE)
+    }
+    var splashVisible by remember {
+        mutableStateOf(!BaajaSplashState.shown && (context as? Activity).isPlainLauncherStart())
+    }
+    LaunchedEffect(Unit) {
+        BaajaSplashState.shown = true
+        if (splashVisible) {
+            delay(SPLASH_MILLIS)
+            splashVisible = false
+        }
     }
 
     fun markSeen() {
-        showWelcome = false
+        stage = STAGE_NONE
         scope.launch { context.safeDataStoreEdit { it[BaajaHasSeenWelcomeKey] = true } }
     }
 
-    // Back on the welcome screen leaves the app instead of reaching the screens underneath.
-    BackHandler(enabled = showWelcome) {
+    // Back never reaches the app underneath from the first-run screens: login goes back to welcome,
+    // welcome (and the splash) send the app to the background.
+    BackHandler(enabled = stage == STAGE_LOGIN) { stage = STAGE_WELCOME }
+    BackHandler(enabled = stage == STAGE_WELCOME || splashVisible) {
         (context as? Activity)?.moveTaskToBack(true)
     }
 
+    val covered = stage != STAGE_NONE || splashVisible
     Box(Modifier.fillMaxSize()) {
-        // Hide the app underneath from screen readers while the welcome overlay covers it.
-        Box(Modifier.fillMaxSize().then(if (showWelcome) Modifier.clearAndSetSemantics { } else Modifier)) {
+        // Hide the app underneath from screen readers while an overlay covers it.
+        Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics { } else Modifier)) {
             content()
         }
+        // The first-run screens start (and play their entrance motion) once the splash is leaving.
         AnimatedVisibility(
-            visible = showWelcome,
+            visible = stage != STAGE_NONE && !splashVisible,
             enter = fadeIn(tween(0)),
             exit = fadeOut(tween(250)),
         ) {
-            BaajaWelcomeScreen(
-                onStart = ::markSeen,
-                onSignIn = {
-                    markSeen()
-                    onSignIn()
-                },
-                modifier =
-                    Modifier.pointerInput(Unit) {
-                        // Swallow touches so nothing reaches the app underneath while the welcome screen is up.
-                        awaitPointerEventScope { while (true) awaitPointerEvent() }
+            val swallowTouches =
+                Modifier.pointerInput(Unit) {
+                    // Nothing reaches the app underneath while the first-run screens are up.
+                    awaitPointerEventScope { while (true) awaitPointerEvent() }
+                }
+            if (stage == STAGE_LOGIN) {
+                BaajaLoginIntro(
+                    onBack = { stage = STAGE_WELCOME },
+                    onSignIn = {
+                        markSeen()
+                        onSignIn()
                     },
+                    onContinueAsGuest = ::markSeen,
+                    modifier = swallowTouches,
+                )
+            } else {
+                BaajaWelcomeScreen(
+                    onStart = { stage = STAGE_LOGIN },
+                    onSignIn = { stage = STAGE_LOGIN },
+                    modifier = swallowTouches,
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = splashVisible,
+            enter = fadeIn(tween(0)),
+            exit = fadeOut(tween(300)),
+        ) {
+            BaajaSplash(
+                Modifier.pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },
             )
         }
     }
@@ -154,6 +196,7 @@ fun BaajaWelcomeScreen(
             .map { songs -> songs.mapNotNull { it.song.thumbnailUrl } }
     }.collectAsStateWithLifecycle(emptyList())
 
+    val clock = rememberBaajaClock()
     BoxWithConstraints(
         modifier
             .fillMaxSize()
@@ -169,19 +212,20 @@ fun BaajaWelcomeScreen(
                 .padding(horizontal = 24.dp),
         ) {
             Spacer(Modifier.height(20.dp))
-            BaajaBrandRow(Modifier.align(Alignment.CenterHorizontally))
+            BaajaBrandRow(Modifier.align(Alignment.CenterHorizontally).fadeUp(clock, 0f), clock = clock)
             Spacer(Modifier.height(20.dp))
 
-            WelcomeCollage(covers = covers, modifier = Modifier.fillMaxWidth())
+            WelcomeCollage(covers = covers, clock = clock, modifier = Modifier.fillMaxWidth())
 
             Spacer(Modifier.height(28.dp))
-            WelcomeHeadline()
+            WelcomeHeadline(clock, Modifier.fadeUp(clock, 0.5f))
             Spacer(Modifier.height(14.dp))
             Text(
                 stringResource(R.string.baaja_onb_welcome_body),
                 fontSize = 17.sp,
                 lineHeight = 24.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fadeUp(clock, 0.75f),
             )
 
             Spacer(Modifier.height(28.dp))
@@ -190,11 +234,12 @@ fun BaajaWelcomeScreen(
             BaajaCtaButton(
                 text = stringResource(R.string.baaja_onb_welcome_start),
                 onClick = onStart,
-                modifier = Modifier.heightIn(min = 64.dp),
+                modifier = Modifier.heightIn(min = 64.dp).fadeUp(clock, 1f),
+                clock = clock,
             )
             Spacer(Modifier.height(12.dp))
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().fadeUp(clock, 1.2f),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -224,13 +269,16 @@ fun BaajaWelcomeScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun WelcomeHeadline() {
+private fun WelcomeHeadline(
+    clock: BaajaClock,
+    modifier: Modifier = Modifier,
+) {
     val start = stringResource(R.string.baaja_onb_welcome_title_start)
     val highlight = stringResource(R.string.baaja_onb_welcome_title_highlight)
     val end = stringResource(R.string.baaja_onb_welcome_title_end)
     val headlineSize = 42.sp
     FlowRow(
-        Modifier.fillMaxWidth().semantics(mergeDescendants = true) { heading() },
+        modifier.fillMaxWidth().semantics(mergeDescendants = true) { heading() },
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
@@ -247,7 +295,13 @@ private fun WelcomeHeadline() {
             color = MaterialTheme.colorScheme.onPrimary,
             modifier =
                 Modifier
-                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp), shadowOffset = 0.dp)
+                    .graphicsLayer {
+                        // "moves" wiggles: rotate -2..2 degrees while swelling up to 6%.
+                        val w = clock.wave(2.6f, 1.4f)
+                        rotationZ = -2f + 4f * w
+                        scaleX = 1f + 0.06f * w
+                        scaleY = 1f + 0.06f * w
+                    }.baajaSurface(baajaInk, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp), shadowOffset = 0.dp)
                     .padding(horizontal = 8.dp),
         )
         end.split(' ').filter(String::isNotBlank).forEach { word ->
@@ -256,21 +310,42 @@ private fun WelcomeHeadline() {
     }
 }
 
-/** Tilted artwork card (real covers when the library has some, drawn placeholders otherwise) with feature stickers. */
+/**
+ * Tilted artwork card with a spinning record behind it, bouncing equaliser bars, rising notes and bobbing
+ * feature stickers (WelcomeMotion.dc.html). All motion comes from [clock] and is read in graphicsLayer/draw.
+ */
 @Composable
 private fun WelcomeCollage(
     covers: List<String>,
+    clock: BaajaClock,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier) {
         val cardSize = minOf(maxWidth - 56.dp, 300.dp)
         Box(Modifier.fillMaxWidth().height(cardSize + 24.dp)) {
+            // A record peeking out from behind the card's right edge.
+            WelcomeVinyl(
+                clock = clock,
+                size = cardSize * (260f / 300f),
+                modifier = Modifier.align(Alignment.Center).offset(x = cardSize * 0.3f, y = 0.dp),
+            )
             Box(
                 Modifier
                     .align(Alignment.Center)
                     .size(cardSize)
-                    .rotate(-3f)
-                    .baajaSurface(baajaInk, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(34.dp), shadowOffset = 6.dp, borderWidth = 2.5.dp),
+                    .graphicsLayer {
+                        // Swings in from below with overshoot, then floats.
+                        val enter = clock.enter(0.15f, 0.9f)
+                        val e = easeOutBack(enter, 1.3f)
+                        val fl = clock.wave(5f, 1.1f)
+                        val settled = enter >= 1f
+                        rotationZ = if (settled) lerpF(-3f, -1.2f, fl) else lerpF(-14f, -3f, e)
+                        val sc = lerpF(0.7f, 1f, e)
+                        scaleX = sc
+                        scaleY = sc
+                        translationY = if (settled) -9.dp.toPx() * fl else (1f - e) * 40.dp.toPx()
+                        alpha = (enter * 3f).coerceAtMost(1f)
+                    }.baajaSurface(baajaInk, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(34.dp), shadowOffset = 6.dp, borderWidth = 2.5.dp),
             ) {
                 Column(Modifier.fillMaxSize()) {
                     repeat(2) { row ->
@@ -294,9 +369,20 @@ private fun WelcomeCollage(
                         }
                     }
                 }
+                WelcomeEqualizer(
+                    clock = clock,
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
+                )
             }
 
+            WelcomeNote(clock, 0f, 26.dp, 18f, BaajaPurple, Modifier.align(Alignment.TopCenter).offset(x = 103.dp, y = 46.dp))
+            WelcomeNote(clock, 1.2f, (-22).dp, -16f, BaajaPink, Modifier.align(Alignment.TopCenter).offset(x = (-87).dp, y = 56.dp))
+            WelcomeNote(clock, 2.4f, 14.dp, 10f, BaajaYellow, Modifier.align(Alignment.TopCenter).offset(x = 13.dp, y = 36.dp))
+
             WelcomeSticker(
+                clock = clock,
+                period = 3.2f,
+                delay = 0f,
                 text = stringResource(R.string.baaja_onb_welcome_sticker_no_ads),
                 container = BaajaYellow,
                 content = BaajaInk,
@@ -305,6 +391,9 @@ private fun WelcomeCollage(
                 modifier = Modifier.align(Alignment.TopStart).offset(x = (-8).dp, y = cardSize * 0.1f),
             )
             WelcomeSticker(
+                clock = clock,
+                period = 3.6f,
+                delay = 0.5f,
                 text = stringResource(R.string.baaja_onb_welcome_sticker_lyrics),
                 container = BaajaPink,
                 content = Color.White,
@@ -313,6 +402,9 @@ private fun WelcomeCollage(
                 modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = cardSize * 0.68f),
             )
             WelcomeSticker(
+                clock = clock,
+                period = 3.4f,
+                delay = 1f,
                 text = stringResource(R.string.baaja_onb_welcome_sticker_offline),
                 container = Color.White,
                 content = BaajaInk,
@@ -326,6 +418,9 @@ private fun WelcomeCollage(
 
 @Composable
 private fun WelcomeSticker(
+    clock: BaajaClock,
+    period: Float,
+    delay: Float,
     text: String,
     container: Color,
     content: Color,
@@ -335,7 +430,7 @@ private fun WelcomeSticker(
 ) {
     Row(
         modifier
-            .rotate(rotation)
+            .stickerBob(clock, period, delay, rotation)
             .heightIn(min = 40.dp)
             .baajaSurface(BaajaInk, container, CircleShape, shadowOffset = 2.dp)
             .padding(horizontal = 16.dp),

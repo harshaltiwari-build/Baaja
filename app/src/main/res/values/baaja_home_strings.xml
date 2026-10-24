@@ -33,4 +33,9 @@
     <string name="baaja_home_more">More</string>
     <string name="baaja_home_back">Back</string>
     <string name="baaja_home_kind_artist">Artist</string>
+    <string name="baaja_loading">Loading…</string>
+    <string name="baaja_charts_error_title">Charts aren\'t available right now</string>
+    <string name="baaja_charts_error_body">Check your connection and try again.</string>
+    <string name="baaja_charts_fallback_note">Charts aren\'t available in your region, so here is what\'s trending on YouTube Music.</string>
+    <string name="baaja_new_releases_error_title">Couldn\'t load new releases</string>
 </resources>

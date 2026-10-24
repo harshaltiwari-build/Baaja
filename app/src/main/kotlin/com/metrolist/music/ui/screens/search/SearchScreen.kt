@@ -309,7 +309,7 @@ fun SearchScreen(
                         Modifier
                             .size(54.dp)
                             .baajaSurface(ink, MaterialTheme.colorScheme.primary, CircleShape, shadowOffset = 3.dp)
-                            .clickable(role = Role.Button) { navController.navigate("recognition") },
+                            .clickable(role = Role.Button) { navController.navigate("recognition?autoStart=true") },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(

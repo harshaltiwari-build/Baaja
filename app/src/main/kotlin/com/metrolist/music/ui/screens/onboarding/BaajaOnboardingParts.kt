@@ -6,6 +6,12 @@
 package com.metrolist.music.ui.screens.onboarding
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -106,6 +112,7 @@ internal fun BaajaPlaceholderArt(
 internal fun BaajaBrandRow(
     modifier: Modifier = Modifier,
     logoSize: Dp = 50.dp,
+    clock: BaajaClock? = null,
 ) {
     Row(
         modifier,
@@ -113,7 +120,24 @@ internal fun BaajaBrandRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val logoDescription = stringResource(R.string.baaja_onb_logo_description)
-        BaajaLogo(Modifier.semantics { contentDescription = logoDescription }, size = logoSize)
+        BaajaLogo(
+            Modifier
+                .graphicsLayer {
+                    // A quick wiggle every 6 seconds, after a 1.5 s pause.
+                    val p = clock?.loop(6f, 1.5f) ?: 0f
+                    val (rot, sc) =
+                        when {
+                            p < 0.88f -> 0f to 1f
+                            p < 0.92f -> lerpF(0f, -10f, (p - 0.88f) / 0.04f) to lerpF(1f, 1.1f, (p - 0.88f) / 0.04f)
+                            p < 0.96f -> lerpF(-10f, 8f, (p - 0.92f) / 0.04f) to 1.1f
+                            else -> lerpF(8f, 0f, (p - 0.96f) / 0.04f) to lerpF(1.1f, 1f, (p - 0.96f) / 0.04f)
+                        }
+                    rotationZ = rot
+                    scaleX = sc
+                    scaleY = sc
+                }.semantics { contentDescription = logoDescription },
+            size = logoSize,
+        )
         Text(
             stringResource(R.string.baaja_onb_wordmark),
             fontSize = 34.sp,
@@ -234,7 +258,7 @@ internal fun BaajaSegmentedToggle(
     }
 }
 
-/** Big rounded CTA with a trailing arrow, matching the welcome/login mockups. */
+/** Big rounded CTA with a trailing arrow, matching the welcome/login mockups. A [clock] adds the pulsing shadow and nudging arrow. */
 @Composable
 internal fun BaajaCtaButton(
     text: String,
@@ -243,14 +267,25 @@ internal fun BaajaCtaButton(
     primary: Boolean = true,
     @DrawableRes trailingIcon: Int? = R.drawable.arrow_forward,
     leading: (@Composable () -> Unit)? = null,
+    clock: BaajaClock? = null,
 ) {
     val container = if (primary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
     val content = if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val ink = baajaInk
+    val shape = CircleShape
     Row(
         modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .baajaSurface(baajaInk, container, CircleShape, shadowOffset = 4.dp, borderWidth = 2.5.dp)
+            .drawBehind {
+                // Hard shadow whose offset breathes between 4 and 7 dp (when animated).
+                val grow = clock?.wave(2.4f, 1.8f) ?: 0f
+                val offset = lerpF(4f, 7f, grow).dp.toPx()
+                val outline = shape.createOutline(size, layoutDirection, this)
+                translate(left = offset, top = offset * 1.25f) { drawOutline(outline, ink) }
+            }.border(2.5.dp, ink, shape)
+            .clip(shape)
+            .background(container)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 22.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -259,7 +294,15 @@ internal fun BaajaCtaButton(
         leading?.invoke()
         Text(text, color = content, fontWeight = FontWeight.Bold, fontSize = 19.sp, maxLines = 1)
         if (trailingIcon != null) {
-            Icon(painterResource(trailingIcon), null, tint = content, modifier = Modifier.size(22.dp))
+            Icon(
+                painterResource(trailingIcon),
+                null,
+                tint = content,
+                modifier =
+                    Modifier
+                        .size(22.dp)
+                        .graphicsLayer { translationX = 6.dp.toPx() * (clock?.wave(1.2f, 1.8f) ?: 0f) },
+            )
         }
     }
 }

@@ -92,7 +92,7 @@ fun SettingsScreen(
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.equalizer),
-                    title = { Text(stringResource(R.string.equalizer)) },
+                    title = { Text(stringResource(R.string.baaja_clean_sound_equalizer)) },
                     trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("equalizer") }
                 ),

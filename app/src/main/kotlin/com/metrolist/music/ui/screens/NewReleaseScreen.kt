@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -28,6 +29,10 @@ import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import com.metrolist.music.constants.AppBarHeight
+import com.metrolist.music.ui.component.home.BaajaErrorState
+import com.metrolist.music.ui.component.home.BaajaLoadingLabel
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
@@ -54,11 +59,20 @@ fun NewReleaseScreen(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val newReleaseAlbums by viewModel.newReleaseAlbums.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val hasError by viewModel.hasError.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
     val gridItemSize by rememberEnumPreference(GridItemsSizeKey, GridItemSize.BIG)
 
-    LazyVerticalGrid(
+    if (newReleaseAlbums.isEmpty() && !isLoading && hasError) {
+        BaajaErrorState(
+            title = stringResource(R.string.baaja_new_releases_error_title),
+            body = stringResource(R.string.baaja_charts_error_body),
+            onRetry = viewModel::load,
+            modifier = Modifier.padding(top = AppBarHeight),
+        )
+    } else LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
         contentPadding = LocalPlayerAwareWindowInsets.current.add(WindowInsets(left = 4.dp, right = 4.dp)).asPaddingValues(),
     ) {
@@ -92,6 +106,9 @@ fun NewReleaseScreen(
         }
 
         if (newReleaseAlbums.isEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_loading_label") {
+                BaajaLoadingLabel()
+            }
             items(8) {
                 ShimmerHost {
                     GridItemPlaceHolder(fillMaxWidth = true)

@@ -107,7 +107,6 @@ import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.constants.ListThumbnailSize
-import com.metrolist.music.constants.RandomizeHomeOrderKey
 import com.metrolist.music.constants.SmallGridThumbnailHeight
 import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.db.entities.Album
@@ -124,7 +123,6 @@ import com.metrolist.music.playback.queues.YouTubeAlbumRadio
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.component.AlbumGridItem
 import com.metrolist.music.ui.component.ArtistGridItem
-import com.metrolist.music.ui.component.HideOnScrollFAB
 import com.metrolist.music.ui.component.LocalBottomSheetPageState
 import com.metrolist.music.ui.component.LocalMenuState
 import com.metrolist.music.ui.component.RandomizeGridItem
@@ -566,7 +564,6 @@ fun HomeScreen(
     val accountName by viewModel.accountName.collectAsStateWithLifecycle()
     val accountImageUrl by viewModel.accountImageUrl.collectAsStateWithLifecycle()
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
-    val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
@@ -627,14 +624,6 @@ fun HomeScreen(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val scrollToTop =
         backStackEntry?.savedStateHandle?.getStateFlow("scrollToTop", false)?.collectAsStateWithLifecycle()
-
-    var randomSeed by rememberSaveable { mutableLongStateOf(System.currentTimeMillis()) }
-
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            randomSeed = System.currentTimeMillis()
-        }
-    }
 
     LaunchedEffect(scrollToTop?.value) {
         if (scrollToTop?.value == true) {
@@ -879,8 +868,6 @@ fun HomeScreen(
 
     val homeSections =
         remember(
-            randomizeHomeOrder,
-            randomSeed,
             selectedChip,
             speedDialItems,
             quickPicks,
@@ -915,77 +902,23 @@ fun HomeScreen(
 
             if (explorePage?.moodAndGenres != null) list.add(HomeSection.MoodAndGenres)
 
-            if (randomizeHomeOrder) {
-                list.sortedByDescending { section ->
-                    // Use a stable seed for each section based on the session seed + section ID hash
-                    // This ensures the weight for a specific section remains constant during a session (until refresh)
-                    // even if other sections appear/disappear, preventing jumping.
-                    val sectionRandom = Random(randomSeed + section.id.hashCode())
+            val defaultOrder =
+                mapOf(
+                    HomeSection.SpeedDial to 100,
+                    HomeSection.QuickPicks to 90,
+                    HomeSection.FromTheCommunity to 80,
+                    HomeSection.DailyDiscover to 70,
+                    HomeSection.KeepListening to 60,
+                    HomeSection.AccountPlaylists to 50,
+                    HomeSection.ForgottenFavorites to 40,
+                    HomeSection.MoodAndGenres to 10,
+                )
 
-                    // Flatten the base values to allow for more overlap and variation
-                    // All "main" sections start closer together
-                    val base =
-                        when (section) {
-                            HomeSection.SpeedDial,
-                            HomeSection.QuickPicks,
-                            HomeSection.DailyDiscover,
-                            -> 500
-
-                            // Top tier starts equal
-
-                            HomeSection.KeepListening,
-                            HomeSection.AccountPlaylists,
-                            HomeSection.ForgottenFavorites,
-                            HomeSection.FromTheCommunity,
-                            -> 300
-
-                            // Middle tier starts equal
-
-                            else -> 100 // Bottom tier
-                        }
-
-                    val modifier =
-                        when (section) {
-                            // Top tier: High variance to allow shuffling among themselves
-                            // Range: [500-200, 500+400] = [300, 900]
-                            HomeSection.SpeedDial,
-                            HomeSection.QuickPicks,
-                            HomeSection.DailyDiscover,
-                            -> sectionRandom.nextInt(-200, 400)
-
-                            // Middle tier: Can jump up to challenge top tier, or drop lower
-                            // Range: [300-100, 300+400] = [200, 700]
-                            // This allows them to occasionally appear above a "bad roll" top tier item
-                            HomeSection.KeepListening,
-                            HomeSection.AccountPlaylists,
-                            HomeSection.ForgottenFavorites,
-                            HomeSection.FromTheCommunity,
-                            -> sectionRandom.nextInt(-100, 400)
-
-                            // Bottom tier: Standard variance
-                            else -> sectionRandom.nextInt(-50, 50)
-                        }
-                    base + modifier
-                }
-            } else {
-                val defaultOrder =
-                    mapOf(
-                        HomeSection.SpeedDial to 100,
-                        HomeSection.QuickPicks to 90,
-                        HomeSection.FromTheCommunity to 80,
-                        HomeSection.DailyDiscover to 70,
-                        HomeSection.KeepListening to 60,
-                        HomeSection.AccountPlaylists to 50,
-                        HomeSection.ForgottenFavorites to 40,
-                        HomeSection.MoodAndGenres to 10,
-                    )
-
-                list.sortedByDescending { section ->
-                    when (section) {
-                        is HomeSection.SimilarRecommendation -> 30 - section.index
-                        is HomeSection.HomePageSection -> 20 - section.index
-                        else -> defaultOrder[section] ?: 0
-                    }
+            list.sortedByDescending { section ->
+                when (section) {
+                    is HomeSection.SimilarRecommendation -> 30 - section.index
+                    is HomeSection.HomePageSection -> 20 - section.index
+                    else -> defaultOrder[section] ?: 0
                 }
             }
         }
@@ -1028,6 +961,77 @@ fun HomeScreen(
             )
         },
     ) {
+            val onLuckyShuffle: () -> Unit = {
+            if (!isListenTogetherGuest) {
+                // Only songs and albums can be started from a local item.
+                val luckyLocalItems = allLocalItems.filter { it is Song || it is Album }
+                val local =
+                    when {
+                        luckyLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> Random.nextFloat() < 0.5
+                        luckyLocalItems.isNotEmpty() -> true
+                        else -> false
+                    }
+                scope.launch(Dispatchers.Main) {
+                    if (local) {
+                        when (val luckyItem = luckyLocalItems.random()) {
+                            is Song -> {
+                                playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
+                            }
+
+                            is Album -> {
+                                val albumWithSongs =
+                                    withContext(Dispatchers.IO) {
+                                        database.albumWithSongs(luckyItem.id).first()
+                                    }
+                                albumWithSongs?.let {
+                                    playerConnection.playQueue(LocalAlbumRadio(it))
+                                }
+                            }
+
+                            else -> Unit
+                        }
+                    } else {
+                        when (val luckyItem = allYtItems.random()) {
+                            is SongItem -> {
+                                playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
+                            }
+
+                            is AlbumItem -> {
+                                playerConnection.playQueue(YouTubeAlbumRadio(luckyItem.playlistId))
+                            }
+
+                            is ArtistItem -> {
+                                luckyItem.radioEndpoint?.let {
+                                    playerConnection.playQueue(YouTubeQueue(it))
+                                }
+                            }
+
+                            is PlaylistItem -> {
+                                luckyItem.playEndpoint?.let {
+                                    playerConnection.playQueue(YouTubeQueue(it))
+                                }
+                            }
+
+                            is PodcastItem -> {
+                                luckyItem.playEndpoint?.let {
+                                    playerConnection.playQueue(YouTubeQueue(it))
+                                }
+                            }
+
+                            is EpisodeItem -> {
+                                playerConnection.playQueue(
+                                    ListQueue(
+                                        title = luckyItem.title,
+                                        items = listOf(luckyItem.toMediaMetadata().toMediaItem()),
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopStart,
@@ -1391,9 +1395,25 @@ fun HomeScreen(
                             speedDialItems.takeIf { it.isNotEmpty() }?.let { items ->
                                 item(key = "speed_dial_title") {
  BaajaEntranceBox(5, entranceKey) {
-                                    BaajaHomeSectionTitle(
-                                        title = stringResource(R.string.speed_dial),
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        BaajaHomeSectionTitle(
+                                            title = stringResource(R.string.speed_dial),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        if (allLocalItems.isNotEmpty() || allYtItems.isNotEmpty()) {
+                                            BaajaIconButton(
+                                                icon = R.drawable.shuffle,
+                                                contentDescription = stringResource(R.string.baaja_sd_shuffle),
+                                                onClick = onLuckyShuffle,
+                                                size = 40.dp,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(end = 20.dp),
+                                            )
+                                        }
+                                    }
                                 }
 }
 
@@ -1446,7 +1466,7 @@ fun HomeScreen(
                                                                         Modifier
                                                                             .width(itemWidth)
                                                                             .height(itemWidth)
-                                                                            .padding(4.dp),
+                                                                            .padding(start = 2.dp, top = 2.dp),
                                                                 ) {
                                                                     RandomizeGridItem(
                                                                         isLoading = isRandomizing,
@@ -1534,7 +1554,7 @@ fun HomeScreen(
                                                                         Modifier
                                                                             .width(itemWidth)
                                                                             .height(itemWidth)
-                                                                            .padding(4.dp),
+                                                                            .padding(start = 2.dp, top = 2.dp),
                                                                 ) {
                                                                     SpeedDialGridItem(
                                                                         item = item,
@@ -2388,81 +2408,6 @@ fun HomeScreen(
                 }
             }
 
-            HideOnScrollFAB(
-                visible = allLocalItems.isNotEmpty() || allYtItems.isNotEmpty(),
-                lazyListState = lazylistState,
-                icon = R.drawable.shuffle,
-                onClick = {
-                    if (!isListenTogetherGuest) {
-                        // Only songs and albums can be started from a local item.
-                        val luckyLocalItems = allLocalItems.filter { it is Song || it is Album }
-                        val local =
-                            when {
-                                luckyLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> Random.nextFloat() < 0.5
-                                luckyLocalItems.isNotEmpty() -> true
-                                else -> false
-                            }
-                        scope.launch(Dispatchers.Main) {
-                            if (local) {
-                                when (val luckyItem = luckyLocalItems.random()) {
-                                    is Song -> {
-                                        playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
-                                    }
-
-                                    is Album -> {
-                                        val albumWithSongs =
-                                            withContext(Dispatchers.IO) {
-                                                database.albumWithSongs(luckyItem.id).first()
-                                            }
-                                        albumWithSongs?.let {
-                                            playerConnection.playQueue(LocalAlbumRadio(it))
-                                        }
-                                    }
-
-                                    else -> Unit
-                                }
-                            } else {
-                                when (val luckyItem = allYtItems.random()) {
-                                    is SongItem -> {
-                                        playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
-                                    }
-
-                                    is AlbumItem -> {
-                                        playerConnection.playQueue(YouTubeAlbumRadio(luckyItem.playlistId))
-                                    }
-
-                                    is ArtistItem -> {
-                                        luckyItem.radioEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
-                                        }
-                                    }
-
-                                    is PlaylistItem -> {
-                                        luckyItem.playEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
-                                        }
-                                    }
-
-                                    is PodcastItem -> {
-                                        luckyItem.playEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
-                                        }
-                                    }
-
-                                    is EpisodeItem -> {
-                                        playerConnection.playQueue(
-                                            ListQueue(
-                                                title = luckyItem.title,
-                                                items = listOf(luckyItem.toMediaMetadata().toMediaItem()),
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-            )
         }
     }
 }

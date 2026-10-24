@@ -79,7 +79,7 @@ import com.metrolist.innertube.models.YTItem
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
-import com.metrolist.music.constants.AutoRadioQueueKey
+import com.metrolist.music.constants.rememberKeepPlayingSimilar
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
@@ -162,7 +162,7 @@ fun OnlineSearchResult(
 
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
     val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = false)
-    val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    val autoRadioQueue by rememberKeepPlayingSimilar()
 
     BackHandler(enabled = isSearchFocused) {
         isSearchFocused = false

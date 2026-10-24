@@ -232,11 +232,9 @@
     <string name="login_failed">Login failed</string>
 
     <string name="content_language">Default content language</string>
+    <string name="region_and_language">Region &amp; language</string>
     <string name="content_country">Default content country</string>
     <string name="system_default">System default</string>
-    <string name="enable_proxy">Enable proxy</string>
-    <string name="proxy_type">Proxy type</string>
-    <string name="proxy_url">Proxy URL</string>
 
     <string name="player_and_audio">Player and audio</string>
     <string name="audio_quality">Audio quality</string>
@@ -261,7 +259,6 @@
     <string name="song_cache">Song Cache</string>
     <string name="unlimited">Unlimited</string>
     <string name="clear_all_downloads">Clear all downloads</string>
-    <string name="max_image_cache_size">Max image cache size</string>
     <string name="clear_image_cache">Clear image cache</string>
     <string name="max_song_cache_size">Max song cache size</string>
     <string name="clear_song_cache">Clear song cache</string>
@@ -277,8 +274,6 @@
     <string name="clear_search_history_confirm">Are you sure you want to clear all search history?</string>
     <string name="disable_screenshot">Disable screenshot</string>
     <string name="disable_screenshot_desc">When this option is on, screenshots and the app\'s view in Recents are disabled.</string>
-    <string name="enable_lrclib">Enable LrcLib lyrics provider</string>
-    <string name="enable_kugou">Enable KuGou lyrics provider</string>
     <string name="hide_explicit">Hide explicit content</string>
 
     <string name="backup_restore">Backup and restore</string>
@@ -289,7 +284,6 @@
     <string name="restore_failed">Failed to restore backup</string>
 
     <string name="dismiss">Dismiss</string>
-    <string name="options">Options</string>
     <string name="preview">Preview</string>
 
     <string name="about">About</string>

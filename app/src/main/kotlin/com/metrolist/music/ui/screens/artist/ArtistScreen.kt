@@ -110,9 +110,6 @@ import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.AppBarHeight
 import com.metrolist.music.constants.HideExplicitKey
-import com.metrolist.music.constants.ShowArtistDescriptionKey
-import com.metrolist.music.constants.ShowArtistSubscriberCountKey
-import com.metrolist.music.constants.ShowMonthlyListenersKey
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
@@ -177,9 +174,9 @@ fun ArtistScreen(
     val libraryAlbums by viewModel.libraryAlbums.collectAsStateWithLifecycle()
     val isChannelSubscribed by viewModel.isChannelSubscribed.collectAsStateWithLifecycle()
     val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
-    val showArtistDescription by rememberPreference(key = ShowArtistDescriptionKey, defaultValue = true)
-    val showArtistSubscriberCount by rememberPreference(key = ShowArtistSubscriberCountKey, defaultValue = true)
-    val showMonthlyListeners by rememberPreference(key = ShowMonthlyListenersKey, defaultValue = true)
+    val showArtistDescription = true
+    val showArtistSubscriberCount = true
+    val showMonthlyListeners = true
 
     val lazyListState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }

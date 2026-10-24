@@ -38,7 +38,6 @@ import com.metrolist.music.constants.SongFilterKey
 import com.metrolist.music.constants.SongSortDescendingKey
 import com.metrolist.music.constants.SongSortType
 import com.metrolist.music.constants.SongSortTypeKey
-import com.metrolist.music.constants.TopSize
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.extensions.filterExplicit
 import com.metrolist.music.extensions.filterExplicitAlbums
@@ -64,6 +63,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -298,10 +298,7 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) { syncUtils.syncSavedPlaylists() }
     }
 
-    val topValue =
-        context.dataStore.data
-            .map { it[TopSize] ?: "50" }
-            .distinctUntilChanged()
+    val topValue = flowOf("50")
 }
 
 @HiltViewModel
@@ -369,10 +366,7 @@ constructor(
         }
     }
 
-    val topValue =
-        context.dataStore.data
-            .map { it[TopSize] ?: "50" }
-            .distinctUntilChanged()
+    val topValue = flowOf("50")
     var artists =
         database
             .artistsBookmarked(

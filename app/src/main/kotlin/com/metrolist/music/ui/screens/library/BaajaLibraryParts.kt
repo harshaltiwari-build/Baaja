@@ -71,6 +71,7 @@ internal object BaajaLibraryRoutes {
     const val CACHED = "cache_playlist/cached"
     const val LOCAL_MUSIC = "local_music"
     const val IMPORT_SPOTIFY = "import_spotify"
+    const val IMPORT_YOUTUBE = "import_youtube"
 
     fun top(size: Int) = "top_playlist/$size"
 }
@@ -258,6 +259,15 @@ internal fun BaajaLibraryCollections(
                         stringResource(R.string.baaja_library_import_spotify_desc),
                         BaajaLibraryRoutes.IMPORT_SPOTIFY,
                         BaajaTileColors.mint(),
+                    ),
+                )
+                add(
+                    SmallTile(
+                        R.drawable.playlist_add,
+                        stringResource(R.string.baaja_yti_tile_title),
+                        stringResource(R.string.baaja_yti_tile_desc),
+                        BaajaLibraryRoutes.IMPORT_YOUTUBE,
+                        BaajaTileColors.peach(),
                     ),
                 )
             }

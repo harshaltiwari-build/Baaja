@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.screens.features
 
+import java.time.LocalDateTime
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -339,7 +340,7 @@ constructor(
         phase = ImportPhase.Saving
         viewModelScope.launch {
             try {
-                val entity = PlaylistEntity(name = name)
+                val entity = PlaylistEntity(name = name, bookmarkedAt = LocalDateTime.now(), isEditable = true)
                 withContext(Dispatchers.IO) {
                     database.withTransaction {
                         insert(entity)

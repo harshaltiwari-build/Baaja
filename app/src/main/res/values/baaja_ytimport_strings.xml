@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baaja: import playlists from YouTube Music -->
+<resources>
+    <string name="baaja_yti_tile_title">From YouTube</string>
+    <string name="baaja_yti_tile_desc">Copy a playlist</string>
+    <string name="baaja_yti_title">YouTube Music import</string>
+    <string name="baaja_yti_subtitle">Copy a playlist into your library</string>
+    <string name="baaja_yti_hint_title">Local copies</string>
+    <string name="baaja_yti_hint_body">Imported playlists are local copies. Changes you make here are not synced back to YouTube Music.</string>
+    <string name="baaja_yti_hint_dismiss">Got it</string>
+    <string name="baaja_yti_link_label">Paste a link</string>
+    <string name="baaja_yti_link_hint">music.youtube.com/playlist?list=…</string>
+    <string name="baaja_yti_paste">Paste</string>
+    <string name="baaja_yti_paste_desc">Paste a link from the clipboard</string>
+    <string name="baaja_yti_preview">Preview playlist</string>
+    <string name="baaja_yti_invalid_link">That doesn\'t look like a YouTube Music or YouTube playlist link.</string>
+    <string name="baaja_yti_not_playlist">This link points to a video or a mix, not a playlist. Open the playlist page and copy its link.</string>
+    <string name="baaja_yti_private">This playlist is private or unavailable.</string>
+    <string name="baaja_yti_network">Couldn\'t reach YouTube. Check your connection and try again.</string>
+    <string name="baaja_yti_retry">Try again</string>
+    <string name="baaja_yti_account_title">Your YouTube Music playlists</string>
+    <string name="baaja_yti_account_signin">Sign in to pick from your own playlists</string>
+    <string name="baaja_yti_account_loading">Loading your playlists…</string>
+    <string name="baaja_yti_account_empty">No playlists found on your account.</string>
+    <string name="baaja_yti_account_failed">Couldn\'t load your playlists.</string>
+    <string name="baaja_yti_select_all">Select all</string>
+    <string name="baaja_yti_select_none">Select none</string>
+    <string name="baaja_yti_import_selected">Import %1$d selected</string>
+    <string name="baaja_yti_batch_note">Playlists whose name already exists are imported as a new copy, for example \"Title (2)\".</string>
+    <string name="baaja_yti_loading_preview">Fetching playlist…</string>
+    <string name="baaja_yti_preview_by">By %1$s</string>
+    <string name="baaja_yti_preview_count">%1$s songs</string>
+    <string name="baaja_yti_import">Import</string>
+    <string name="baaja_yti_importing">Importing</string>
+    <string name="baaja_yti_importing_item">Playlist %1$d of %2$d: %3$s</string>
+    <string name="baaja_yti_progress">Loaded %1$d of %2$d songs</string>
+    <string name="baaja_yti_progress_unknown">Loaded %1$d songs</string>
+    <string name="baaja_yti_saving">Saving to your library…</string>
+    <string name="baaja_yti_cancel">Cancel</string>
+    <string name="baaja_yti_dup_title">A playlist named \"%1$s\" already exists</string>
+    <string name="baaja_yti_dup_body">What should happen to the songs you are importing?</string>
+    <string name="baaja_yti_dup_replace">Replace</string>
+    <string name="baaja_yti_dup_add">Add to existing</string>
+    <string name="baaja_yti_dup_both">Keep both (%1$s)</string>
+    <string name="baaja_yti_done_one">Imported \"%1$s\" with %2$d songs.</string>
+    <string name="baaja_yti_done_many">Imported %1$d playlists with %2$d songs.</string>
+    <string name="baaja_yti_done_failed">%1$d playlists could not be imported.</string>
+    <string name="baaja_yti_open_playlist">Open playlist</string>
+    <string name="baaja_yti_import_another">Import another</string>
+    <string name="baaja_yti_select_item_desc">%1$s, %2$s</string>
+    <string name="baaja_yti_unknown_title">YouTube Music playlist</string>
+</resources>

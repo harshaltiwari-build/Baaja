@@ -42,7 +42,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.annotation.ExperimentalCoilApi
 import coil3.imageLoader
@@ -50,8 +49,15 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.constants.AutoDownloadOnLikeKey
 import com.metrolist.music.constants.EnableSongCacheKey
-import com.metrolist.music.constants.MaxImageCacheSizeKey
+import com.metrolist.music.constants.SmartDownloadsCountKey
+import com.metrolist.music.constants.SmartDownloadsWifiOnlyKey
+import com.metrolist.music.playback.SmartDownloads
+import com.metrolist.music.playback.SmartDownloadsCounts
+import com.metrolist.music.ui.component.EnumDialog
+import com.metrolist.music.utils.dataStore
+import com.metrolist.music.utils.safeDataStoreEdit
 import com.metrolist.music.constants.MaxSongCacheSizeKey
 import com.metrolist.music.extensions.tryOrNull
 import com.metrolist.music.ui.component.ActionPromptDialog
@@ -83,19 +89,29 @@ fun StorageSettings(
 
     val coroutineScope = rememberCoroutineScope()
     val songCacheString = stringResource(R.string.song_cache).lowercase()
-    val imageCacheString = stringResource(R.string.image_cache).lowercase()
-    val (maxImageCacheSize, onMaxImageCacheSizeChange) = rememberPreference(
-        key = MaxImageCacheSizeKey,
-        defaultValue = 512
-    )
-    val (maxSongCacheSize, onMaxSongCacheSizeChange) = rememberPreference(
+    val (maxSongCacheSize, _) = rememberPreference(
         key = MaxSongCacheSizeKey,
         defaultValue = 1024
     )
-    val (enableSongCache, onEnableSongCacheChange) = rememberPreference(
+    val (enableSongCache, _) = rememberPreference(
         key = EnableSongCacheKey,
         defaultValue = true
     )
+
+    val (autoDownloadOnLike, onAutoDownloadOnLikeChange) = rememberPreference(AutoDownloadOnLikeKey, defaultValue = false)
+    val (smartDownloadsCount, onSmartDownloadsCountChange) = rememberPreference(SmartDownloadsCountKey, defaultValue = 0)
+    val (smartDownloadsWifiOnly, onSmartDownloadsWifiOnlyChange) = rememberPreference(SmartDownloadsWifiOnlyKey, defaultValue = true)
+    var showSmartDownloadsDialog by remember { mutableStateOf(false) }
+    // Size 0 means the song cache is off, which is what EnableSongCacheKey stores for the player.
+    val effectiveSongCacheSize = if (enableSongCache) maxSongCacheSize else 0
+    val setSongCacheSize: (Int) -> Unit = { size ->
+        coroutineScope.launch {
+            context.safeDataStoreEdit {
+                it[MaxSongCacheSizeKey] = size
+                it[EnableSongCacheKey] = size != 0
+            }
+        }
+    }
 
     var clearDownloads by remember { mutableStateOf(false) }
     var clearCacheDialog by remember { mutableStateOf(false) }
@@ -116,33 +132,17 @@ fun StorageSettings(
     var downloadCacheSize by remember {
         mutableLongStateOf(tryOrNull { downloadCache.cacheSpace } ?: 0)
     }
-    val imageCacheProgress by animateFloatAsState(
-        targetValue =
-            (imageCacheSize.toFloat() / (maxImageCacheSize * 1024 * 1024L)).coerceIn(
-                0f,
-                1f,
-            ),
-        label = "imageCacheProgress",
-    )
     val playerCacheProgress by animateFloatAsState(
         targetValue =
-            (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(
+            (playerCacheSize.toFloat() / (effectiveSongCacheSize * 1024 * 1024L)).coerceIn(
                 0f,
                 1f,
             ),
         label = "playerCacheProgress",
     )
 
-    LaunchedEffect(maxImageCacheSize) {
-        SingletonImageLoader.reset()
-        if (maxImageCacheSize == 0) {
-            coroutineScope.launch(Dispatchers.IO) {
-                imageDiskCache.clear()
-            }
-        }
-    }
-    LaunchedEffect(maxSongCacheSize) {
-        if (maxSongCacheSize == 0) {
+    LaunchedEffect(effectiveSongCacheSize) {
+        if (effectiveSongCacheSize == 0) {
             coroutineScope.launch(Dispatchers.IO) {
                 playerCache.keys.forEach { key ->
                     playerCache.removeResource(key)
@@ -168,6 +168,23 @@ fun StorageSettings(
             delay(500)
             downloadCacheSize = tryOrNull { downloadCache.cacheSpace } ?: 0
         }
+    }
+
+    if (showSmartDownloadsDialog) {
+        EnumDialog(
+            onDismiss = { showSmartDownloadsDialog = false },
+            onSelect = { count ->
+                onSmartDownloadsCountChange(count)
+                SmartDownloads.schedule(context, count, smartDownloadsWifiOnly)
+                showSmartDownloadsDialog = false
+            },
+            title = stringResource(R.string.baaja_pb_smart_dialog_title),
+            current = smartDownloadsCount,
+            values = SmartDownloadsCounts,
+            valueText = { count ->
+                if (count == 0) stringResource(R.string.baaja_pb_smart_off) else stringResource(R.string.baaja_pb_smart_option, count)
+            },
+        )
     }
 
     if (clearDownloads) {
@@ -297,24 +314,54 @@ fun StorageSettings(
             ),
         )
         Material3SettingsGroup(
-            title = stringResource(R.string.storage),
+            title = stringResource(R.string.baaja_clean_downloads_group),
             items =
-                listOf(
-                    Material3SettingsItem(
+                buildList {
+                    add(Material3SettingsItem(
                         icon = painterResource(R.drawable.storage),
                         title = { Text(stringResource(R.string.downloaded_songs)) },
                         description = {
                             Text(text = Formatter.formatShortFileSize(context, downloadCacheSize))
                         },
-                    ),
-                    Material3SettingsItem(
+                    ))
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.offline),
+                        title = { Text(stringResource(R.string.baaja_pb_smart_title)) },
+                        description = {
+                            Text(
+                                if (smartDownloadsCount <= 0) stringResource(R.string.baaja_pb_smart_off)
+                                else stringResource(R.string.baaja_clean_smart_on, smartDownloadsCount),
+                            )
+                        },
+                        onClick = { showSmartDownloadsDialog = true },
+                    ))
+                    if (smartDownloadsCount > 0) {
+                        add(switchItem(
+                            icon = R.drawable.wifi_proxy,
+                            title = stringResource(R.string.baaja_pb_smart_wifi_title),
+                            description = stringResource(R.string.baaja_clean_smart_wifi_desc),
+                            checked = smartDownloadsWifiOnly,
+                            onChange = {
+                                onSmartDownloadsWifiOnlyChange(it)
+                                SmartDownloads.schedule(context, smartDownloadsCount, it, runNow = false)
+                            },
+                        ))
+                    }
+                    add(switchItem(
+                        icon = R.drawable.download,
+                        title = stringResource(R.string.auto_download_on_like),
+                        description = stringResource(R.string.auto_download_on_like_desc),
+                        checked = autoDownloadOnLike,
+                        onChange = onAutoDownloadOnLikeChange,
+                    ))
+                    add(Material3SettingsItem(
                         icon = painterResource(R.drawable.clear_all),
                         title = { Text(stringResource(R.string.clear_all_downloads)) },
                         onClick = {
                             clearDownloads = true
                         },
-                    ),
-                ),
+                    ))
+                },
         )
 
         Material3SettingsGroup(
@@ -322,43 +369,20 @@ fun StorageSettings(
             items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.cached),
-                    title = { Text(stringResource(R.string.enable_song_cache)) },
-                    description = { Text(stringResource(R.string.enable_song_cache_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = enableSongCache,
-                            onCheckedChange = onEnableSongCacheChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (enableSongCache) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onEnableSongCacheChange(!enableSongCache) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.cached),
-                    title = { Text(stringResource(R.string.max_song_cache_size)) },
-                    enabled = enableSongCache,
+                    title = { Text(stringResource(R.string.baaja_clean_cache_size_title)) },
                     description = {
                         val songCacheValues =
                             remember { listOf(0, 128, 256, 512, 1024, 2048, 4096, 8192, -1) }
                         Column {
                             Text(
-                                text = when (maxSongCacheSize) {
-                                    0 -> stringResource(R.string.disable)
+                                text = when (effectiveSongCacheSize) {
+                                    0 -> stringResource(R.string.baaja_clean_cache_off)
                                     -1 -> stringResource(R.string.unlimited)
-                                    else -> Formatter.formatShortFileSize(context, maxSongCacheSize * 1024 * 1024L)
+                                    else -> Formatter.formatShortFileSize(context, effectiveSongCacheSize * 1024 * 1024L)
                                 }
                             )
                             Slider(
-                                value = songCacheValues.indexOf(maxSongCacheSize).toFloat(),
-                                enabled = enableSongCache,
+                                value = songCacheValues.indexOf(effectiveSongCacheSize).toFloat(),
                                 onValueChange = {
                                     val newValue = songCacheValues[it.roundToInt()]
                                     val newLimitInBytes = if (newValue == -1) {
@@ -370,10 +394,10 @@ fun StorageSettings(
                                         if (newLimitInBytes < playerCacheSize) {
                                             cacheUsage = playerCacheSize
                                             cacheType = songCacheString
-                                            onConfirmAction = { onMaxSongCacheSizeChange(newValue) }
+                                            onConfirmAction = { setSongCacheSize(newValue) }
                                             showCacheWarningDialog = true
                                         } else {
-                                            onMaxSongCacheSizeChange(newValue)
+                                            setSongCacheSize(newValue)
                                         }
                                     },
                                     steps = songCacheValues.size - 2,
@@ -387,12 +411,12 @@ fun StorageSettings(
                                 Spacer(modifier = Modifier.padding(2.dp))
                                 Text(
                                     text =
-                                        if (maxSongCacheSize == -1) {
+                                        if (effectiveSongCacheSize == -1) {
                                             Formatter.formatShortFileSize(context, playerCacheSize)
                                         } else {
                                             "${Formatter.formatShortFileSize(context, playerCacheSize)} / ${
                                                 Formatter.formatShortFileSize(context, 
-                                                    maxSongCacheSize * 1024 * 1024L,
+                                                    effectiveSongCacheSize * 1024 * 1024L,
                                                 )
                                             }"
                                         },
@@ -416,57 +440,9 @@ fun StorageSettings(
             items =
                 listOf(
                     Material3SettingsItem(
-                        icon = painterResource(R.drawable.manage_search),
-                        title = { Text(stringResource(R.string.max_image_cache_size)) },
-                        description = {
-                            val imageCacheValues =
-                                remember { listOf(0, 128, 256, 512, 1024, 2048, 4096, 8192) }
-                            Column {
-                                Text(
-                                    text =
-                                        when (maxImageCacheSize) {
-                                            0 -> stringResource(R.string.disable)
-                                            else -> Formatter.formatShortFileSize(context, maxImageCacheSize * 1024 * 1024L)
-                                        },
-                                )
-                                Slider(
-                                    value = imageCacheValues.indexOf(maxImageCacheSize).toFloat(),
-                                    onValueChange = {
-                                        val newValue = imageCacheValues[it.roundToInt()]
-                                        val newLimitInBytes = newValue * 1024 * 1024L
-
-                                        if (newLimitInBytes < imageCacheSize) {
-                                            cacheUsage = imageCacheSize
-                                            cacheType = imageCacheString
-                                            onConfirmAction = { onMaxImageCacheSizeChange(newValue) }
-                                            showCacheWarningDialog = true
-                                        } else {
-                                            onMaxImageCacheSizeChange(newValue)
-                                        }
-                                    },
-                                    steps = imageCacheValues.size - 2,
-                                    valueRange = 0f..(imageCacheValues.size - 1).toFloat(),
-                                )
-                                LinearProgressIndicator(
-                                    progress = { imageCacheProgress },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    strokeCap = StrokeCap.Round,
-                                )
-                                Spacer(modifier = Modifier.padding(2.dp))
-                                Text(
-                                    text = "${Formatter.formatShortFileSize(context, imageCacheSize)} / ${
-                                        Formatter.formatShortFileSize(context, 
-                                            maxImageCacheSize * 1024 * 1024L,
-                                        )
-                                    }",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            }
-                        },
-                    ),
-                    Material3SettingsItem(
                         icon = painterResource(R.drawable.clear_all),
                         title = { Text(stringResource(R.string.clear_image_cache)) },
+                        description = { Text(Formatter.formatShortFileSize(context, imageCacheSize)) },
                         onClick = {
                             clearImageCacheDialog = true
                         },

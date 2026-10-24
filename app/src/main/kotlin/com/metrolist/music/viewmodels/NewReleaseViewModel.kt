@@ -18,6 +18,7 @@ import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -29,13 +30,28 @@ class NewReleaseViewModel
 @Inject
 constructor(
     @ApplicationContext val context: Context,
-    database: MusicDatabase,
+    private val database: MusicDatabase,
 ) : ViewModel() {
     private val _newReleaseAlbums = MutableStateFlow<List<AlbumItem>>(emptyList())
     val newReleaseAlbums = _newReleaseAlbums.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _hasError = MutableStateFlow(false)
+    val hasError = _hasError.asStateFlow()
+
+    private var loadJob: Job? = null
+
     init {
-        viewModelScope.launch {
+        load()
+    }
+
+    fun load() {
+        if (loadJob?.isActive == true) return
+        loadJob = viewModelScope.launch {
+            _isLoading.value = true
+            _hasError.value = false
             YouTube
                 .newReleaseAlbums()
                 .onSuccess { albums ->
@@ -65,9 +81,12 @@ constructor(
                                     } ?: Int.MAX_VALUE
                                 firstArtistKey
                             }.filterExplicit(context.dataStore.get(HideExplicitKey, false))
+                    if (_newReleaseAlbums.value.isEmpty()) _hasError.value = true
                 }.onFailure {
+                    _hasError.value = true
                     reportException(it)
                 }
+            _isLoading.value = false
         }
     }
 }

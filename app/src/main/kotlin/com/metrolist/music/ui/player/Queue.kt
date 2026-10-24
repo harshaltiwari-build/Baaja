@@ -111,7 +111,6 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.ListItemHeight
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.QueueEditLockKey
-import com.metrolist.music.constants.UseNewPlayerDesignKey
 import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.move
 import com.metrolist.music.extensions.toggleRepeatMode
@@ -220,12 +219,6 @@ fun Queue(
 
     var locked by rememberPreference(QueueEditLockKey, defaultValue = true)
 
-    val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
-        rememberPreference(
-            UseNewPlayerDesignKey,
-            defaultValue = true,
-        )
-
     val baajaColors = rememberBaajaPlayerColors(onImageBackground = playerBackground != PlayerBackgroundStyle.DEFAULT)
     val queueInk = baajaInk
 
@@ -281,103 +274,61 @@ fun Queue(
                     }
                 }
             }
-            if (useNewPlayerDesign) {
-                // Mockup row: Lyrics · Sleep timer · Queue, plus the player menu.
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(
-                                WindowInsets.systemBars.only(
-                                    WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
-                                ),
-                            ).padding(horizontal = 20.dp, vertical = 8.dp),
-                ) {
-                    BaajaPlayerPill(
-                        text = stringResource(R.string.lyrics),
-                        icon = R.drawable.lyrics,
-                        onClick = onToggleLyrics,
-                        active = showInlineLyrics,
-                        colors = baajaColors,
-                    )
+            // Mockup row: Lyrics · Sleep timer · Queue, plus the player menu.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(
+                            WindowInsets.systemBars.only(
+                                WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
+                            ),
+                        ).padding(horizontal = 20.dp, vertical = 8.dp),
+            ) {
+                BaajaPlayerPill(
+                    text = stringResource(R.string.lyrics),
+                    icon = R.drawable.lyrics,
+                    onClick = onToggleLyrics,
+                    active = showInlineLyrics,
+                    colors = baajaColors,
+                )
 
-                    BaajaPlayerPill(
-                        text = if (sleepTimerEnabled) makeTimeString(sleepTimerTimeLeft) else null,
-                        icon = R.drawable.bedtime,
-                        contentDescription = sleepTimerLabel,
-                        onClick = onSleepTimerClick,
-                        active = sleepTimerEnabled,
-                        enabled = !isListenTogetherGuest,
-                        colors = baajaColors,
-                        modifier = if (sleepTimerEnabled) Modifier else Modifier.size(44.dp),
-                    )
+                BaajaPlayerPill(
+                    text = if (sleepTimerEnabled) makeTimeString(sleepTimerTimeLeft) else null,
+                    icon = R.drawable.bedtime,
+                    contentDescription = sleepTimerLabel,
+                    onClick = onSleepTimerClick,
+                    active = sleepTimerEnabled,
+                    enabled = !isListenTogetherGuest,
+                    colors = baajaColors,
+                    modifier = if (sleepTimerEnabled) Modifier else Modifier.size(44.dp),
+                )
 
-                    BaajaPlayerPill(
-                        text = stringResource(R.string.queue),
-                        icon = R.drawable.queue_music,
-                        onClick = { state.expandSoft() },
-                        colors = baajaColors,
-                    )
+                BaajaPlayerPill(
+                    text = stringResource(R.string.queue),
+                    icon = R.drawable.queue_music,
+                    onClick = { state.expandSoft() },
+                    colors = baajaColors,
+                )
 
-                    BaajaPlayerPill(
-                        text = null,
-                        icon = R.drawable.more_vert,
-                        contentDescription = stringResource(R.string.baaja_player_more),
-                        onClick = {
-                            menuState.show {
-                                PlayerMenu(
-                                    mediaMetadata = mediaMetadata,
-                                    playerBottomSheetState = playerBottomSheetState,
-                                    onDismiss = menuState::dismiss,
-                                )
-                            }
-                        },
-                        colors = baajaColors,
-                        modifier = Modifier.size(44.dp),
-                    )
-                }
-            } else {
-                // Classic row: Queue · Sleep timer · Lyrics
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(
-                                WindowInsets.systemBars
-                                    .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
-                            ).padding(horizontal = 24.dp, vertical = 8.dp),
-                ) {
-                    BaajaPlayerPill(
-                        text = stringResource(id = R.string.queue),
-                        icon = R.drawable.queue_music,
-                        onClick = { state.expandSoft() },
-                        colors = baajaColors,
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    BaajaPlayerPill(
-                        text = if (sleepTimerEnabled) makeTimeString(sleepTimerTimeLeft) else sleepTimerLabel,
-                        icon = R.drawable.bedtime,
-                        onClick = onSleepTimerClick,
-                        active = sleepTimerEnabled,
-                        enabled = !isListenTogetherGuest,
-                        colors = baajaColors,
-                        modifier = Modifier.weight(1.2f),
-                    )
-
-                    BaajaPlayerPill(
-                        text = stringResource(R.string.lyrics),
-                        icon = R.drawable.lyrics,
-                        onClick = onToggleLyrics,
-                        active = showInlineLyrics,
-                        colors = baajaColors,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                BaajaPlayerPill(
+                    text = null,
+                    icon = R.drawable.more_vert,
+                    contentDescription = stringResource(R.string.baaja_player_more),
+                    onClick = {
+                        menuState.show {
+                            PlayerMenu(
+                                mediaMetadata = mediaMetadata,
+                                playerBottomSheetState = playerBottomSheetState,
+                                onDismiss = menuState::dismiss,
+                            )
+                        }
+                    },
+                    colors = baajaColors,
+                    modifier = Modifier.size(44.dp),
+                )
             }
 
             if (showSleepTimerDialog) {

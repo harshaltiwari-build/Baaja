@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
+import com.metrolist.music.constants.SliderStyle
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaSurface
 import com.metrolist.music.utils.makeTimeString
@@ -91,7 +92,17 @@ internal data class BaajaPlayerColors(
     val track: Color,
 )
 
-enum class BaajaSeekStyle { DEFAULT, WAVY, SLIM }
+/** Seek bar fill styles: a gentle moving wave, or a taller one. */
+enum class BaajaSeekStyle(val waveAmplitude: Dp) {
+    WAVY(3.dp),
+    SQUIGGLY(4.dp),
+}
+
+internal fun SliderStyle.toSeekStyle(): BaajaSeekStyle =
+    when (this) {
+        SliderStyle.WAVY -> BaajaSeekStyle.WAVY
+        SliderStyle.SQUIGGLY -> BaajaSeekStyle.SQUIGGLY
+    }
 
 /**
  * Seek bar from the Now Playing mockup: a 6 dp rounded track with the accent fill and a white
@@ -107,18 +118,16 @@ internal fun BaajaSeekBar(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     showThumb: Boolean = true,
-    style: BaajaSeekStyle = BaajaSeekStyle.DEFAULT,
+    style: BaajaSeekStyle = BaajaSeekStyle.WAVY,
     playing: Boolean = false,
-    waveAmplitude: Dp = 3.dp,
 ) {
-    // The wave only animates (and only invalidates drawing) while it is visible: WAVY style and playing.
-    val wavy = style == BaajaSeekStyle.WAVY
+    // The wave only animates (and only invalidates drawing) while playing.
     val wavePhase = remember { Animatable(0f) }
-    LaunchedEffect(wavy, playing) {
-        if (!wavy || !playing) return@LaunchedEffect
+    LaunchedEffect(playing) {
+        if (!playing) return@LaunchedEffect
         while (true) wavePhase.animateTo(wavePhase.value + 1f, tween(1600, easing = LinearEasing))
     }
-    val waveAmount by animateFloatAsState(if (playing && style == BaajaSeekStyle.WAVY) 1f else 0f, tween(400), label = "seekWaveAmount")
+    val waveAmount by animateFloatAsState(if (playing) 1f else 0f, tween(400), label = "seekWaveAmount")
     val span = valueRange.endInclusive - valueRange.start
     val fraction = if (span > 0f) ((value - valueRange.start) / span).coerceIn(0f, 1f) else 0f
     val seekLabel = stringResource(R.string.baaja_player_seek)
@@ -133,9 +142,7 @@ internal fun BaajaSeekBar(
         colors = SliderDefaults.colors(),
         modifier = modifier.heightIn(min = 32.dp).semantics { contentDescription = seekLabel },
         thumb = {
-            if (style == BaajaSeekStyle.SLIM) {
-                Box(Modifier.size(2.dp))
-            } else if (showThumb) {
+            if (showThumb) {
                 Canvas(Modifier.size(22.dp)) {
                     val outer = size.minDimension / 2f
                     drawCircle(colors.ink, radius = outer)
@@ -148,16 +155,15 @@ internal fun BaajaSeekBar(
         },
         track = {
             Canvas(Modifier.fillMaxWidth().height(22.dp)) {
-                val slim = style == BaajaSeekStyle.SLIM
-                val stroke = (if (slim) 4.dp else 6.dp).toPx()
+                val stroke = 6.dp.toPx()
                 val y = size.height / 2f
                 val start = stroke / 2f
                 val end = size.width - stroke / 2f
                 val activeEnd = start + (end - start) * fraction
                 drawLine(colors.track, Offset(start, y), Offset(end, y), strokeWidth = stroke, cap = StrokeCap.Round)
                 if (fraction > 0f) {
-                    val amp = waveAmplitude.toPx() * waveAmount
-                    if (style == BaajaSeekStyle.WAVY && amp > 0.1f) {
+                    val amp = style.waveAmplitude.toPx() * waveAmount
+                    if (amp > 0.1f) {
                         val wavelength = 28.dp.toPx()
                         val path = Path()
                         var x = start
@@ -187,6 +193,8 @@ internal fun BaajaSeekRow(
     colors: BaajaPlayerColors,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    style: BaajaSeekStyle = BaajaSeekStyle.WAVY,
+    playing: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -202,6 +210,8 @@ internal fun BaajaSeekRow(
             colors = colors,
             enabled = enabled,
             showThumb = false,
+            style = style,
+            playing = playing,
             modifier = Modifier.weight(1f),
         )
         BaajaTimeText(if (duration > 0) makeTimeString(duration) else "", colors.mutedContent)

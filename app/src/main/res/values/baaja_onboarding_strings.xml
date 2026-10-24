@@ -5,6 +5,10 @@
     <string name="baaja_onb_wordmark_hindi" translatable="false">बाजा</string>
     <string name="baaja_onb_logo_description">Baaja logo</string>
 
+    <!-- Splash -->
+    <string name="baaja_onb_splash_tagline">बाजा बजाओ · music for every mood</string>
+    <string name="baaja_onb_splash_tuning">Tuning up your music…</string>
+
     <!-- Welcome -->
     <string name="baaja_onb_welcome_sticker_no_ads">No ads</string>
     <string name="baaja_onb_welcome_sticker_lyrics">Synced lyrics</string>

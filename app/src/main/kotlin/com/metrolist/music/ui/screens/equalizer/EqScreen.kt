@@ -242,6 +242,10 @@ private fun EqScreenContent(
             contentPadding = PaddingValues(bottom = LocalPlayerAwareWindowInsets.current
                 .asPaddingValues().calculateBottomPadding())
         ) {
+            item {
+                QuickToneSection(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            }
+
             // Frequency response graph
             item {
                 EqFrequencyResponseGraph(

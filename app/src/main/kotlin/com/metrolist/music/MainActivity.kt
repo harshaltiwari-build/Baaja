@@ -99,7 +99,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.window.Dialog
@@ -141,37 +140,27 @@ import com.metrolist.music.constants.CheckForUpdatesKey
 import com.metrolist.music.constants.DarkModeKey
 import com.metrolist.music.constants.DefaultOpenTabKey
 import com.metrolist.music.constants.DismissedStandaloneUpdateKey
-import com.metrolist.music.constants.DensityScaleKey
 import com.metrolist.music.constants.DisableScreenshotKey
-import com.metrolist.music.constants.EnableHighRefreshRateKey
-import com.metrolist.music.constants.EnableLandscapeScalingKey
-import com.metrolist.music.constants.ExperimentalLyricsKey
 import com.metrolist.music.constants.ForceBottomNavBarKey
 import com.metrolist.music.constants.LastSeenVersionKey
 import com.metrolist.music.constants.ListenTogetherNoticeAcceptedKey
 import com.metrolist.music.ui.component.ListenTogetherNoticeDialog
 import com.metrolist.music.constants.ListenTogetherUsernameKey
-import com.metrolist.music.constants.LyricsProviderOrderKey
 import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
 import com.metrolist.music.constants.NavigationBarAnimationSpec
 import com.metrolist.music.constants.NavigationBarHeight
 import com.metrolist.music.constants.PauseSearchHistoryKey
-import com.metrolist.music.constants.PreferredLyricsProvider
-import com.metrolist.music.constants.PreferredLyricsProviderKey
 import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SYSTEM_DEFAULT
-import com.metrolist.music.constants.SimpMusicMigrationDoneKey
 import com.metrolist.music.constants.SlimNavBarHeight
 import com.metrolist.music.constants.SlimNavBarKey
 import com.metrolist.music.constants.StopMusicOnTaskClearKey
 import com.metrolist.music.constants.UpdateNotificationsEnabledKey
-import com.metrolist.music.constants.UseNewMiniPlayerDesignKey
 import com.metrolist.music.constants.VideoThumbnailMigrationDoneKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.SearchHistory
 import com.metrolist.music.extensions.toEnum
-import com.metrolist.music.lyrics.LyricsProviderRegistry
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.DownloadUtil
 import com.metrolist.music.playback.MusicService
@@ -195,10 +184,7 @@ import com.metrolist.music.ui.screens.navigationBuilder
 import com.metrolist.music.ui.screens.settings.ChangelogScreen
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.NavigationTab
-import com.metrolist.music.ui.theme.ColorSaver
-import com.metrolist.music.ui.theme.DefaultThemeColor
 import com.metrolist.music.ui.theme.BaajaTheme
-import com.metrolist.music.ui.theme.extractThemeColor
 import com.metrolist.music.ui.utils.appBarScrollBehavior
 import com.metrolist.music.ui.utils.resetHeightOffset
 import com.metrolist.music.utils.ReleaseInfo
@@ -429,30 +415,6 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val preferences = dataStore.data.first()
 
-            // SimpMusic Removal Migration
-            if (preferences[SimpMusicMigrationDoneKey] != true) {
-                safeDataStoreEdit { settings ->
-                    val currentOrder = settings[LyricsProviderOrderKey] ?: ""
-                    if (currentOrder.contains("SimpMusic")) {
-                        val orderList =
-                            currentOrder
-                                .split(",")
-                                .map { it.trim() }
-                                .filter { it.isNotBlank() && it != "SimpMusic" }
-                                .toMutableList()
-                        if (orderList.isEmpty()) {
-                            settings[LyricsProviderOrderKey] = ""
-                        } else {
-                            settings[LyricsProviderOrderKey] = orderList.joinToString(",")
-                        }
-                    }
-                    if (settings[PreferredLyricsProviderKey] == "SIMPMUSIC") {
-                        settings[PreferredLyricsProviderKey] = PreferredLyricsProvider.LRCLIB.name
-                    }
-                    settings[SimpMusicMigrationDoneKey] = true
-                }
-            }
-
             if (preferences[VideoThumbnailMigrationDoneKey] != true) {
                 database.repairMissingVideoThumbnails()
                 safeDataStoreEdit { settings ->
@@ -537,34 +499,15 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
-
-        LaunchedEffect(enableHighRefreshRate) {
+        LaunchedEffect(Unit) {
             val window = this@MainActivity.window
+            val params = window.attributes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val layoutParams = window.attributes
-                if (enableHighRefreshRate) {
-                    layoutParams.preferredDisplayModeId = 0
-                } else {
-                    val modes = window.windowManager.defaultDisplay.supportedModes
-                    val mode60 =
-                        modes.firstOrNull { kotlin.math.abs(it.refreshRate - 60f) < 1f }
-                            ?: modes.minByOrNull { kotlin.math.abs(it.refreshRate - 60f) }
-
-                    if (mode60 != null) {
-                        layoutParams.preferredDisplayModeId = mode60.modeId
-                    }
-                }
-                window.attributes = layoutParams
+                params.preferredDisplayModeId = 0
             } else {
-                val params = window.attributes
-                if (enableHighRefreshRate) {
-                    params.preferredRefreshRate = 0f
-                } else {
-                    params.preferredRefreshRate = 60f
-                }
-                window.attributes = params
+                params.preferredRefreshRate = 0f
             }
+            window.attributes = params
         }
 
         val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
@@ -578,102 +521,18 @@ class MainActivity : FragmentActivity() {
             setSystemBarAppearance(useDarkTheme)
         }
 
-        val enableLandscapeScaling by rememberPreference(EnableLandscapeScalingKey, defaultValue = false)
-        val userDensityScale by rememberPreference(DensityScaleKey, defaultValue = 1f)
         val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
         val pureBlack =
             remember(pureBlackEnabled, useDarkTheme) {
                 pureBlackEnabled && useDarkTheme
             }
 
-        // Album-art tinting is a fixed behaviour; the default brand colour is the fallback seed.
-        val selectedThemeColor = DefaultThemeColor
-
         val showChangelog = rememberSaveable { mutableStateOf(false) }
-
-        var themeColor by rememberSaveable(stateSaver = ColorSaver) {
-            mutableStateOf(selectedThemeColor)
-        }
-
-        val themeColorCache = remember { mutableMapOf<String, Color>() }
-
-        LaunchedEffect(playerConnection, selectedThemeColor) {
-            val playerConnection = playerConnection
-            if (playerConnection == null) {
-                themeColor = selectedThemeColor
-                return@LaunchedEffect
-            }
-
-            playerConnection.service.currentMediaMetadata
-                .distinctUntilChanged { old, new -> old?.id == new?.id }
-                .collectLatest { song ->
-                    if (song?.thumbnailUrl != null) {
-                        val cached = themeColorCache[song.thumbnailUrl]
-                        if (cached != null) {
-                            withFrameNanos { }
-                            themeColor = cached
-                            return@collectLatest
-                        }
-                        withContext(Dispatchers.IO) {
-                            try {
-                                val result =
-                                    imageLoader.execute(
-                                        ImageRequest
-                                            .Builder(this@MainActivity)
-                                            .data(song.thumbnailUrl)
-                                            .allowHardware(false)
-                                            .memoryCachePolicy(CachePolicy.ENABLED)
-                                            .diskCachePolicy(CachePolicy.ENABLED)
-                                            .networkCachePolicy(CachePolicy.ENABLED)
-                                            .crossfade(false)
-                                            .build(),
-                                    )
-                                val extractedColor = result.image?.toBitmap()?.extractThemeColor() ?: selectedThemeColor
-                                themeColorCache[song.thumbnailUrl] = extractedColor
-                                withFrameNanos { }
-                                themeColor = extractedColor
-                            } catch (e: Exception) {
-                                withFrameNanos { }
-                                themeColor = selectedThemeColor
-                            }
-                        }
-                    } else {
-                        themeColor = selectedThemeColor
-                    }
-                }
-        }
 
         BaajaTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
-            themeColor = themeColor,
         ) {
-            val currentDensity = LocalDensity.current
-            val windowInfo = LocalWindowInfo.current
-            val containerSize = windowInfo.containerDpSize
-            val smallestDimensionDp = minOf(containerSize.width, containerSize.height)
-
-            val landscapeDensityScale =
-                remember(smallestDimensionDp, enableLandscapeScaling) {
-                    if (enableLandscapeScaling) {
-                        when {
-                            smallestDimensionDp >= 840.dp -> 1.15f
-                            smallestDimensionDp >= 720.dp -> 1.1f
-                            smallestDimensionDp >= 600.dp -> 1.05f
-                            else -> 1.0f
-                        }
-                    } else {
-                        1.0f
-                    }
-                }
-            val scaledDensity: Density = remember(currentDensity, landscapeDensityScale, userDensityScale) {
-                Density(
-                    density = currentDensity.density * landscapeDensityScale * userDensityScale,
-                    fontScale = currentDensity.fontScale,
-                )
-            }
-
-            CompositionLocalProvider(LocalDensity provides scaledDensity) {
             BoxWithConstraints(
                 modifier =
                     Modifier
@@ -709,7 +568,6 @@ class MainActivity : FragmentActivity() {
                 }
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
-                val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
                 val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
                 val defaultOpenTab = remember(defaultOpenTabInt) {
                     try {
@@ -806,7 +664,7 @@ class MainActivity : FragmentActivity() {
                         collapsedBound =
                             bottomInset +
                                 (if (!showRail && shouldShowNavigationBar) navPadding else 0.dp) +
-                                (if (useNewMiniPlayerDesign) MiniPlayerBottomSpacing else 0.dp) +
+                                MiniPlayerBottomSpacing +
                                 MiniPlayerHeight,
                         expandedBound = maxHeight,
                     )
@@ -1149,9 +1007,7 @@ class MainActivity : FragmentActivity() {
                                                 .graphicsLayer {
                                                     val progress = playerBottomSheetState.progress
                                                     alpha =
-                                                        if (progress > 0f ||
-                                                            (useNewMiniPlayerDesign && !shouldShowNavigationBar)
-                                                        ) {
+                                                        if (progress > 0f || !shouldShowNavigationBar) {
                                                             0f
                                                         } else {
                                                             1f
@@ -1180,7 +1036,7 @@ class MainActivity : FragmentActivity() {
                                             .graphicsLayer {
                                                 val progress = playerBottomSheetState.progress
                                                 alpha =
-                                                    if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
+                                                    if (progress > 0f || !shouldShowNavigationBar) 0f else 1f
                                             }.background(baseBg),
                                 )
                             }
@@ -1379,7 +1235,6 @@ class MainActivity : FragmentActivity() {
                     }
                     }
                 }
-            }
             }
         }
     }

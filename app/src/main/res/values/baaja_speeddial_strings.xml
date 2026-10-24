@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Baaja Project (C) 2026
+  Licensed under GPL-3.0 | See git history for contributors
+-->
+<resources>
+    <string name="baaja_sd_surprise">Surprise me</string>
+    <string name="baaja_sd_shuffle">Play something random</string>
+    <string name="baaja_sd_pinned">Pinned</string>
+</resources>

@@ -12,7 +12,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Process
-import android.widget.Toast
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -29,8 +28,6 @@ import com.metrolist.kugou.KuGou
 import com.metrolist.music.BuildConfig
 import com.metrolist.music.constants.*
 import com.metrolist.music.di.ApplicationScope
-import com.metrolist.music.extensions.toEnum
-import com.metrolist.music.extensions.toInetSocketAddress
 import com.metrolist.music.utils.CrashHandler
 import com.metrolist.music.utils.ArtistNameAliases
 import com.metrolist.music.utils.InnerTubeXPlayer
@@ -45,15 +42,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
-import java.net.Authenticator
-import java.net.PasswordAuthentication
-import java.net.Proxy
 import java.util.Locale
 import javax.inject.Inject
 
@@ -90,14 +82,9 @@ class App :
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
 
-        // Pre-read Coil cache size on background to avoid runBlocking in newImageLoader
-        applicationScope.launch(Dispatchers.IO) {
-            cachedCoilCacheSize = dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
-        }
-
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {
-            // Apply settings, including proxy configuration, before building extraction transport.
+            // Apply settings before building extraction transport.
             initializeSettings()
 
             // Warm player config, cipher, and optional PO-token state off the first-play path.
@@ -141,35 +128,6 @@ class App :
 
         if (languageTag == "zh-TW") {
             KuGou.useTraditionalChinese = true
-        }
-
-        if (settings[ProxyEnabledKey] == true) {
-            val username = settings[ProxyUsernameKey].orEmpty()
-            val password = settings[ProxyPasswordKey].orEmpty()
-            val type = settings[ProxyTypeKey].toEnum(defaultValue = Proxy.Type.HTTP)
-
-            if (username.isNotEmpty() || password.isNotEmpty()) {
-                if (type == Proxy.Type.HTTP) {
-                    YouTube.proxyAuth = Credentials.basic(username, password)
-                } else {
-                    Authenticator.setDefault(
-                        object : Authenticator() {
-                            override fun getPasswordAuthentication(): PasswordAuthentication =
-                                PasswordAuthentication(username, password.toCharArray())
-                        },
-                    )
-                }
-            }
-            try {
-                settings[ProxyUrlKey]?.let {
-                    YouTube.proxy = Proxy(type, it.toInetSocketAddress())
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@App, getString(R.string.failed_to_parse_proxy), Toast.LENGTH_SHORT).show()
-                }
-                reportException(e)
-            }
         }
 
         YouTube.useLoginForBrowse = settings[UseLoginForBrowse] ?: true
@@ -272,13 +230,8 @@ class App :
         }
     }
 
-    @Volatile
-    private var cachedCoilCacheSize: Int? = null
-
     override fun newImageLoader(context: PlatformContext): ImageLoader {
-        val cacheSize = cachedCoilCacheSize ?: runBlocking {
-            dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
-        }
+        val cacheSize = IMAGE_CACHE_SIZE_MB
         return ImageLoader
             .Builder(this)
             .apply {
@@ -308,6 +261,8 @@ class App :
     }
 
     companion object {
+        private const val IMAGE_CACHE_SIZE_MB = 512
+
         suspend fun forgetAccount(context: Context) {
             Timber.d("forgetAccount: Starting logout process")
 

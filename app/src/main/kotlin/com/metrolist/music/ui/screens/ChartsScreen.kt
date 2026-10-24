@@ -41,6 +41,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
+import com.metrolist.music.ui.component.home.BaajaErrorState
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
+import com.metrolist.music.ui.component.home.BaajaLoadingLabel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +96,8 @@ fun ChartsScreen(
 
     val chartsPage by viewModel.chartsPage.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isFallback by viewModel.isFallback.collectAsStateWithLifecycle()
 
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -116,13 +123,20 @@ fun ChartsScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
-            if (isLoading || chartsPage == null) {
+            if (chartsPage == null && !isLoading && error != null) {
+                BaajaErrorState(
+                    title = stringResource(R.string.baaja_charts_error_title),
+                    body = stringResource(R.string.baaja_charts_error_body),
+                    onRetry = viewModel::loadCharts,
+                )
+            } else if (chartsPage == null) {
                 ShimmerHost(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                     ) {
+                        BaajaLoadingLabel()
                         TextPlaceholder(
                             height = 36.dp,
                             modifier =
@@ -204,8 +218,18 @@ fun ChartsScreen(
                             .only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
                             .asPaddingValues(),
                 ) {
-                    chartsPage?.sections?.filter { it.title != "Top music videos" }?.forEach { section ->
-                        item(key = "section_title_${section.title}") {
+                    if (isFallback) {
+                        item(key = "charts_fallback_note") {
+                            Text(
+                                text = stringResource(R.string.baaja_charts_fallback_note),
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = BaajaHomeGutter, vertical = 8.dp),
+                            )
+                        }
+                    }
+                    chartsPage?.sections?.filter { it.title != "Top music videos" }?.forEachIndexed { sectionIndex, section ->
+                        item(key = "section_title_${sectionIndex}_${section.title}") {
                             BaajaHomeSectionTitle(
                                 title =
                                     when (section.title) {
@@ -215,7 +239,7 @@ fun ChartsScreen(
                                 modifier = Modifier.animateItem(),
                             )
                         }
-                        item(key = "section_content_${section.title}") {
+                        item(key = "section_content_${sectionIndex}_${section.title}") {
                             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                                 val horizontalLazyGridItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
                                 val horizontalLazyGridItemWidth = maxWidth * horizontalLazyGridItemWidthFactor

@@ -6,7 +6,6 @@
 package com.metrolist.music.lyrics
 
 import android.content.Context
-import com.metrolist.music.constants.EnableZemerKey
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 import io.ktor.client.HttpClient
@@ -75,8 +74,7 @@ object ZemerLyricsProvider : LyricsProvider {
         }
     }
 
-    override fun isEnabled(context: Context): Boolean =
-        context.dataStore[EnableZemerKey] ?: true
+    override fun isEnabled(context: Context): Boolean = true
 
     override suspend fun getLyrics(
         context: Context,

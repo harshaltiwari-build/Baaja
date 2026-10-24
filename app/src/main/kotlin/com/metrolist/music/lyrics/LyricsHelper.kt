@@ -7,20 +7,16 @@ package com.metrolist.music.lyrics
 
 import android.content.Context
 import android.util.LruCache
-import com.metrolist.music.constants.LyricsProviderOrderKey
 import com.metrolist.music.db.entities.LyricsEntity.Companion.LYRICS_NOT_FOUND
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.utils.NetworkConnectivityObserver
-import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.reportException
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
@@ -36,11 +32,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val networkConnectivity: NetworkConnectivityObserver,
 ) {
-    val preferred =
-        context.dataStore.data
-            .map { preferences ->
-                resolveLyricsProviders(preferences)
-            }.distinctUntilChanged()
+    val preferred = flowOf(LyricsProviderRegistry.getFixedProviders())
 
     private val cache = LruCache<String, List<LyricsResult>>(MAX_CACHE_SIZE)
     private var currentLyricsJob: Job? = null
@@ -53,9 +45,7 @@ constructor(
             return LyricsWithProvider(cached.lyrics, cached.providerName)
         }
 
-        val orderedProviders = context.dataStore.data
-            .map { preferences -> resolveLyricsProviders(preferences) }
-            .first()
+        val orderedProviders = LyricsProviderRegistry.getFixedProviders()
 
         val isNetworkAvailable = try {
             networkConnectivity.isCurrentlyConnected()
@@ -138,9 +128,7 @@ constructor(
         val allResult = mutableListOf<LyricsResult>()
         currentLyricsJob = CoroutineScope(SupervisorJob()).launch {
             val cleanedTitle = LyricsUtils.cleanTitleForSearch(songTitle)
-            val allProviders = context.dataStore.data
-                .map { preferences -> resolveLyricsProviders(preferences) }
-                .first()
+            val allProviders = LyricsProviderRegistry.getFixedProviders()
             val enabledProviders = allProviders.filter { it.isEnabled(context) }
 
             val otherProviders = enabledProviders.filter { it.name != "LyricsPlus" }
@@ -192,16 +180,6 @@ constructor(
         }
 
         currentLyricsJob?.join()
-    }
-
-    private fun resolveLyricsProviders(preferences: androidx.datastore.preferences.core.Preferences): List<LyricsProvider> {
-        val providerOrder = preferences[LyricsProviderOrderKey].orEmpty()
-        if (providerOrder.isNotBlank()) {
-            return LyricsProviderRegistry.getOrderedProviders(providerOrder)
-        }
-
-        return LyricsProviderRegistry.getDefaultProviderOrder()
-            .mapNotNull { LyricsProviderRegistry.getProviderByName(it) }
     }
 
     companion object {

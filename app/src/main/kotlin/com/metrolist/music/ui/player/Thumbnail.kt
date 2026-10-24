@@ -6,7 +6,6 @@
 package com.metrolist.music.ui.player
 
 import androidx.compose.foundation.shape.CircleShape
-import com.metrolist.music.constants.SpinningAlbumArtKey
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -83,8 +82,6 @@ import coil3.request.ImageRequest
 import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
-import com.metrolist.music.constants.CropAlbumArtKey
-import com.metrolist.music.constants.HidePlayerThumbnailKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
@@ -232,8 +229,6 @@ fun Thumbnail(
     // Disable swipe for Listen Together guests
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
     val swipeThumbnail = swipeThumbnailPref && !isListenTogetherGuest
-    val hidePlayerThumbnail by rememberPreference(HidePlayerThumbnailKey, false)
-    val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
@@ -409,8 +404,6 @@ fun Thumbnail(
                             ThumbnailItem(
                                 item = item,
                                 dimensions = dimensions,
-                                hidePlayerThumbnail = hidePlayerThumbnail,
-                                cropAlbumArt = cropAlbumArt,
                                 textBackgroundColor = textBackgroundColor,
                                 layoutDirection = layoutDirection,
                                 onSeek = onSeekCallback,
@@ -550,8 +543,6 @@ private fun HeaderIconButton(
 private fun ThumbnailItem(
     item: MediaItem,
     dimensions: ThumbnailDimensions,
-    hidePlayerThumbnail: Boolean,
-    cropAlbumArt: Boolean,
     textBackgroundColor: Color,
     layoutDirection: LayoutDirection,
     onSeek: (String, Boolean) -> Unit,
@@ -568,10 +559,6 @@ private fun ThumbnailItem(
     val currentOnArtworkClick by rememberUpdatedState(onArtworkClick)
     val openImmersiveLabel = stringResource(R.string.baaja_player_open_immersive)
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
-    val spinningAlbumArt by rememberPreference(SpinningAlbumArtKey, defaultValue = false)
-    val isPlaying by playerConnection.isPlaying.collectAsState()
-    val spinThis = spinningAlbumArt && !hidePlayerThumbnail && item.mediaId == currentMediaId
-    val vinylRotation = rememberVinylRotation(spinning = spinThis && isPlaying)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
 
@@ -625,11 +612,10 @@ private fun ThumbnailItem(
             },
         contentAlignment = Alignment.Center
     ) {
-        val artShape = if (spinThis) CircleShape else RoundedCornerShape(dimensions.cornerRadius)
+        val artShape = RoundedCornerShape(dimensions.cornerRadius)
         Box(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
-                // Outline and hard shadow sit outside the rotation so the shadow doesn't spin.
                 .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
                 .then(
                     if (onArtworkClick != null && item.mediaId == currentMediaId) {
@@ -638,23 +624,18 @@ private fun ThumbnailItem(
                         Modifier
                     }
                 )
-                .graphicsLayer { if (spinThis) rotationZ = vinylRotation.value }
                 .clip(artShape)
         ) {
-            if (hidePlayerThumbnail) {
-                HiddenThumbnailPlaceholder(textBackgroundColor = textBackgroundColor)
+            val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
+                currentMediaThumbnail
             } else {
-                val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
-                    currentMediaThumbnail
-                } else {
-                    item.mediaMetadata.artworkUri?.toString()
-                }
-
-                ThumbnailImage(
-                    artworkUri = artworkUriToUse,
-                    cropArtwork = cropAlbumArt
-                )
+                item.mediaMetadata.artworkUri?.toString()
             }
+
+            ThumbnailImage(
+                artworkUri = artworkUriToUse,
+                cropArtwork = false
+            )
             
             // Cast button at top-right corner of thumbnail
             CastButton(
@@ -664,29 +645,6 @@ private fun ThumbnailItem(
                 tintColor = textBackgroundColor
             )
         }
-    }
-}
-
-/**
- * Placeholder shown when thumbnail is hidden.
- */
-@Composable
-private fun HiddenThumbnailPlaceholder(
-    textBackgroundColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.small_icon),
-            contentDescription = stringResource(R.string.hide_player_thumbnail),
-            tint = textBackgroundColor.copy(alpha = 0.7f),
-            modifier = Modifier.size(120.dp)
-        )
     }
 }
 

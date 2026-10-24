@@ -48,10 +48,6 @@
     <string name="about_artist">About</string>
     <string name="show_more">Show more</string>
     <string name="show_less">Show less</string>
-    <string name="artist_page_settings">Artist page</string>
-    <string name="show_artist_description">Show artist description</string>
-    <string name="show_artist_subscriber_count">Show subscriber count</string>
-    <string name="show_artist_monthly_listeners">Show monthly listeners</string>
 
     <!-- Menu descriptions -->
     <string name="download_playlist_desc">Download all songs for offline playback</string>
@@ -71,10 +67,6 @@
 
     <string name="lyrics">Lyrics</string>
     <string name="close">Close</string>
-    <string name="hide_player_thumbnail">Hide player thumbnail</string>
-    <string name="hide_player_thumbnail_desc">Replace the album artwork with the app logo in the player</string>
-    <string name="crop_album_art">Crop album art</string>
-    <string name="crop_album_art_desc">Force a square aspect ratio by cropping video thumbnails</string>
 
     <string name="already_in_playlist">Already in playlist: </string>
 
@@ -86,7 +78,6 @@
     <string name="seek_forward_dynamic">+%1$d seconds forward</string>
     <string name="seek_backward_dynamic">-%1$d seconds backward</string>
     <string name="seek_seconds_addup">Progressive seek</string>
-    <string name="seek_seconds_addup_description">When enabled, adds 5 extra seconds incrementally with each seek</string>
 
     <string name="similar_content">Similar content</string>
 
@@ -94,14 +85,7 @@
     <string name="player_background_solid">Solid</string>
     <string name="follow_theme">Follow theme</string>
     <string name="gradient">Gradient</string>
-    <string name="new_player_design">New player design</string>
-    <string name="new_mini_player_design">New mini-player design</string>
     <string name="player_background_blur">Blur</string>
-    <string name="player_buttons_style">Player button colors</string>
-    <string name="default_style">Default</string>
-    <string name="primary_color_style">Primary color</string>
-    <string name="tertiary_color_style">Tertiary color</string>
-    <string name="display_density">Display density</string>
     <string name="restart">Restart</string>
     <string name="wavy">Wavy</string>
     <string name="enable_swipe_thumbnail">Enable swipe to change song</string>
@@ -116,32 +100,8 @@
     <string name="show_interval_indicator_desc">Shows a progress bar during long instrumental gaps</string>
     <string name="respect_agent_positioning">Respect agent positioning</string>
     <string name="respect_agent_positioning_desc">Align lyrics based on the agent role (e.g. background vocals)</string>
-    <string name="lyrics_glow_effect">Enable glowing lyrics effect</string>
-    <string name="lyrics_glow_effect_desc">Adds a glowing animation and bounce effect to the active lyric line</string>
     <string name="lyrics_animation_style">Lyrics animation style</string>
-    <string name="lyrics_animation_none">None</string>
-    <string name="lyrics_animation_fade">Fade</string>
-    <string name="lyrics_animation_glow">Glow</string>
-    <string name="lyrics_animation_slide">Slide</string>
-    <string name="lyrics_animation_karaoke">Karaoke</string>
-    <string name="lyrics_animation_apple">Apple Music Style</string>
-    <string name="lyrics_text_size">Lyrics text size</string>
-    <string name="lyrics_line_spacing">Lyrics line spacing</string>
-    <string name="enable_lrclib_desc">Community-driven synchronized lyrics database</string>
-    <string name="enable_kugou_desc">Pulls lyrics from KuGou, a popular Chinese music platform</string>
-    <string name="youtube_music_lyrics_note">NOTE: YouTube Music lyrics will be shown automatically when no other source is available. They are usually not synchronized</string>
-    <string name="enable_zemer">Enable Zemer</string>
-    <string name="enable_zemer_desc">Lyrics for Jewish music</string>
-    <string name="enable_better_lyrics">Enable Better Lyrics</string>
-    <string name="enable_better_lyrics_desc">Syllable-synced lyrics for any song, perfect for karaoke</string>
-    <string name="enable_paxsenix">Enable Paxsenix</string>
-    <string name="enable_paxsenix_desc">High-quality synchronized lyrics from Paxsenix API</string>
-    <string name="enable_lyricsplus">Enable LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Synchronized lyrics from multiple sources</string>
-    <string name="lyrics_provider_selection">Provider selection</string>
-    <string name="lyrics_provider_selection_desc">Choose which lyrics providers are enabled</string>
     <string name="auto_scroll">Re-sync</string>
-    <string name="slim">Slim</string>
     <string name="force_bottom_navbar">Force bottom navigation bar</string>
     <string name="slim_navbar">Slim bottom navigation bar</string>
     <string name="auto_playlists">Auto playlists</string>
@@ -149,15 +109,11 @@
     <string name="show_downloaded_playlist">Show Downloaded playlist</string>
     <string name="show_top_playlist">Show Top playlist</string>
     <string name="show_cached_playlist">Show Cached playlist</string>
-    <string name="enable_song_cache">Enable song cache</string>
-    <string name="enable_song_cache_desc">Automatically cache songs for faster future playback</string>
     <string name="show_uploaded_playlist">Show Uploaded playlist</string>
     <string name="show_most_stats_playlists">Show Weekly and Monthly Most playlists</string>
     <string name="show_most_stats_playlists_desc">Create and show stats-based Most playlists in Stats and Library</string>
     <string name="shuffle_playlist_first">Shuffle playlist or album first</string>
-    <string name="shuffle_playlist_first_desc">When shuffling, play all songs from the current playlist or album before moving to similar content</string>
     <string name="prevent_duplicate_tracks_in_queue">Prevent duplicate tracks in queue</string>
-    <string name="prevent_duplicate_tracks_in_queue_desc">When adding a track that\'s already in the queue, it will be moved from its previous position rather than added again</string>
     <string name="add_to_playlist_position">Add to playlist position</string>
     <string name="playlist_position_beginning">Beginning of playlist</string>
     <string name="playlist_position_beginning_desc">Newly added songs appear before existing songs</string>
@@ -165,11 +121,6 @@
     <string name="playlist_position_end_desc">Newly added songs appear after existing songs</string>
     <string name="skip_silence_desc">Fast-forward through silent parts of songs</string>
     <string name="show_audio_format_on_player">Show audio format on player</string>
-    <string name="sound_shaping">Sound shaping</string>
-    <string name="animated_player_glow">Animated glow</string>
-    <string name="animated_player_glow_desc">Let the gradient background drift softly while music plays</string>
-    <string name="spinning_album_art">Spinning album art</string>
-    <string name="spinning_album_art_desc">Turn the album art into a slowly spinning record while music plays</string>
     <string name="auto_backup">Automatic backups</string>
     <string name="auto_backup_off">Off</string>
     <string name="auto_backup_daily">Every day</string>
@@ -178,7 +129,6 @@
     <string name="auto_backup_folder_not_set">Not set</string>
     <string name="auto_backup_desc">Automatic backups run in the background when your battery isn\'t low. The %1$d newest are kept in the folder you choose; older automatic backups are deleted.</string>
     <string name="sponsorblock">Skip non-music segments</string>
-    <string name="sponsorblock_desc">Use SponsorBlock to skip sponsors, self-promotion, reminders to subscribe and non-music parts of music videos. Only a short hash of each song ID is sent.</string>
     <string name="sponsorblock_skipped">Skipped a non-music segment</string>
     <string name="audio_quality_mobile">Quality on mobile data</string>
     <string name="audio_quality_auto_save_data">Auto (save data)</string>
@@ -215,31 +165,13 @@
 
     <!-- General -->
     <string name="general">General</string>
-    <string name="proxy">Proxy</string>
     <string name="default_lib_chips">Change default library chip</string>
     <string name="set_quick_picks">Set quick picks</string>
     <string name="last_song_listened">Based on the last song you listened to</string>
     <string name="app_language">App language</string>
-    <string name="lyrics_provider_priority">Lyrics provider priority</string>
-    <string name="lyrics_provider_priority_desc">Drag to reorder providers by preference. Higher position means higher priority</string>
-    <string name="experimental_lyrics">Experimental lyrics</string>
-    <string name="experimental_lyrics_desc">Enable the new experimental lyrics component with enhanced animations and performance</string>
-    <string name="experimental_lyrics_beta_title">Experimental feature</string>
-    <string name="experimental_lyrics_beta_message">The new lyrics component is currently in development and may contain bugs. Are you sure you want to enable it?</string>
-    <string name="config_proxy">Configure proxy</string>
-    <string name="proxy_username">Proxy username</string>
-    <string name="proxy_password">Proxy password</string>
-    <string name="enable_authentication">Enable authentication</string>
 
 
-    <string name="auto_radio_queue">Auto radio queue</string>
-    <string name="auto_radio_queue_desc">Automatically create a radio queue when playing a song from search or home</string>
     <string name="enable_similar_content">Enable similar content</string>
-    <string name="similar_content_desc">Automatically adds more similar songs when the end of the queue is reached</string>
-    <string name="persistent_shuffle_title">Persistent shuffle</string>
-    <string name="persistent_shuffle_desc">Keep shuffle enabled when starting new songs or playlists</string>
-    <string name="remember_shuffle_and_repeat">Remember shuffle and repeat</string>
-    <string name="remember_shuffle_and_repeat_desc">Remember shuffle and repeat settings when the app is restarted</string>
     <string name="percentage_format">%d%%</string>
 
     <string name="import_online">Import an M3U playlist</string>
@@ -291,8 +223,6 @@
     <string name="past_week">Past week</string>
     <string name="past_month">Past month</string>
     <string name="past_year">Past year</string>
-    <string name="top_length">My Top list length</string>
-    <string name="history_duration">History duration</string>
     <string name="information">Information</string>
     <string name="description">Description</string>
     <string name="views">Views</string>
@@ -310,9 +240,6 @@
     <string name="set_as_default">Set as default</string>
     <string name="sleep_timer_default_set">Sleep timer default set to %d minutes</string>
     <string name="enable_automatic_sleeptimer">Enable automatic sleep timer</string>
-    <string name="sleeptimer_description">Automatically starts the sleep timer at a set time using the default duration</string>
-    <string name="sleep_timer_repeat_description">Set a recurring day and time for the sleep timer to activate automatically</string>
-    <string name="sleep_timer_repeat">Repeat</string>
     <string name="sleep_timer_daily">Daily</string>
     <string name="sleep_timer_weekdays">Monday to Friday</string>
     <string name="sleep_timer_weekdays_weekends">Weekdays / Weekends</string>
@@ -328,9 +255,7 @@
     <string name="sleep_timer_saturday">Saturday</string>
     <string name="sleep_timer_sunday">Sunday</string>
     <string name="sleep_timer_stop_after_current_song_title">Stop at the end of current song</string>
-    <string name="sleep_timer_stop_after_current_song_description">Waits for the currently playing song to finish before stopping</string>
     <string name="sleep_timer_fade_out_title">Fade out</string>
-    <string name="sleep_timer_fade_out_description">Gradually fades out the volume in the final minute</string>
 
     <!-- Alarm -->
     <string name="alarm">Alarm</string>
@@ -364,22 +289,15 @@
     <string name="alarm_battery_optimization_desc">Disable battery optimization for more reliable alarm behavior in the background</string>
 
     <!-- Player Settings -->
-    <string name="disable_load_more_when_repeat_all">Disable auto-load in repeat all mode</string>
-    <string name="disable_load_more_when_repeat_all_desc">Don\'t automatically load more songs or similar content when repeat all is enabled</string>
     <string name="pause_music_when_media_is_muted">Pause music when media is muted</string>
     <string name="resume_on_bluetooth_connect">Resume on Bluetooth connection</string>
     <string name="keep_screen_on_when_player_is_expanded">Keep screen on when player is expanded</string>
 
-    <string name="crossfade">Crossfade</string>
-    <string name="crossfade_desc">Fades out the current song as the next one fades in</string>
     <string name="crossfade_duration">Crossfade duration</string>
-    <string name="crossfade_gapless">Disable for gapless albums</string>
-    <string name="crossfade_gapless_desc">Skip crossfade for albums designed to play without gaps</string>
 
     <!-- Romanization Settings -->
     <string name="lyrics_romanize_title">Romanization</string>
     <string name="lyrics_romanization">Lyrics romanization</string>
-    <string name="line_by_line_option_title">Detect language line-by-line</string>
     <string name="romanize_current_track">Romanize current track</string>
 
     <!-- Lyrics Offset Settings -->
@@ -402,24 +320,15 @@
     <string name="update_channel_desc">Notifications about new app versions</string>
 
     <!-- Offload -->
-    <string name="audio_offload">Enable audio offload</string>
-    <string name="audio_offload_description">Uses the hardware audio offload path for playback. Disabling this may increase battery usage, but can help if you experience issues with playback or audio post-processing</string>
-    <string name="audio_offload_disabled_by_crossfade">Disabled because crossfade is active</string>
 
     <!-- Varispeed -->
-    <string name="speed">Playback Speed</string>
-    <string name="varispeed">Enable varispeed</string>
-    <string name="varispeed_description">Link pitch to playback speed, resulting in tape-style speedup and slowdown effects</string>
 
     <!-- AudioTrack Playback Parameters -->
-    <string name="audio_track_playback_params">Use hardware audio processing</string>
-    <string name="audio_track_playback_params_description">Use Android\'s AudioTrack for speed/pitch changes instead of software processing. More reliable for extreme pitch values</string>
 
     <!-- Google Cast -->
     <string name="google_cast">Google Cast</string>
     <string name="google_cast_description">Cast audio to Chromecast and other Cast-enabled devices</string>
 
-    <string name="lyrics_romanize_as_main">Show romanized lyrics as main</string>
 
     <string name="username">Username</string>
     <string name="password">Password</string>
@@ -444,13 +353,10 @@
     <string name="equalizer_desc">Open the audio equalizer</string>
     <string name="mini_player">Mini-player</string>
     <string name="mini_player_background_style">Mini-player background style</string>
-    <string name="transparent">Transparent</string>
-    <string name="mini_player_background_not_available">Unavailable when the new mini-player design is disabled</string>
     <string name="cache_size_warning_title">Hold on!</string>
     <string name="cache_size_warning_message">The limit you\'ve chosen (%1$s) is smaller than what the app is currently using. Continuing may cause some cached %2$s to be removed. Proceed anyway?</string>
     <string name="cache_size_warning_confirm">Continue</string>
 
-    <string name="lyrics_animation_style_title">Word-by-word animation style</string>
     <string name="none">None</string>
 
     <!-- Equalizer UI -->
@@ -494,7 +400,6 @@
     <string name="copied_title">Title copied</string>
     <string name="copied_artist">Artist copied</string>
     <string name="error_playing">Playback error</string>
-    <string name="failed_to_parse_proxy">Failed to parse proxy URL</string>
 
     <!-- Playback errors -->
     <string name="error_playback_failed">Playback failed</string>
@@ -564,10 +469,6 @@
     <string name="mute">Mute</string>
     <string name="unmute">Unmute</string>
     <string name="listen_together_join_requests">Join requests</string>
-    <string name="listen_together_view_logs">View logs</string>
-    <string name="listen_together_view_logs_desc">Debug connection events and messages</string>
-    <string name="listen_together_logs">Connection logs</string>
-    <string name="listen_together_no_logs">No logs yet</string>
     <string name="listen_together_auto_approval_joins">Auto-approve join requests</string>
     <string name="listen_together_auto_approval_joins_desc">Automatically approve join requests without reviewing them manually</string>
     <string name="listen_together_auto_approval_suggestions">Auto-approve song suggestions</string>
@@ -646,10 +547,6 @@
     <!-- Theme Content Descriptions -->
     <string name="cd_back">Back</string>
     <string name="play_all">Play all</string>
-    <string name="enable_high_refresh_rate">Enable high refresh rate</string>
-    <string name="enable_high_refresh_rate_desc">Forces the display to run at its highest supported refresh rate (e.g. 120Hz)</string>
-    <string name="enable_landscape_scaling">Landscape Scaling</string>
-    <string name="enable_landscape_scaling_desc">Scale UI in landscape mode for larger screens</string>
 
     <!-- Music Recognition -->
     <string name="recognize_music">Recognize music</string>
@@ -690,8 +587,6 @@
     <string name="unpin_from_speed_dial">Unpin from speed dial</string>
     <string name="pin">Pin</string>
     <string name="unpin">Unpin</string>
-    <string name="randomize_home_order">Randomize home screen order</string>
-    <string name="randomize_home_order_desc">Randomly reorder home screen sections using weighted priorities</string>
 
     <!-- Daily Discover -->
     <string name="daily_discover_sounds_like">Sounds like %1$s</string>
@@ -774,9 +669,6 @@
     <string name="android_auto_target_playlist">Quick-add destination</string>
     <string name="android_auto_target_playlist_auto">Not set</string>
     <string name="android_auto_target_playlist_not_set">No playlist selected. Choose one in Android Auto settings</string>
-    <string name="android_auto_search_options">Search options</string>
-    <string name="android_auto_search_local_songs_limit">Songs search limit</string>
-    <string name="android_auto_search_local_songs_limit_desc">Limit the number of local songs shown in the search results. It is recommended to not set unlimited to prevent memory crashes</string>
 
     <!-- Stats time transfer -->
     <string name="time_transfer_title">Time transfer</string>
@@ -788,8 +680,6 @@
     <string name="song_dropdown_more_results">Keep typing to narrow results (%d more)</string>
 
     <!-- Player and Audio Settings -->
-    <string name="autoplay">Autoplay</string>
-    <string name="autoplay_desc">Automatically play the next song when the current one ends</string>
 
     <!-- Accessibility -->
     <string name="back">Back</string>

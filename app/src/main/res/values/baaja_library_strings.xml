@@ -7,9 +7,9 @@
     <string name="baaja_library_collections">Collections</string>
     <string name="baaja_library_your_library">Your library</string>
     <string name="baaja_library_local_music">On this device</string>
-    <string name="baaja_library_local_music_desc">Music files on your phone</string>
-    <string name="baaja_library_import_spotify">Import from Spotify</string>
-    <string name="baaja_library_import_spotify_desc">Bring your playlists over</string>
+    <string name="baaja_library_local_music_desc">Your music files</string>
+    <string name="baaja_library_import_spotify">From Spotify</string>
+    <string name="baaja_library_import_spotify_desc">Link or CSV file</string>
     <string name="baaja_library_play_item">Play %1$s</string>
     <string name="baaja_library_more_for">More options for %1$s</string>
     <string name="baaja_library_like_album">Save to library</string>

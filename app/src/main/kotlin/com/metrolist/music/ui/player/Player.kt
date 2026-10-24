@@ -5,7 +5,6 @@
 
 package com.metrolist.music.ui.player
 
-import com.metrolist.music.constants.AnimatedPlayerGlowKey
 import androidx.activity.compose.BackHandler
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -142,15 +141,11 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.ShowAudioFormatOnPlayerKey
-import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.DarkModeKey
-import com.metrolist.music.constants.HidePlayerThumbnailKey
 import com.metrolist.music.constants.HideStatusBarOnFullscreenKey
 import com.metrolist.music.constants.KeepScreenOn
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
-import com.metrolist.music.constants.PlayerButtonsStyle
-import com.metrolist.music.constants.PlayerButtonsStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
 import com.metrolist.music.constants.QueuePeekHeight
 import com.metrolist.music.constants.SleepTimerDefaultKey
@@ -158,9 +153,7 @@ import com.metrolist.music.constants.SleepTimerFadeOutKey
 import com.metrolist.music.constants.SleepTimerStopAfterCurrentSongKey
 import com.metrolist.music.constants.SliderStyle
 import com.metrolist.music.constants.SliderStyleKey
-import com.metrolist.music.constants.SquigglySliderKey
 import com.metrolist.music.constants.ThumbnailCornerRadius
-import com.metrolist.music.constants.UseNewPlayerDesignKey
 import com.metrolist.music.db.entities.LyricsEntity
 import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.togglePlayPause
@@ -176,7 +169,6 @@ import com.metrolist.music.ui.component.PlayerSliderTrack
 import com.metrolist.music.ui.component.ResizableIconButton
 import com.metrolist.music.ui.component.heartBurst
 import com.metrolist.music.ui.component.rememberHeartBurst
-import com.metrolist.music.ui.component.SquigglySlider
 import com.metrolist.music.ui.component.WavySlider
 import com.metrolist.music.ui.component.rememberBottomSheetState
 import com.metrolist.music.ui.menu.PlayerMenu
@@ -230,14 +222,7 @@ fun BottomSheetPlayer(
     val bottomSheetPageState = LocalBottomSheetPageState.current
     val playerConnection = LocalPlayerConnection.current ?: return
 
-    val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
-        rememberPreference(
-            UseNewPlayerDesignKey,
-            defaultValue = true,
-        )
-    val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
-    val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
 
     var showInlineLyrics by rememberSaveable {
         mutableStateOf(false)
@@ -250,10 +235,6 @@ fun BottomSheetPlayer(
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT,
-    )
-    val playerButtonsStyle by rememberEnumPreference(
-        key = PlayerButtonsStyleKey,
-        defaultValue = PlayerButtonsStyle.DEFAULT,
     )
 
     // Immersive full-art layout (Immersive mockup). Opens by default when the user picked it as their
@@ -283,7 +264,6 @@ fun BottomSheetPlayer(
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val showAudioFormat by rememberPreference(ShowAudioFormatOnPlayerKey, defaultValue = true)
-    val animatedPlayerGlow by rememberPreference(AnimatedPlayerGlowKey, defaultValue = false)
     val currentFormat by playerConnection.currentFormat.collectAsState()
     val audioFormatLabel = remember(currentFormat) { currentFormat?.audioFormatLabel() }
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
@@ -365,8 +345,7 @@ fun BottomSheetPlayer(
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
     val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
 
-    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
-    val squigglySlider by rememberPreference(SquigglySliderKey, defaultValue = false)
+    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.WAVY)
 
     // Listen Together state (reactive)
     val listenTogetherManager = LocalListenTogetherManager.current
@@ -518,108 +497,23 @@ fun BottomSheetPlayer(
     val (textButtonColor, iconButtonColor) =
         when {
             playerBackground == PlayerBackgroundStyle.BLUR ||
-                playerBackground == PlayerBackgroundStyle.GRADIENT -> {
-                when (playerButtonsStyle) {
-                    PlayerButtonsStyle.DEFAULT -> {
-                        Pair(Color.White, Color.Black)
-                    }
+                playerBackground == PlayerBackgroundStyle.GRADIENT -> Pair(Color.White, Color.Black)
 
-                    PlayerButtonsStyle.PRIMARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onPrimary,
-                        )
-                    }
-
-                    PlayerButtonsStyle.TERTIARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.tertiary,
-                            MaterialTheme.colorScheme.onTertiary,
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                when (playerButtonsStyle) {
-                    PlayerButtonsStyle.DEFAULT -> {
-                        if (useDarkTheme) {
-                            Pair(Color.White, Color.Black)
-                        } else {
-                            Pair(Color.Black, Color.White)
-                        }
-                    }
-
-                    PlayerButtonsStyle.PRIMARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onPrimary,
-                        )
-                    }
-
-                    PlayerButtonsStyle.TERTIARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.tertiary,
-                            MaterialTheme.colorScheme.onTertiary,
-                        )
-                    }
-                }
-            }
+            useDarkTheme -> Pair(Color.White, Color.Black)
+            else -> Pair(Color.Black, Color.White)
         }
 
-    // Separate colors for Previous/Next buttons in PRIMARY/TERTIARY modes
     val (sideButtonContainerColor, sideButtonContentColor) =
         when {
             playerBackground == PlayerBackgroundStyle.BLUR ||
-                playerBackground == PlayerBackgroundStyle.GRADIENT -> {
-                when (playerButtonsStyle) {
-                    PlayerButtonsStyle.DEFAULT -> {
-                        Pair(
-                            Color.White.copy(alpha = 0.2f),
-                            Color.White,
-                        )
-                    }
+                playerBackground == PlayerBackgroundStyle.GRADIENT ->
+                Pair(Color.White.copy(alpha = 0.2f), Color.White)
 
-                    PlayerButtonsStyle.PRIMARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-
-                    PlayerButtonsStyle.TERTIARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.tertiaryContainer,
-                            MaterialTheme.colorScheme.onTertiaryContainer,
-                        )
-                    }
-                }
-            }
-
-            else -> {
-                when (playerButtonsStyle) {
-                    PlayerButtonsStyle.DEFAULT -> {
-                        Pair(
-                            MaterialTheme.colorScheme.surfaceContainerHighest,
-                            MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    PlayerButtonsStyle.PRIMARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-
-                    PlayerButtonsStyle.TERTIARY -> {
-                        Pair(
-                            MaterialTheme.colorScheme.tertiaryContainer,
-                            MaterialTheme.colorScheme.onTertiaryContainer,
-                        )
-                    }
-                }
-            }
+            else ->
+                Pair(
+                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                    MaterialTheme.colorScheme.onSurface,
+                )
         }
 
     val download by LocalDownloadUtil.current
@@ -844,11 +738,8 @@ fun BottomSheetPlayer(
 
     // ---- Baaja controls: shared by Now Playing, the lyrics screen and the immersive player ----
     val onImageBackground = playerBackground != PlayerBackgroundStyle.DEFAULT
-    val (accentColor, onAccentColor) =
-        when (playerButtonsStyle) {
-            PlayerButtonsStyle.TERTIARY -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.onTertiary
-            else -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        }
+    val accentColor = MaterialTheme.colorScheme.primary
+    val onAccentColor = MaterialTheme.colorScheme.onPrimary
     val baajaColors = rememberBaajaPlayerColors(onImageBackground, accentColor, onAccentColor)
     val shuffleModeEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
     val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
@@ -937,6 +828,8 @@ fun BottomSheetPlayer(
             onValueChangeFinished = onSeekFinished,
             colors = baajaColors.onCard(),
             enabled = !isListenTogetherGuest,
+            style = sliderStyle.toSeekStyle(),
+            playing = effectiveIsPlaying,
         )
     }
 
@@ -1035,21 +928,13 @@ fun BottomSheetPlayer(
                                             1.0f to Color.Black,
                                         )
                                     }
-                                if (animatedPlayerGlow) {
-                                    AmbientGlowBackground(
-                                        colors = colors,
-                                        playing = isPlaying,
-                                        modifier = Modifier.fillMaxSize().graphicsLayer { alpha = state.progress.coerceIn(0f, 1f) },
-                                    )
-                                } else {
-                                    Box(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .graphicsLayer { alpha = state.progress.coerceIn(0f, 1f) }
-                                            .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                            .background(Color.Black.copy(alpha = 0.2f)),
-                                    )
-                                }
+                                Box(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer { alpha = state.progress.coerceIn(0f, 1f) }
+                                        .background(Brush.verticalGradient(colorStops = gradientColorStops))
+                                        .background(Color.Black.copy(alpha = 0.2f)),
+                                )
                             }
                         }
                     }
@@ -1079,11 +964,6 @@ fun BottomSheetPlayer(
         },
     ) {
         val controlsContent: @Composable ColumnScope.(MediaMetadata) -> Unit = { mediaMetadata ->
-            val playPauseRoundness by animateDpAsState(
-                targetValue = if (isPlaying) 24.dp else 36.dp,
-                animationSpec = tween(durationMillis = 90, easing = LinearEasing),
-                label = "playPauseRoundness",
-            )
             // For episodes, show saved state (inLibrary); for songs, show liked state
             val isEpisode = currentSong?.song?.isEpisode == true
             val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
@@ -1112,37 +992,16 @@ fun BottomSheetPlayer(
                 ) { showLyrics ->
                     if (showLyrics) {
                         Row {
-                            if (hidePlayerThumbnail) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(56.dp)
-                                            .baajaOutline(baajaColors.ink, RoundedCornerShape(14.dp), shadowOffset = 2.dp)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.small_icon),
-                                        contentDescription = null,
-                                        modifier =
-                                            Modifier
-                                                .size(32.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            } else {
-                                AsyncImage(
-                                    model = mediaMetadata.thumbnailUrl,
-                                    contentDescription = null,
-                                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                                    modifier =
-                                        Modifier
-                                            .size(56.dp)
-                                            .baajaOutline(baajaColors.ink, RoundedCornerShape(14.dp), shadowOffset = 2.dp)
-                                            .clip(RoundedCornerShape(14.dp)),
-                                )
-                            }
+                            AsyncImage(
+                                model = mediaMetadata.thumbnailUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier =
+                                    Modifier
+                                        .size(56.dp)
+                                        .baajaOutline(baajaColors.ink, RoundedCornerShape(14.dp), shadowOffset = 2.dp)
+                                        .clip(RoundedCornerShape(14.dp)),
+                            )
                             Spacer(modifier = Modifier.width(12.dp))
                         }
                     } else {
@@ -1293,98 +1152,53 @@ fun BottomSheetPlayer(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                if (useNewPlayerDesign) {
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
-                            if (showLyrics) {
-                                BaajaPlayerPill(
-                                    text = null,
-                                    icon = R.drawable.fullscreen,
-                                    contentDescription = stringResource(R.string.baaja_player_toggle_fullscreen),
-                                    onClick = { isFullScreen = !isFullScreen },
-                                    colors = baajaColors,
-                                    modifier = Modifier.size(44.dp),
-                                )
-                            } else {
-                                BaajaPlayerPill(
-                                    text = stringResource(R.string.share),
-                                    icon = R.drawable.share,
-                                    onClick = { shareSong(mediaMetadata.id) },
-                                    colors = baajaColors,
-                                    height = 40.dp,
-                                )
-                            }
-                        }
-
-                        AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
-                            if (showLyrics) {
-                                BaajaPlayerPill(
-                                    text = null,
-                                    icon = R.drawable.more_horiz,
-                                    contentDescription = stringResource(R.string.baaja_player_lyrics_options),
-                                    onClick = openLyricsMenu,
-                                    colors = baajaColors,
-                                    modifier = Modifier.size(44.dp),
-                                )
-                            } else {
-                                BaajaPlayerPill(
-                                    text = stringResource(if (isFavorite) R.string.liked else R.string.like),
-                                    icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
-                                    onClick = playerConnection::toggleLike,
-                                    colors = baajaColors,
-                                    active = isFavorite,
-                                    activeContainer = likeColor,
-                                    activeContent = MaterialTheme.colorScheme.onSecondary,
-                                    height = 40.dp,
-                                    modifier = Modifier.heartBurst(heartBurst, likeColor),
-                                )
-                            }
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
+                        if (showLyrics) {
+                            BaajaPlayerPill(
+                                text = null,
+                                icon = R.drawable.fullscreen,
+                                contentDescription = stringResource(R.string.baaja_player_toggle_fullscreen),
+                                onClick = { isFullScreen = !isFullScreen },
+                                colors = baajaColors,
+                                modifier = Modifier.size(44.dp),
+                            )
+                        } else {
+                            BaajaPlayerPill(
+                                text = stringResource(R.string.share),
+                                icon = R.drawable.share,
+                                onClick = { shareSong(mediaMetadata.id) },
+                                colors = baajaColors,
+                                height = 40.dp,
+                            )
                         }
                     }
-                } else {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
-                            if (showLyrics) {
-                                BaajaRoundButton(
-                                    icon = R.drawable.fullscreen,
-                                    contentDescription = stringResource(R.string.baaja_player_toggle_fullscreen),
-                                    onClick = { isFullScreen = !isFullScreen },
-                                    colors = baajaColors,
-                                    size = 44.dp,
-                                )
-                            } else {
-                                BaajaRoundButton(
-                                    icon = R.drawable.share,
-                                    contentDescription = stringResource(R.string.share),
-                                    onClick = { shareSong(mediaMetadata.id) },
-                                    colors = baajaColors,
-                                    size = 44.dp,
-                                )
-                            }
-                        }
 
-                        AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
-                            if (showLyrics) {
-                                BaajaRoundButton(
-                                    icon = R.drawable.more_horiz,
-                                    contentDescription = stringResource(R.string.baaja_player_lyrics_options),
-                                    onClick = openLyricsMenu,
-                                    colors = baajaColors,
-                                    size = 44.dp,
-                                )
-                            } else {
-                                PlayerMoreMenuButton(
-                                    mediaMetadata = mediaMetadata,
-                                    state = state,
-                                    colors = baajaColors,
-                                )
-                            }
+                    AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
+                        if (showLyrics) {
+                            BaajaPlayerPill(
+                                text = null,
+                                icon = R.drawable.more_horiz,
+                                contentDescription = stringResource(R.string.baaja_player_lyrics_options),
+                                onClick = openLyricsMenu,
+                                colors = baajaColors,
+                                modifier = Modifier.size(44.dp),
+                            )
+                        } else {
+                            BaajaPlayerPill(
+                                text = stringResource(if (isFavorite) R.string.liked else R.string.like),
+                                icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
+                                onClick = playerConnection::toggleLike,
+                                colors = baajaColors,
+                                active = isFavorite,
+                                activeContainer = likeColor,
+                                activeContent = MaterialTheme.colorScheme.onSecondary,
+                                height = 40.dp,
+                                modifier = Modifier.heartBurst(heartBurst, likeColor),
+                            )
                         }
                     }
                 }
@@ -1392,34 +1206,17 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(20.dp))
 
-            when (sliderStyle) {
-                SliderStyle.DEFAULT -> {
-                    BaajaSeekBar(
-                        value = (sliderPosition ?: effectivePosition).toFloat(),
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
-                        onValueChange = onSeekChange,
-                        onValueChangeFinished = onSeekFinished,
-                        colors = baajaColors,
-                        enabled = !isListenTogetherGuest,
-                        modifier = Modifier.padding(horizontal = PlayerHorizontalPadding - 4.dp),
-                    )
-                }
-
-                SliderStyle.WAVY, SliderStyle.SLIM -> {
-                    BaajaSeekBar(
-                        value = (sliderPosition ?: effectivePosition).toFloat(),
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
-                        onValueChange = onSeekChange,
-                        onValueChangeFinished = onSeekFinished,
-                        colors = baajaColors,
-                        enabled = !isListenTogetherGuest,
-                        style = if (sliderStyle == SliderStyle.WAVY) BaajaSeekStyle.WAVY else BaajaSeekStyle.SLIM,
-                        playing = effectiveIsPlaying,
-                        waveAmplitude = if (squigglySlider) 4.dp else 3.dp,
-                        modifier = Modifier.padding(horizontal = PlayerHorizontalPadding - 4.dp),
-                    )
-                }
-            }
+            BaajaSeekBar(
+                value = (sliderPosition ?: effectivePosition).toFloat(),
+                valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                onValueChange = onSeekChange,
+                onValueChangeFinished = onSeekFinished,
+                colors = baajaColors,
+                enabled = !isListenTogetherGuest,
+                style = sliderStyle.toSeekStyle(),
+                playing = effectiveIsPlaying,
+                modifier = Modifier.padding(horizontal = PlayerHorizontalPadding - 4.dp),
+            )
 
             Spacer(Modifier.height(2.dp))
 
@@ -1457,134 +1254,53 @@ fun BottomSheetPlayer(
                 exit = shrinkVertically(shrinkTowards = Alignment.Top) + slideOutVertically(targetOffsetY = { it }) + fadeOut(),
             ) {
                 Column {
-                    if (useNewPlayerDesign) {
-                        // Mockup layout: previous · shuffle · PLAY · repeat · next
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = PlayerHorizontalPadding - 10.dp),
-                        ) {
-                            BaajaControlIcon(
-                                icon = R.drawable.skip_previous,
-                                contentDescription = stringResource(R.string.previous),
-                                onClick = playerConnection::seekToPrevious,
-                                enabled = canSkipPrevious && !isListenTogetherGuest,
-                                tint = baajaColors.content,
-                            )
-                            BaajaToggleIcon(
-                                icon = R.drawable.shuffle,
-                                contentDescription = stringResource(R.string.shuffle),
-                                active = shuffleModeEnabled,
-                                enabled = !isListenTogetherGuest,
-                                onClick = { playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled },
-                                colors = baajaColors,
-                            )
-                            BaajaPlayButton(
-                                icon = playIconRes,
-                                contentDescription = playLabel,
-                                onClick = togglePlayback,
-                                colors = baajaColors,
-                                size = 84.dp,
-                                modifier = Modifier.focusRequester(focusRequester),
-                            )
-                            BaajaToggleIcon(
-                                icon = repeatIcon,
-                                contentDescription = repeatLabel,
-                                active = repeatMode != Player.REPEAT_MODE_OFF,
-                                enabled = !isListenTogetherGuest,
-                                onClick = { playerConnection.player.toggleRepeatMode() },
-                                colors = baajaColors,
-                            )
-                            BaajaControlIcon(
-                                icon = R.drawable.skip_next,
-                                contentDescription = stringResource(R.string.next),
-                                onClick = playerConnection::seekToNext,
-                                enabled = canSkipNext && !isListenTogetherGuest,
-                                tint = baajaColors.content,
-                            )
-                        }
-                    } else {
-                        // Classic layout: shuffle · repeat · previous · PLAY · next · like
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = PlayerHorizontalPadding),
-                        ) {
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                BaajaToggleIcon(
-                                    icon = R.drawable.shuffle,
-                                    contentDescription = stringResource(R.string.shuffle),
-                                    active = shuffleModeEnabled,
-                                    enabled = !isListenTogetherGuest,
-                                    onClick = { playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled },
-                                    colors = baajaColors,
-                                    size = 44.dp,
-                                )
-                            }
-
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                BaajaToggleIcon(
-                                    icon = repeatIcon,
-                                    contentDescription = repeatLabel,
-                                    active = repeatMode != Player.REPEAT_MODE_OFF,
-                                    enabled = !isListenTogetherGuest,
-                                    onClick = { playerConnection.player.toggleRepeatMode() },
-                                    colors = baajaColors,
-                                    size = 44.dp,
-                                )
-                            }
-
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                BaajaControlIcon(
-                                    icon = R.drawable.skip_previous,
-                                    contentDescription = stringResource(R.string.previous),
-                                    onClick = playerConnection::seekToPrevious,
-                                    enabled = canSkipPrevious && !isListenTogetherGuest,
-                                    tint = baajaColors.content,
-                                )
-                            }
-
-                            Spacer(Modifier.width(8.dp))
-
-                            BaajaPlayButton(
-                                icon = playIconRes,
-                                contentDescription = playLabel,
-                                onClick = togglePlayback,
-                                colors = baajaColors,
-                                size = 72.dp,
-                                shape = RoundedCornerShape(playPauseRoundness),
-                                modifier = Modifier.focusRequester(focusRequester),
-                            )
-
-                            Spacer(Modifier.width(8.dp))
-
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                BaajaControlIcon(
-                                    icon = R.drawable.skip_next,
-                                    contentDescription = stringResource(R.string.next),
-                                    onClick = playerConnection::seekToNext,
-                                    enabled = canSkipNext && !isListenTogetherGuest,
-                                    tint = baajaColors.content,
-                                )
-                            }
-
-                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                BaajaControlIcon(
-                                    icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
-                                    contentDescription = stringResource(if (isFavorite) R.string.action_remove_like else R.string.action_like),
-                                    onClick = playerConnection::toggleLike,
-                                    tint = if (isFavorite) likeColor else baajaColors.content,
-                                    size = 48.dp,
-                                    iconSize = 26.dp,
-                                    modifier = Modifier.heartBurst(heartBurst, likeColor),
-                                )
-                            }
-                        }
+                    // Mockup layout: previous · shuffle · PLAY · repeat · next
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = PlayerHorizontalPadding - 10.dp),
+                    ) {
+                        BaajaControlIcon(
+                            icon = R.drawable.skip_previous,
+                            contentDescription = stringResource(R.string.previous),
+                            onClick = playerConnection::seekToPrevious,
+                            enabled = canSkipPrevious && !isListenTogetherGuest,
+                            tint = baajaColors.content,
+                        )
+                        BaajaToggleIcon(
+                            icon = R.drawable.shuffle,
+                            contentDescription = stringResource(R.string.shuffle),
+                            active = shuffleModeEnabled,
+                            enabled = !isListenTogetherGuest,
+                            onClick = { playerConnection.player.shuffleModeEnabled = !shuffleModeEnabled },
+                            colors = baajaColors,
+                        )
+                        BaajaPlayButton(
+                            icon = playIconRes,
+                            contentDescription = playLabel,
+                            onClick = togglePlayback,
+                            colors = baajaColors,
+                            size = 84.dp,
+                            modifier = Modifier.focusRequester(focusRequester),
+                        )
+                        BaajaToggleIcon(
+                            icon = repeatIcon,
+                            contentDescription = repeatLabel,
+                            active = repeatMode != Player.REPEAT_MODE_OFF,
+                            enabled = !isListenTogetherGuest,
+                            onClick = { playerConnection.player.toggleRepeatMode() },
+                            colors = baajaColors,
+                        )
+                        BaajaControlIcon(
+                            icon = R.drawable.skip_next,
+                            contentDescription = stringResource(R.string.next),
+                            onClick = playerConnection::seekToNext,
+                            enabled = canSkipNext && !isListenTogetherGuest,
+                            tint = baajaColors.content,
+                        )
                     }
                 }
             }

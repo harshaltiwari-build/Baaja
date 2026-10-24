@@ -7,14 +7,12 @@ package com.metrolist.music.lyrics
 
 import android.content.Context
 import com.metrolist.kugou.KuGou
-import com.metrolist.music.constants.EnableKugouKey
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 
 object KuGouLyricsProvider : LyricsProvider {
     override val name = "Kugou"
-    override fun isEnabled(context: Context): Boolean =
-        context.dataStore[EnableKugouKey] ?: true
+    override fun isEnabled(context: Context): Boolean = true
 
     override suspend fun getLyrics(
         context: Context,

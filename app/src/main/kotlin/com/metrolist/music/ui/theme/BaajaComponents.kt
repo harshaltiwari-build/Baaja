@@ -180,9 +180,10 @@ fun BaajaIconButton(
     modifier: Modifier = Modifier,
     filled: Boolean = false,
     size: Dp = 46.dp,
+    tint: Color? = null,
 ) {
     val container = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val content = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val content = tint ?: if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     val source = remember { MutableInteractionSource() }
     Box(
         modifier

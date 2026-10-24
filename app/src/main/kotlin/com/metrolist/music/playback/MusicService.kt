@@ -104,18 +104,13 @@ import com.metrolist.music.constants.AddToPlaylistPosition
 import com.metrolist.music.constants.AddToPlaylistPositionKey
 import com.metrolist.music.constants.AndroidAutoTargetPlaylistKey
 import com.metrolist.music.constants.AudioNormalizationKey
-import com.metrolist.music.constants.AudioOffload
 import com.metrolist.music.constants.AudioQualityKey
 import com.metrolist.music.constants.MobileAudioQualityKey
-import com.metrolist.music.constants.AudioTrackPlaybackParamsKey
 import com.metrolist.music.constants.AutoDownloadOnLikeKey
-import com.metrolist.music.constants.AutoLoadMoreKey
 import com.metrolist.music.constants.AutoSkipNextOnErrorKey
-import com.metrolist.music.constants.AutoplayKey
+import com.metrolist.music.constants.keepPlayingSimilar
 import com.metrolist.music.constants.CrossfadeDurationKey
 import com.metrolist.music.constants.CrossfadeEnabledKey
-import com.metrolist.music.constants.CrossfadeGaplessKey
-import com.metrolist.music.constants.DisableLoadMoreWhenRepeatAllKey
 import com.metrolist.music.constants.EnableSongCacheKey
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
@@ -129,7 +124,6 @@ import com.metrolist.music.constants.MediaSessionConstants.CommandToggleStartRad
 import com.metrolist.music.constants.PauseListenHistoryKey
 import com.metrolist.music.constants.PauseOnMute
 import com.metrolist.music.constants.PersistentQueueKey
-import com.metrolist.music.constants.PersistentShuffleAcrossQueuesKey
 import com.metrolist.music.constants.PlayerVolumeKey
 import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
@@ -166,7 +160,6 @@ import com.metrolist.music.extensions.currentMetadata
 import com.metrolist.music.extensions.findNextMediaItemById
 import com.metrolist.music.extensions.mediaItems
 import com.metrolist.music.extensions.metadata
-import com.metrolist.music.extensions.setOffloadEnabled
 import com.metrolist.music.extensions.toEnum
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.extensions.toPersistQueue
@@ -493,17 +486,13 @@ class MusicService :
     @Volatile
     private var cachedPersistentQueue = true
     @Volatile
-    private var cachedAutoplay = true
-    @Volatile
-    private var cachedDisableLoadMoreWhenRepeatAll = false
+    private var cachedKeepPlayingSimilar = true
     @Volatile
     private var cachedHideExplicit = false
     @Volatile
     private var cachedHideVideoSongs = false
     @Volatile
     private var cachedShufflePlaylistFirst = false
-    @Volatile
-    private var cachedAutoLoadMore = true
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     private val songUrlCache = StreamUrlCache()
@@ -953,18 +942,6 @@ class MusicService :
             setupAudioNormalization()
         }
 
-        combine(
-            dataStore.data.map { it[AudioOffload] ?: false },
-            dataStore.data.map { it[CrossfadeEnabledKey] ?: false },
-        ) { offloadPref, crossfadeEnabled ->
-            // Force disable offload if crossfade is enabled to prevent volume ramp issues
-            if (crossfadeEnabled) false else offloadPref
-        }.distinctUntilChanged()
-            .collectLatest(scope) { useOffload ->
-                player.setOffloadEnabled(useOffload)
-                secondaryPlayer?.setOffloadEnabled(useOffload)
-            }
-
         dataStore.data
             .map { (it[PauseListenHistoryKey] ?: false) to ((it[HistoryDuration] ?: 30f) * 1000).toLong() }
             .distinctUntilChanged()
@@ -972,21 +949,6 @@ class MusicService :
                 historyPaused = paused
                 historyDurationMs = durationMs
                 historyReporters.values.forEach { it.refresh() }
-            }
-
-        var isFirstAudioTrackParamsEmit = true
-        dataStore.data
-            .map { it[AudioTrackPlaybackParamsKey] ?: true }
-            .distinctUntilChanged()
-            .collectLatest(scope) { useAudioTrackParams ->
-                if (isFirstAudioTrackParamsEmit) {
-                    isFirstAudioTrackParamsEmit = false
-                    return@collectLatest
-                }
-
-                Timber.tag("MusicService").i("AudioTrackPlaybackParams changed to: $useAudioTrackParams")
-                recreatePlayer()
-                Timber.tag("MusicService").i("Player recreated with AudioTrackPlaybackParams: $useAudioTrackParams")
             }
 
         dataStore.data
@@ -1024,7 +986,7 @@ class MusicService :
                 Triple(
                     prefs[CrossfadeEnabledKey] ?: false,
                     prefs[CrossfadeDurationKey] ?: 5f,
-                    prefs[CrossfadeGaplessKey] ?: true,
+                    true,
                 )
             },
             listenTogetherManager.roomState,
@@ -1042,10 +1004,7 @@ class MusicService :
             dataStore.data.map { it[PersistentQueueKey] ?: true }.distinctUntilChanged().collect { cachedPersistentQueue = it }
         }
         scope.launch {
-            dataStore.data.map { it[AutoplayKey] ?: true }.distinctUntilChanged().collect { cachedAutoplay = it }
-        }
-        scope.launch {
-            dataStore.data.map { it[DisableLoadMoreWhenRepeatAllKey] ?: false }.distinctUntilChanged().collect { cachedDisableLoadMoreWhenRepeatAll = it }
+            dataStore.data.map { it.keepPlayingSimilar() }.distinctUntilChanged().collect { cachedKeepPlayingSimilar = it }
         }
         scope.launch {
             dataStore.data.map { it[HideExplicitKey] ?: false }.distinctUntilChanged().collect { cachedHideExplicit = it }
@@ -1055,9 +1014,6 @@ class MusicService :
         }
         scope.launch {
             dataStore.data.map { it[ShufflePlaylistFirstKey] ?: false }.distinctUntilChanged().collect { cachedShufflePlaylistFirst = it }
-        }
-        scope.launch {
-            dataStore.data.map { it[AutoLoadMoreKey] ?: true }.distinctUntilChanged().collect { cachedAutoLoadMore = it }
         }
         if (startupPrefs!![PersistentQueueKey] ?: true) {
             val queueFile = filesDir.resolve(PERSISTENT_QUEUE_FILE)
@@ -1174,17 +1130,15 @@ class MusicService :
         val silenceProcessor = SilenceDetectorAudioProcessor { handleLongSilenceDetected() }
 
         // Set initial state — use pre-read prefs when available, otherwise fall back to DataStore
-        val useAudioTrackPlaybackParams = if (prefs != null) {
+        if (prefs != null) {
             val skipSilence = prefs[SkipSilenceKey] ?: false
             val instantSkip = prefs[SkipSilenceInstantKey] ?: false
             silenceProcessor.instantModeEnabled = skipSilence && instantSkip
-            prefs[AudioTrackPlaybackParamsKey] ?: true
         } else {
             runBlocking {
                 val skipSilence = dataStore.get(SkipSilenceKey, false)
                 val instantSkip = dataStore.get(SkipSilenceInstantKey, false)
                 silenceProcessor.instantModeEnabled = skipSilence && instantSkip
-                dataStore.get(AudioTrackPlaybackParamsKey, true)
             }
         }
 
@@ -1195,7 +1149,7 @@ class MusicService :
                 .setMediaSourceFactory(
                     createMediaSourceFactory(normalizationProcessor) { createdPlayer },
                 )
-                .setRenderersFactory(createRenderersFactory(normalizationProcessor, eqProcessor, soundShaperProcessor, silenceProcessor, useAudioTrackPlaybackParams, floatEqProcessor))
+                .setRenderersFactory(createRenderersFactory(normalizationProcessor, eqProcessor, soundShaperProcessor, silenceProcessor, true, floatEqProcessor))
                 .setLoadControl(
                     // Start playback once ~750ms is buffered (media3's default is 1000ms) so first
                     // audio is audible a touch sooner. min/max/after-rebuffer match the media3 1.x
@@ -1229,16 +1183,10 @@ class MusicService :
         audioOutputRouter?.preferredDevice?.let(player::setPreferredAudioDevice)
 
         if (prefs != null) {
-            val offload = prefs[AudioOffload] ?: false
-            val crossfade = prefs[CrossfadeEnabledKey] ?: false
-            player.setOffloadEnabled(if (crossfade) false else offload)
             player.skipSilenceEnabled = prefs[SkipSilenceKey] ?: false
         } else {
             player.apply {
                 runBlocking {
-                    val offload = dataStore.get(AudioOffload, false)
-                    val crossfade = dataStore.get(CrossfadeEnabledKey, false)
-                    setOffloadEnabled(if (crossfade) false else offload)
                     skipSilenceEnabled = dataStore.get(SkipSilenceKey, false)
                 }
             }
@@ -1732,7 +1680,7 @@ class MusicService :
 
         currentQueue = queue
         queueTitle = null
-        val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
+        val persistShuffleAcrossQueues = dataStore.get(RememberShuffleAndRepeatKey, true)
         if (!persistShuffleAcrossQueues && !restoringQueue) {
             player.shuffleModeEnabled = false
         }
@@ -1894,7 +1842,7 @@ class MusicService :
 
     fun getAutomix(playlistId: String) {
         if (dataStore.get(SimilarContent, true) &&
-            !(dataStore.get(DisableLoadMoreWhenRepeatAllKey, false) && player.repeatMode == REPEAT_MODE_ALL)
+            player.repeatMode != REPEAT_MODE_ALL
         ) {
             scope.launch(SilentHandler) {
                 try {
@@ -2528,11 +2476,11 @@ class MusicService :
             }
         }
 
-        if (cachedAutoLoadMore &&
+        if (cachedKeepPlayingSimilar &&
             reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
             player.mediaItemCount - player.currentMediaItemIndex <= 5 &&
             currentQueue.hasNextPage() &&
-            !(cachedDisableLoadMoreWhenRepeatAll && player.repeatMode == REPEAT_MODE_ALL)
+            player.repeatMode != REPEAT_MODE_ALL
         ) {
             scope.launch(SilentHandler) {
                 val mediaItems =
@@ -2588,7 +2536,7 @@ class MusicService :
                 return
             }
 
-            if (player.playWhenReady && cachedAutoplay && player.hasNextMediaItem()) {
+            if (player.playWhenReady && player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
                 player.prepare()
                 if (castConnectionHandler?.isCasting?.value != true) {
@@ -3358,10 +3306,9 @@ class MusicService :
      */
     private fun handleFinalFailure() {
         val autoSkipOnError = dataStore.get(AutoSkipNextOnErrorKey, false)
-        val autoplay = dataStore.get(AutoplayKey, true)
         val canAdvance = player.hasNextMediaItem()
 
-        if (autoSkipOnError || (autoplay && canAdvance)) {
+        if (autoSkipOnError || canAdvance) {
             Timber.tag(TAG).d("All recovery attempts exhausted, auto-skipping to next track")
             skipOnError()
         } else {

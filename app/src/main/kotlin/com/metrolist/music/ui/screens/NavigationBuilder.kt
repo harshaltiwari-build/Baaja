@@ -51,7 +51,11 @@ import com.metrolist.music.ui.screens.settings.AppearanceSettings
 import com.metrolist.music.ui.screens.settings.BackupAndRestore
 import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
+import com.metrolist.music.ui.screens.settings.PlaybackSettings
+import com.metrolist.music.ui.screens.settings.PlayerPageSettings
 import com.metrolist.music.ui.screens.settings.PlayerSettings
+import com.metrolist.music.ui.screens.settings.QueueSettings
+import com.metrolist.music.ui.screens.settings.TimersSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
 import com.metrolist.music.ui.screens.settings.RomanizationSettings
 import com.metrolist.music.ui.screens.settings.SettingsScreen
@@ -354,6 +358,22 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/player") {
         PlayerSettings(navController)
+    }
+
+    composable("settings/player/playback") {
+        PlaybackSettings(navController)
+    }
+
+    composable("settings/player/player") {
+        PlayerPageSettings(navController)
+    }
+
+    composable("settings/player/queue") {
+        QueueSettings(navController)
+    }
+
+    composable("settings/player/timers") {
+        TimersSettings(navController)
     }
 
     composable("settings/storage") {

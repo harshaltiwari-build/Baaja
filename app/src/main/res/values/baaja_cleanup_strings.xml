@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Player and audio menu -->
+    <string name="baaja_clean_menu_playback_title">Playback</string>
+    <string name="baaja_clean_menu_playback_desc">Quality, transitions, loudness</string>
+    <string name="baaja_clean_menu_player_title">Player</string>
+    <string name="baaja_clean_menu_player_desc">Player extras, output and casting</string>
+    <string name="baaja_clean_menu_queue_title">Queue</string>
+    <string name="baaja_clean_menu_queue_desc">Shuffle, repeat, what plays next</string>
+    <string name="baaja_clean_menu_timers_title">Timers &amp; alarms</string>
+    <string name="baaja_clean_menu_timers_desc">Sleep timer and music alarms</string>
+
+    <!-- Playback -->
+    <string name="baaja_clean_transition_title">Transition style</string>
+    <string name="baaja_clean_transition_off">Off</string>
+    <string name="baaja_clean_transition_off_desc">Songs play back to back, gapless where possible</string>
+    <string name="baaja_clean_transition_crossfade">Crossfade</string>
+    <string name="baaja_clean_transition_crossfade_desc">Blend the end of a song into the next</string>
+    <string name="baaja_clean_transition_automix">Automix</string>
+    <string name="baaja_clean_transition_automix_desc">Smart blends picked from the audio itself</string>
+    <string name="baaja_clean_count_play_title">Count a play after %1$d seconds</string>
+    <string name="baaja_clean_count_play_desc">How long a song plays before it counts in your history</string>
+    <string name="baaja_clean_seek_desc">Repeated seeks add 5 extra seconds each time</string>
+
+    <!-- Player -->
+    <string name="baaja_clean_sponsorblock_desc">Skip sponsors and non-music parts of videos</string>
+    <string name="baaja_clean_float_desc">Stops boosts from clipping, uses a little more battery</string>
+
+    <!-- Queue -->
+    <string name="baaja_clean_keep_similar_title">Keep playing similar music</string>
+    <string name="baaja_clean_keep_similar_desc">Load more songs and continue with similar music at the end</string>
+    <string name="baaja_clean_similar_content_desc">Add YouTube Music suggestions to playlist queues</string>
+    <string name="baaja_clean_remember_shuffle_title">Remember shuffle and repeat</string>
+    <string name="baaja_clean_remember_shuffle_desc">Keep both modes across restarts and new queues</string>
+    <string name="baaja_clean_shuffle_first_desc">Play the current list before similar songs when shuffling</string>
+    <string name="baaja_clean_prevent_dup_desc">Move a repeated song instead of adding it twice</string>
+    <string name="baaja_clean_skip_error_desc">Move on to the next song when one fails</string>
+
+    <!-- Timers -->
+    <string name="baaja_clean_days_title">Days</string>
+    <string name="baaja_clean_days_desc">Pick the days and times the timer runs</string>
+    <string name="baaja_clean_sleep_auto_desc">Start the sleep timer automatically at set times</string>
+    <string name="baaja_clean_sleep_finish_desc">Wait for the current song to end</string>
+    <string name="baaja_clean_sleep_fade_desc">Fade the volume out over the final minute</string>
+
+    <!-- Equalizer and settings home -->
+    <string name="baaja_clean_sound_equalizer">Sound &amp; equalizer</string>
+    <string name="baaja_clean_quick_tone">Quick tone</string>
+
+    <!-- Storage -->
+    <string name="baaja_clean_downloads_group">Downloads</string>
+    <string name="baaja_clean_smart_on">Keeps your %1$d most-played songs downloaded</string>
+    <string name="baaja_clean_smart_wifi_desc">Only download on an unmetered network</string>
+    <string name="baaja_clean_cache_size_title">Song cache size</string>
+    <string name="baaja_clean_cache_off">Off, songs are not cached</string>
+</resources>

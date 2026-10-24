@@ -63,7 +63,7 @@ import com.metrolist.music.R
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaOutline
 
-/** Round icon-only button with a 44dp target. */
+/** Round icon-only button with a 48dp target. */
 @Composable
 fun BaajaPlainIconButton(
     @DrawableRes icon: Int,
@@ -76,7 +76,7 @@ fun BaajaPlainIconButton(
     Box(
         modifier =
             modifier
-                .size(44.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,

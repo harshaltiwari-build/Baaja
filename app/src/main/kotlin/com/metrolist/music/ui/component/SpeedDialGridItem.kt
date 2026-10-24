@@ -1,9 +1,8 @@
 package com.metrolist.music.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,22 +13,32 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.metrolist.innertube.models.ArtistItem
-import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.YTItem
 import com.metrolist.music.R
-import com.metrolist.music.constants.ThumbnailCornerRadius
+import com.metrolist.music.ui.theme.BaajaInk
+import com.metrolist.music.ui.theme.BaajaYellow
+import com.metrolist.music.ui.theme.baajaInk
+import com.metrolist.music.ui.theme.baajaOutline
 import com.metrolist.music.ui.utils.resize
 
+private val SpeedDialTileShape = RoundedCornerShape(20.dp)
+private val SpeedDialLabelShape = RoundedCornerShape(10.dp)
+
+/**
+ * Speed dial tile: artwork in an ink-outlined rounded square (round for artists) with a hard offset
+ * shadow and a small outlined label strip at the bottom. The active item turns its label accent.
+ */
 @Composable
 fun SpeedDialGridItem(
     item: YTItem,
@@ -38,78 +47,63 @@ fun SpeedDialGridItem(
     isActive: Boolean = false,
     isPlaying: Boolean = false,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(1f) // Square aspect ratio
-            .clip(RoundedCornerShape(ThumbnailCornerRadius))
-    ) {
-        // Thumbnail
+    val ink = baajaInk
+    val isArtist = item is ArtistItem
+    val artShape = if (isArtist) CircleShape else SpeedDialTileShape
+    val scheme = MaterialTheme.colorScheme
+    val labelColor = if (isActive) scheme.primary else scheme.surface
+    val labelContent = if (isActive) scheme.onPrimary else scheme.onSurface
+
+    // Right/bottom padding leaves room for the hard shadow inside the tile's bounds.
+    Box(modifier = modifier.padding(end = 4.dp, bottom = 5.dp)) {
         ItemThumbnail(
-            thumbnailUrl = item.thumbnail?.resize(200, 200),
+            thumbnailUrl = remember(item.thumbnail) { item.thumbnail?.resize(200, 200) },
             isActive = isActive,
             isPlaying = isPlaying,
-            shape = if (item is ArtistItem) CircleShape else RoundedCornerShape(ThumbnailCornerRadius),
-            modifier = Modifier.fillMaxSize()
+            shape = artShape,
+            modifier = Modifier.fillMaxSize(),
         )
 
-        // Gradient Overlay for Text Readability and Icon Contrast
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.4f), // Top scrim for icon visibility on bright covers
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.6f),
-                            Color.Black.copy(alpha = 0.9f)
-                        )
-                    )
-                )
+        Text(
+            text = item.title,
+            color = labelContent,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = if (isArtist) 14.dp else 8.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .clip(SpeedDialLabelShape)
+                    .background(labelColor)
+                    .border(2.dp, ink, SpeedDialLabelShape)
+                    .padding(horizontal = 6.dp, vertical = 3.dp),
         )
 
-        // Title and Chevron
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp) // Reduced padding for tighter layout
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.titleSmall, // Smaller, punchier font
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            
-            // Navigation Chevron for browsable items (Album, Playlist, Artist)
-            if (item !is SongItem) {
-                Icon(
-                    painter = painterResource(R.drawable.navigate_next),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-        }
-    }
-        // Pinned Icon
         if (isPinned) {
-            Icon(
-                painter = painterResource(R.drawable.ic_push_pin),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(16.dp)
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    Modifier
+                        .align(if (isArtist) Alignment.TopCenter else Alignment.TopEnd)
+                        .padding(
+                            top = if (isArtist) 0.dp else 6.dp,
+                            end = if (isArtist) 0.dp else 6.dp,
+                        )
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(BaajaYellow)
+                        .border(2.dp, ink, CircleShape),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_push_pin),
+                    contentDescription = stringResource(R.string.baaja_sd_pinned),
+                    tint = BaajaInk,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
         }
-
-
     }
 }

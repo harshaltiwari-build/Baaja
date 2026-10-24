@@ -104,7 +104,6 @@ import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalNavController
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
-import com.metrolist.music.constants.CropAlbumArtKey
 import com.metrolist.music.constants.GridItemSize
 import com.metrolist.music.constants.GridItemsSizeKey
 import com.metrolist.music.constants.GridThumbnailHeight
@@ -1483,7 +1482,6 @@ fun ItemThumbnail(
     thumbnailRatio: Float = 1f,
     shadowOffset: Dp = BaajaListShadowOffset,
 ) {
-    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
     val outlined = albumIndex == null
 
     Box(
@@ -1511,7 +1509,7 @@ fun ItemThumbnail(
                     .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                     .build(),
                 contentDescription = null,
-                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(shape)
@@ -1578,7 +1576,6 @@ fun LocalThumbnail(
     playButtonVisible: Boolean = false,
     thumbnailRatio: Float = 1f
 ) {
-    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -1596,7 +1593,7 @@ fun LocalThumbnail(
                 .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                 .build(),
             contentDescription = null,
-            contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+            contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize()
         )
 
@@ -1663,7 +1660,6 @@ fun PlaylistThumbnail(
     cacheKey: String? = null,
     shadowOffset: Dp = BaajaListShadowOffset,
 ) {
-    val cropAlbumArt by rememberSharedBooleanPreference(CropAlbumArtKey, false)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -1683,7 +1679,7 @@ fun PlaylistThumbnail(
                     .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                     .build(),
                 contentDescription = null,
-                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                contentScale = ContentScale.Fit,
                 placeholder = painterResource(R.drawable.queue_music),
                 error = painterResource(R.drawable.queue_music),
                 modifier = Modifier.fillMaxSize()
@@ -1703,7 +1699,7 @@ fun PlaylistThumbnail(
                             .networkCachePolicy(coil3.request.CachePolicy.ENABLED)
                             .build(),
                         contentDescription = null,
-                        contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                        contentScale = ContentScale.Fit,
                         placeholder = painterResource(R.drawable.queue_music),
                         error = painterResource(R.drawable.queue_music),
                         modifier = Modifier

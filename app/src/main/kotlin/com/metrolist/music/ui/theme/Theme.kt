@@ -27,22 +27,10 @@ val DefaultThemeColor = Color(0xFFED5564)
 fun BaajaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
-    themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit,
 ) {
-    // The default color selects Baaja's brand scheme; any other seed (album art or a picked palette)
-    // is generated with materialKolor and kept on Baaja's white surfaces in light mode.
-    val baseColorScheme = if (themeColor == DefaultThemeColor) {
-        if (darkTheme) BaajaDarkColors else BaajaLightColors
-    } else {
-        val seededScheme = rememberDynamicColorScheme(
-            seedColor = themeColor,
-            isDark = darkTheme,
-            specVersion = ColorSpec.SpecVersion.SPEC_2025,
-            style = PaletteStyle.TonalSpot
-        )
-        if (darkTheme) seededScheme else remember(seededScheme) { seededScheme.withBaajaLightSurfaces() }
-    }
+    // Baaja always uses its own brand colours; they do not change with the music.
+    val baseColorScheme = if (darkTheme) BaajaDarkColors else BaajaLightColors
 
     // Apply pureBlack modification if needed, similar to original logic
     val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {

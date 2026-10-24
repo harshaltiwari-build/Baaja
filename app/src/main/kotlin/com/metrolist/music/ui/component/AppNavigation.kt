@@ -180,16 +180,15 @@ fun AppNavigationBar(
     onSearchLongClick: (() -> Unit)? = null,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val containerColor = if (pureBlack) Color.Black else colorScheme.surface
     val pillColor = if (pureBlack) Color.Black else colorScheme.surfaceContainerLowest
     val outlineColor = if (pureBlack) Color.White else colorScheme.outline
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
+    // No full-width backdrop: only the floating pill is drawn, so content shows around it.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(containerColor)
             .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
         Row(

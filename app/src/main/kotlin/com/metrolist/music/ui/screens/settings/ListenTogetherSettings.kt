@@ -86,8 +86,6 @@ import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.ListenTogetherEvent
 import com.metrolist.music.listentogether.ListenTogetherServer
 import com.metrolist.music.listentogether.ListenTogetherServers
-import com.metrolist.music.listentogether.LogEntry
-import com.metrolist.music.listentogether.LogLevel
 import com.metrolist.music.listentogether.RoomRole
 import com.metrolist.music.ui.component.DefaultDialog
 import com.metrolist.music.ui.component.IconButton
@@ -110,7 +108,6 @@ fun ListenTogetherSettings(navController: NavController) {
     val roomState by manager.roomState.collectAsStateWithLifecycle()
     val role by manager.role.collectAsStateWithLifecycle()
     val pendingJoinRequests by manager.pendingJoinRequests.collectAsStateWithLifecycle()
-    val logs by manager.logs.collectAsStateWithLifecycle()
     val blockedUsernames by manager.blockedUsernames.collectAsStateWithLifecycle()
 
     val servers = remember { ListenTogetherServers.servers }
@@ -124,7 +121,6 @@ fun ListenTogetherSettings(navController: NavController) {
     var showUsernameDialog by rememberSaveable { mutableStateOf(false) }
     var showCreateRoomDialog by rememberSaveable { mutableStateOf(false) }
     var showJoinRoomDialog by rememberSaveable { mutableStateOf(false) }
-    var showLogsDialog by rememberSaveable { mutableStateOf(false) }
     var showBlockedUsersDialog by rememberSaveable { mutableStateOf(false) }
     var roomCodeInput by rememberSaveable { mutableStateOf("") }
 
@@ -334,14 +330,6 @@ fun ListenTogetherSettings(navController: NavController) {
         }
     }
 
-    if (showLogsDialog) {
-        LogsDialog(
-            logs = logs,
-            onClear = { manager.clearLogs() },
-            onDismiss = { showLogsDialog = false },
-        )
-    }
-
     if (showBlockedUsersDialog) {
         BlockedUsersDialog(
             blockedUsernames = blockedUsernames,
@@ -500,14 +488,6 @@ fun ListenTogetherSettings(navController: NavController) {
                             },
                             onClick = { syncHostVolume = !syncHostVolume },
                         ),
-                        IntegrationCardItem(
-                            icon = painterResource(R.drawable.bug_report),
-                            title = { Text(stringResource(R.string.listen_together_view_logs)) },
-                            description = {
-                                Text(stringResource(R.string.listen_together_view_logs_desc))
-                            },
-                            onClick = { showLogsDialog = true },
-                        ),
                     ),
             )
         }
@@ -529,88 +509,6 @@ fun ListenTogetherSettings(navController: NavController) {
             }
         },
     )
-}
-
-@Composable
-fun LogsDialog(
-    logs: List<LogEntry>,
-    onClear: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(logs.size) {
-        if (logs.isNotEmpty()) {
-            listState.animateScrollToItem(logs.size - 1)
-        }
-    }
-
-    val context = LocalContext.current
-
-    DefaultDialog(
-        onDismiss = onDismiss,
-        icon = { Icon(painterResource(R.drawable.bug_report), contentDescription = null) },
-        title = { Text(stringResource(R.string.listen_together_logs)) },
-        buttons = {
-            TextButton(
-                onClick = {
-                    val textToCopy =
-                        logs.joinToString("\n") { log ->
-                            buildString {
-                                append(log.timestamp)
-                                append(" [")
-                                append(log.level.name)
-                                append("] ")
-                                append(log.message)
-                                log.details?.let { d -> append(" -- $d") }
-                            }
-                        }
-                    val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                    val clip = android.content.ClipData.newPlainText("ListenTogetherLogs", textToCopy)
-                    cm.setPrimaryClip(clip)
-                    Toast.makeText(context, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show()
-                },
-                enabled = logs.isNotEmpty(),
-            ) {
-                Text(stringResource(R.string.copy))
-            }
-            TextButton(onClick = onClear) {
-                Text(stringResource(R.string.clear))
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(350.dp),
-        ) {
-            if (logs.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.listen_together_no_logs),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(logs) { log ->
-                        LogEntryItem(log)
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -721,70 +619,6 @@ private fun ServerChooserDialog(
             ) {
                 Text(stringResource(R.string.listen_together_use_custom_server))
             }
-        }
-    }
-}
-
-@Composable
-fun LogEntryItem(log: LogEntry) {
-    val context = LocalContext.current
-
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 2.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = log.timestamp,
-                style = MaterialTheme.typography.labelSmall,
-                fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color =
-                    when (log.level) {
-                        LogLevel.ERROR -> MaterialTheme.colorScheme.errorContainer
-                        LogLevel.WARNING -> Color(0xFFFFF3CD)
-                        LogLevel.DEBUG -> MaterialTheme.colorScheme.surfaceVariant
-                        LogLevel.INFO -> MaterialTheme.colorScheme.primaryContainer
-                    },
-            ) {
-                Text(
-                    text = log.level.name,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                    color =
-                        when (log.level) {
-                            LogLevel.ERROR -> MaterialTheme.colorScheme.onErrorContainer
-                            LogLevel.WARNING -> Color(0xFF856404)
-                            LogLevel.DEBUG -> MaterialTheme.colorScheme.onSurfaceVariant
-                            LogLevel.INFO -> MaterialTheme.colorScheme.onPrimaryContainer
-                        },
-                )
-            }
-        }
-
-        Text(
-            text = log.message,
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
-        )
-        log.details?.let { details ->
-            Text(
-                text = details,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }

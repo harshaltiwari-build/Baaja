@@ -16,21 +16,17 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.ui.theme.BaajaIconButton
 import com.metrolist.music.ui.utils.isScrollingUp
 
 @Composable
@@ -58,28 +54,22 @@ fun BoxScope.HideOnScrollFAB(
             modifier = Modifier.padding(16.dp)
         ) {
             if (onRecognitionClick != null) {
-                SmallFloatingActionButton(
+                BaajaIconButton(
+                    icon = R.drawable.mic,
+                    contentDescription = stringResource(R.string.recognize_music),
                     onClick = onRecognitionClick,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.mic),
-                        contentDescription = stringResource(R.string.recognize_music),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                    size = 40.dp,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
                 Spacer(modifier = Modifier.height(12.dp))
             }
-            FloatingActionButton(
+            BaajaIconButton(
+                icon = icon,
+                contentDescription = null,
                 onClick = onClick,
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                )
-            }
+                size = 56.dp,
+                tint = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }

@@ -32,8 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
-import com.metrolist.music.constants.LyricsRomanizeAsMainKey
-import com.metrolist.music.constants.LyricsRomanizeCyrillicByLineKey
 import com.metrolist.music.constants.LyricsRomanizeList
 import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
@@ -85,16 +83,6 @@ fun RomanizationSettings(
         else -> ToggleableState.Indeterminate
     }
 
-    val (lyricsRomanizeAsMain, onLyricsRomanizeAsMainChange) = rememberPreference(
-        LyricsRomanizeAsMainKey,
-        defaultValue = false
-    )
-
-    val (lyricsRomanizeCyrillicByLine, onLyricsRomanizeCyrillicByLineChange) = rememberPreference(
-        LyricsRomanizeCyrillicByLineKey,
-        defaultValue = false
-    )
-
     val checkboxesList: MutableList<Material3SettingsItem> = mutableListOf()
 
     Column(
@@ -103,52 +91,6 @@ fun RomanizationSettings(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
     ) {
-        Material3SettingsGroup(
-            title = stringResource(R.string.options),
-            items = listOf(
-                Material3SettingsItem(
-                    title = { Text(stringResource(R.string.lyrics_romanize_as_main)) },
-                    trailingContent = {
-                        Switch(
-                            checked = lyricsRomanizeAsMain,
-                            onCheckedChange = onLyricsRomanizeAsMainChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (lyricsRomanizeAsMain) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            }
-                        )
-                    },
-                    icon = painterResource(R.drawable.queue_music)
-                ),
-                Material3SettingsItem(
-                    title = { Text(stringResource(R.string.line_by_line_option_title)) },
-                    trailingContent = {
-                        Switch(
-                            checked = lyricsRomanizeCyrillicByLine,
-                            onCheckedChange = onLyricsRomanizeCyrillicByLineChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (lyricsRomanizeCyrillicByLine) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                                )
-                            }
-                        )
-                    },
-                    icon = painterResource(R.drawable.info)
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         checkboxesList += Material3SettingsItem(
             title = { Text(stringResource(R.string.baaja_fix2_play_all)) },
             trailingContent = {

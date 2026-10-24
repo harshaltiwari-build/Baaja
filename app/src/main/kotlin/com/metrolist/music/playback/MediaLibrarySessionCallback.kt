@@ -34,7 +34,6 @@ import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.filterExplicit
 import com.metrolist.innertube.models.filterVideoSongs
 import com.metrolist.music.R
-import com.metrolist.music.constants.AndroidAutoSearchLocalLimitKey
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.MediaSessionConstants
@@ -65,7 +64,7 @@ import kotlinx.coroutines.plus
 import javax.inject.Inject
 import com.metrolist.music.constants.AndroidAutoSectionsOrderKey
 import com.metrolist.music.constants.AndroidAutoYouTubePlaylistsKey
-import com.metrolist.music.constants.AutoRadioQueueKey
+import com.metrolist.music.constants.keepPlayingSimilar
 import com.metrolist.music.playback.queues.ListQueue
 import com.metrolist.music.playback.queues.YouTubeQueue
 import com.metrolist.music.ui.screens.settings.AndroidAutoSection
@@ -564,7 +563,7 @@ constructor(
 
             try {
                 val searchResults = mutableListOf<MediaItem>()
-                val limit = context.dataStore.get(AndroidAutoSearchLocalLimitKey, 75)
+                val limit = ANDROID_AUTO_SEARCH_LOCAL_LIMIT
 
                 val allLocalSongs = database.searchSongsExtended(query, limit).first()
                 allLocalSongs.forEach { song ->
@@ -783,7 +782,7 @@ constructor(
                     }
 
                     val searchResults = mutableListOf<Song>()
-                    val limit = context.dataStore.get(AndroidAutoSearchLocalLimitKey, 75)
+                    val limit = ANDROID_AUTO_SEARCH_LOCAL_LIMIT
 
                     val allLocalSongs = database.searchSongsExtended(searchQuery, limit).first()
                     searchResults.addAll(allLocalSongs)
@@ -836,7 +835,7 @@ constructor(
                             searchResults.firstOrNull { it.id == songId }
                         }
 
-                    if(context.dataStore.get(AutoRadioQueueKey, true)) {
+                    if(context.dataStore.data.first().keepPlayingSimilar()) {
                         val radioQueue = YouTubeQueue.radio(selectedSong?.toMediaMetadata() ?: return@future defaultResult)
                         val radioStatus = runCatching {
                             withContext(Dispatchers.IO) {
@@ -960,6 +959,7 @@ internal fun <T> List<T>.paginate(
 }
 
 internal const val MAX_ANDROID_AUTO_PAGE_SIZE = 500
+private const val ANDROID_AUTO_SEARCH_LOCAL_LIMIT = 75
 
 internal data class AndroidAutoPageRequest(
     val offset: Int,
