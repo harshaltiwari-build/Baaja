@@ -72,6 +72,9 @@ import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.R
 import com.metrolist.music.constants.BaajaHasSeenWelcomeKey
+import com.metrolist.music.constants.BaajaJustSignedInKey
+import com.metrolist.music.constants.BaajaMusicLanguagesKey
+import com.metrolist.music.constants.BaajaPickedArtistsKey
 import com.metrolist.music.constants.InnerTubeCookieKey
 import com.metrolist.music.ui.theme.BaajaInk
 import com.metrolist.music.ui.theme.BaajaPink
@@ -90,6 +93,9 @@ import java.time.LocalDateTime
 private const val STAGE_NONE = 0
 private const val STAGE_WELCOME = 1
 private const val STAGE_LOGIN = 2
+private const val STAGE_LANGUAGES = 3
+private const val STAGE_ARTISTS = 4
+private const val STAGE_WELCOME_BACK = 5
 private const val UPDATE_GRACE_MILLIS = 60_000L
 
 /**
@@ -116,7 +122,14 @@ fun BaajaWelcomeGate(
                 val info = context.packageManager.getPackageInfo(context.packageName, 0)
                 info.lastUpdateTime - info.firstInstallTime > UPDATE_GRACE_MILLIS
             }.getOrDefault(false)
-        mutableStateOf(if (!seen && !signedIn && !updated) STAGE_WELCOME else STAGE_NONE)
+        val justSignedIn = signedIn && context.dataStore.get(BaajaJustSignedInKey, false)
+        mutableStateOf(
+            when {
+                justSignedIn -> STAGE_WELCOME_BACK
+                !seen && !signedIn && !updated -> STAGE_WELCOME
+                else -> STAGE_NONE
+            },
+        )
     }
     var splashVisible by remember {
         mutableStateOf(!BaajaSplashState.shown && (context as? Activity).isPlainLauncherStart())
@@ -129,14 +142,26 @@ fun BaajaWelcomeGate(
         }
     }
 
+    var languageCodes by rememberSaveable { mutableStateOf("") }
+    // True when the language step was opened from the "Welcome back" screen: it saves and finishes, with no artist step.
+    var languagesOnly by rememberSaveable { mutableStateOf(false) }
+    var pickedRaw by rememberSaveable { mutableStateOf("") }
+
     fun markSeen() {
         stage = STAGE_NONE
-        scope.launch { context.safeDataStoreEdit { it[BaajaHasSeenWelcomeKey] = true } }
+        scope.launch {
+            context.safeDataStoreEdit {
+                it[BaajaHasSeenWelcomeKey] = true
+                it[BaajaJustSignedInKey] = false
+            }
+        }
     }
 
     // Back never reaches the app underneath from the first-run screens: login goes back to welcome,
     // welcome (and the splash) send the app to the background.
     BackHandler(enabled = stage == STAGE_LOGIN) { stage = STAGE_WELCOME }
+    BackHandler(enabled = stage == STAGE_LANGUAGES) { if (languagesOnly) stage = STAGE_WELCOME_BACK else stage = STAGE_LOGIN }
+    BackHandler(enabled = stage == STAGE_ARTISTS) { stage = STAGE_LANGUAGES }
     BackHandler(enabled = stage == STAGE_WELCOME || splashVisible) {
         (context as? Activity)?.moveTaskToBack(true)
     }
@@ -158,14 +183,55 @@ fun BaajaWelcomeGate(
                     // Nothing reaches the app underneath while the first-run screens are up.
                     awaitPointerEventScope { while (true) awaitPointerEvent() }
                 }
-            if (stage == STAGE_LOGIN) {
+            if (stage == STAGE_WELCOME_BACK) {
+                BaajaWelcomeBack(
+                    onContinue = ::markSeen,
+                    onAddLanguages = {
+                        languagesOnly = true
+                        stage = STAGE_LANGUAGES
+                    },
+                    modifier = swallowTouches,
+                )
+            } else if (stage == STAGE_LANGUAGES) {
+                val chosen = decodeLanguages(languageCodes)
+                BaajaLanguageStep(
+                    selected = chosen,
+                    onToggle = { code ->
+                        languageCodes = encodeLanguages(if (code in chosen) chosen - code else chosen + code)
+                    },
+                    onNext = {
+                        scope.launch { context.safeDataStoreEdit { it[BaajaMusicLanguagesKey] = languageCodes } }
+                        if (languagesOnly) markSeen() else stage = STAGE_ARTISTS
+                    },
+                    onSkip = { if (languagesOnly) stage = STAGE_WELCOME_BACK else markSeen() },
+                    modifier = swallowTouches,
+                )
+            } else if (stage == STAGE_ARTISTS) {
+                val pickedArtists = decodeArtists(pickedRaw)
+                BaajaArtistStep(
+                    languages = decodeLanguages(languageCodes),
+                    picked = pickedArtists,
+                    onToggle = { artist ->
+                        pickedRaw =
+                            encodeArtists(
+                                if (pickedArtists.any { it.id == artist.id }) pickedArtists.filterNot { it.id == artist.id } else pickedArtists + artist,
+                            )
+                    },
+                    onDone = {
+                        scope.launch { context.safeDataStoreEdit { it[BaajaPickedArtistsKey] = pickedRaw } }
+                        markSeen()
+                    },
+                    onSkip = ::markSeen,
+                    modifier = swallowTouches,
+                )
+            } else if (stage == STAGE_LOGIN) {
                 BaajaLoginIntro(
                     onBack = { stage = STAGE_WELCOME },
                     onSignIn = {
                         markSeen()
                         onSignIn()
                     },
-                    onContinueAsGuest = ::markSeen,
+                    onContinueAsGuest = { stage = STAGE_LANGUAGES },
                     modifier = swallowTouches,
                 )
             } else {

@@ -72,6 +72,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.AccountChannelHandleKey
 import com.metrolist.music.constants.AccountEmailKey
 import com.metrolist.music.constants.AccountNameKey
+import com.metrolist.music.constants.BaajaJustSignedInKey
+import com.metrolist.music.constants.BaajaAccountImageKey
 import com.metrolist.music.constants.DataSyncIdKey
 import com.metrolist.music.constants.InnerTubeAuthUserKey
 import com.metrolist.music.constants.InnerTubeCookieKey
@@ -220,6 +222,8 @@ private fun LoginWebFlow(
                         settings[AccountNameKey] = accountInfo.name
                         settings[AccountEmailKey] = accountInfo.email.orEmpty()
                         settings[AccountChannelHandleKey] = accountInfo.channelHandle.orEmpty()
+                        settings[BaajaAccountImageKey] = accountInfo.thumbnailUrl.orEmpty()
+                        settings[BaajaJustSignedInKey] = true
                     }
                 }
             check(saved) { "Failed to persist account data" }

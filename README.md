@@ -57,6 +57,7 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Optional SponsorBlock skipping of non-music segments
 
 **Home, search and discovery**
+- A Home made for you: pick your music languages and favourite artists on first run (change them any time in Settings > Content), and Home builds your mix, artist mixes and "Because you like…" rows, then keeps learning from what you listen to
 - Speed dial of your favourite mixes, with a "Surprise me" card
 - Personalised quick picks and mixes, plus Charts and New releases
 - Explore by mood, with cover art on every card
@@ -68,7 +69,7 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Live synced lyrics that follow the song, with a share card
 
 **Library and account**
-- Sign in with your YouTube Music account to sync your library, or just continue as a guest
+- Sign in with your YouTube Music account to sync your library (a Welcome back screen shows what comes over), or just continue as a guest
 - Import any YouTube Music playlist into your Library by link
 - Play music files stored on your device
 - Local playlists and drag-to-reorder queues

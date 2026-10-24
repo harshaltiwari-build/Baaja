@@ -18,3 +18,15 @@ val BaajaProfileBioKey = stringPreferencesKey("baajaProfileBio")
 
 /** Bumped whenever the avatar file is replaced or removed; 0 means no custom photo. */
 val BaajaProfileAvatarVersionKey = longPreferencesKey("baajaProfileAvatarVersion")
+
+/** Music languages picked during first run or in Settings, as comma-separated codes (see BaajaLanguages). */
+val BaajaMusicLanguagesKey = stringPreferencesKey("baajaMusicLanguages")
+
+/** Artists the user picked, one per line: id, name and thumbnail separated by tabs. */
+val BaajaPickedArtistsKey = stringPreferencesKey("baajaPickedArtists")
+
+/** Set when a Google sign-in just finished, so the next start shows the "Welcome back" screen once. */
+val BaajaJustSignedInKey = booleanPreferencesKey("baajaJustSignedIn")
+
+/** Profile photo of the signed-in YouTube Music account. */
+val BaajaAccountImageKey = stringPreferencesKey("baajaAccountImage")

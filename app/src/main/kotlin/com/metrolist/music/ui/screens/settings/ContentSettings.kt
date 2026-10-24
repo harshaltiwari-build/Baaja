@@ -44,6 +44,18 @@ import com.metrolist.music.constants.AddToPlaylistPositionKey
 import com.metrolist.music.constants.ContentCountryKey
 import com.metrolist.music.constants.ContentLanguageKey
 import com.metrolist.music.constants.CountryCodeToName
+import com.metrolist.music.constants.BaajaMusicLanguagesKey
+import com.metrolist.music.constants.BaajaPickedArtistsKey
+import com.metrolist.music.ui.screens.onboarding.BaajaArtistStep
+import com.metrolist.music.ui.screens.onboarding.BaajaLanguageChips
+import com.metrolist.music.ui.screens.onboarding.BaajaLanguages
+import com.metrolist.music.ui.screens.onboarding.decodeArtists
+import com.metrolist.music.ui.screens.onboarding.decodeLanguages
+import com.metrolist.music.ui.screens.onboarding.encodeArtists
+import com.metrolist.music.ui.screens.onboarding.encodeLanguages
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.TextButton
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.HideYoutubeShortsKey
@@ -72,6 +84,10 @@ fun ContentSettings(
     val (hideExplicit, onHideExplicitChange) = rememberPreference(key = HideExplicitKey, defaultValue = true)
     val (hideVideoSongs, onHideVideoSongsChange) = rememberPreference(key = HideVideoSongsKey, defaultValue = true)
     val (hideYoutubeShorts, onHideYoutubeShortsChange) = rememberPreference(key = HideYoutubeShortsKey, defaultValue = true)
+    val (musicLanguagesRaw, onMusicLanguagesChange) = rememberPreference(key = BaajaMusicLanguagesKey, defaultValue = "")
+    val (pickedArtistsRaw, onPickedArtistsChange) = rememberPreference(key = BaajaPickedArtistsKey, defaultValue = "")
+    var showMusicLanguagesDialog by remember { mutableStateOf(false) }
+    var showArtistsDialog by remember { mutableStateOf(false) }
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
     val (showMostStatsPlaylists, onShowMostStatsPlaylistsChange) =
         rememberPreference(key = ShowMostStatsPlaylistsKey, defaultValue = true)
@@ -239,6 +255,50 @@ fun ContentSettings(
         )
     }
 
+    if (showMusicLanguagesDialog) {
+        var draft by remember { mutableStateOf(decodeLanguages(musicLanguagesRaw)) }
+        com.metrolist.music.ui.screens.onboarding.BaajaFullScreenDialog(
+            onDismissRequest = { showMusicLanguagesDialog = false },
+        ) {
+            com.metrolist.music.ui.screens.onboarding.BaajaLanguageStep(
+                selected = draft,
+                onToggle = { code -> draft = if (code in draft) draft - code else draft + code },
+                onNext = {
+                    onMusicLanguagesChange(encodeLanguages(draft))
+                    showMusicLanguagesDialog = false
+                },
+                onSkip = { showMusicLanguagesDialog = false },
+                showSteps = false,
+                actionLabel = stringResource(R.string.baaja_save),
+                skipLabel = stringResource(android.R.string.cancel),
+            )
+        }
+    }
+
+    if (showArtistsDialog) {
+        var draftRaw by remember { mutableStateOf(pickedArtistsRaw) }
+        com.metrolist.music.ui.screens.onboarding.BaajaFullScreenDialog(
+            onDismissRequest = { showArtistsDialog = false },
+        ) {
+            val draft = decodeArtists(draftRaw)
+            BaajaArtistStep(
+                languages = decodeLanguages(musicLanguagesRaw),
+                picked = draft,
+                onToggle = { artist ->
+                    draftRaw = encodeArtists(if (draft.any { it.id == artist.id }) draft.filterNot { it.id == artist.id } else draft + artist)
+                },
+                onDone = {
+                    onPickedArtistsChange(draftRaw)
+                    showArtistsDialog = false
+                },
+                onSkip = { showArtistsDialog = false },
+                showSteps = false,
+                minPicks = 0,
+                onClearAll = { draftRaw = "" },
+            )
+        }
+    }
+
     Column(
         Modifier
             .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
@@ -259,6 +319,21 @@ fun ContentSettings(
                         )
                     },
                     onClick = { showRegionDialog = true }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.language),
+                    title = { Text(stringResource(R.string.baaja_music_languages)) },
+                    description = {
+                        val names = BaajaLanguages.filter { it.code in decodeLanguages(musicLanguagesRaw) }.joinToString(", ") { it.name }
+                        Text(names.ifEmpty { stringResource(R.string.baaja_music_languages_none) })
+                    },
+                    onClick = { showMusicLanguagesDialog = true }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.artist),
+                    title = { Text(stringResource(R.string.baaja_favourite_artists)) },
+                    description = { Text(stringResource(R.string.baaja_favourite_artists_count, decodeArtists(pickedArtistsRaw).size)) },
+                    onClick = { showArtistsDialog = true }
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.explicit),

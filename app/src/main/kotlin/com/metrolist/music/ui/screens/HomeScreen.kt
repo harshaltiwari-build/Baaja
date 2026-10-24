@@ -115,6 +115,26 @@ import com.metrolist.music.db.entities.LocalItem
 import com.metrolist.music.db.entities.Playlist
 import com.metrolist.music.db.entities.PlaylistEntity
 import com.metrolist.music.db.entities.Song
+import com.metrolist.music.constants.BaajaPickedArtistsKey
+import com.metrolist.music.ui.screens.onboarding.decodeArtists
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.clickable
+import com.metrolist.music.ui.theme.baajaOutline
+import com.metrolist.music.ui.component.home.BaajaMixHero
+import com.metrolist.music.ui.component.home.BaajaArtistMixTile
+import com.metrolist.music.ui.component.home.BaajaTasteSongCard
+import com.metrolist.music.ui.component.BaajaTileColors
+import com.metrolist.music.ui.screens.onboarding.BaajaArtist
+import com.metrolist.music.ui.component.home.TasteCard
+import com.metrolist.music.ui.component.home.TasteMix
+import com.metrolist.music.ui.component.home.TasteShelf
+import com.metrolist.music.ui.component.home.TasteStage
+import com.metrolist.music.ui.component.home.tasteHome
+import androidx.compose.foundation.lazy.LazyListScope
+import java.time.LocalDateTime
+import com.metrolist.music.ui.component.home.BaajaCommunityCard
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.queues.ListQueue
@@ -923,9 +943,189 @@ fun HomeScreen(
             }
         }
 
+    val (pickedArtistsRaw) = rememberPreference(BaajaPickedArtistsKey, "")
+    val pickedArtists = remember(pickedArtistsRaw) { decodeArtists(pickedArtistsRaw) }
+    // History decides how much of Home is personalised by picks (see TasteStage).
+    val historySongs by remember(database) {
+        database.mostPlayedSongs(fromTimeStamp = LocalDateTime.now().minusWeeks(8), limit = 24)
+    }.collectAsStateWithLifecycle(emptyList())
+    val historyArtists =
+        remember(popularArtists) {
+            popularArtists.orEmpty().take(5).map { BaajaArtist(it.id, it.title, it.thumbnailUrl) }
+        }
+    val tasteStage =
+        when {
+            historySongs.size >= 10 -> TasteStage.HISTORY
+            historySongs.isNotEmpty() -> TasteStage.MIXED
+            else -> TasteStage.PICKS
+        }
+    val tasteArtists =
+        remember(tasteStage, historyArtists, pickedArtists) {
+            when (tasteStage) {
+                TasteStage.PICKS -> pickedArtists
+                TasteStage.MIXED ->
+                    buildList {
+                        val picks = pickedArtists
+                        for (i in 0 until maxOf(historyArtists.size, picks.size)) {
+                            picks.getOrNull(i)?.let(::add)
+                            historyArtists.getOrNull(i)?.let(::add)
+                        }
+                    }.distinctBy { it.id }
+                TasteStage.HISTORY -> (historyArtists + pickedArtists).distinctBy { it.id }
+            }.take(8)
+        }
+    var tasteSongs by remember { mutableStateOf<Map<String, List<SongItem>>>(emptyMap()) }
+    var tasteAlbums by remember { mutableStateOf<Map<String, List<AlbumItem>>>(emptyMap()) }
+    LaunchedEffect(tasteArtists.map { it.id }) {
+        val fetched =
+            tasteArtists
+                .take(8)
+                .map { artist ->
+                    async {
+                        val page = YouTube.artist(artist.id).getOrNull()
+                        // The artist page only lists a handful of top songs; "See all" has the full list.
+                        val topSection = page?.sections?.firstOrNull { section -> section.items.any { it is SongItem } }
+                        val topSongs = topSection?.items?.filterIsInstance<SongItem>().orEmpty()
+                        val moreSongs =
+                            topSection
+                                ?.moreEndpoint
+                                ?.let { YouTube.artistItems(it).getOrNull() }
+                                ?.items
+                                ?.filterIsInstance<SongItem>()
+                                .orEmpty()
+                        val songs = (topSongs + moreSongs).distinctBy { it.id }.take(40)
+                        val albums =
+                            page
+                                ?.sections
+                                ?.firstOrNull { section -> section.items.any { it is AlbumItem } }
+                                ?.items
+                                ?.filterIsInstance<AlbumItem>()
+                                ?.take(4)
+                                .orEmpty()
+                        Triple(artist.id, songs, albums)
+                    }
+                }.awaitAll()
+        tasteSongs = fetched.filter { it.second.isNotEmpty() }.associate { it.first to it.second }
+        tasteAlbums = fetched.filter { it.third.isNotEmpty() }.associate { it.first to it.third }
+    }
+    val mixArtists = remember(tasteArtists, tasteSongs) { tasteArtists.filter { tasteSongs.containsKey(it.id) } }
+    val tasteMix =
+        remember(mixArtists, tasteSongs) {
+            val lists = mixArtists.mapNotNull { tasteSongs[it.id] }
+            val mixed = mutableListOf<SongItem>()
+            for (i in 0 until 20) lists.forEach { list -> list.getOrNull(i)?.let(mixed::add) }
+            mixed.distinctBy { it.id }.take(100)
+        }
+    val tasteActive = pickedArtists.isNotEmpty() || historySongs.isNotEmpty()
+
+    val tasteUi: (LazyListScope.() -> Unit)? =
+        if (tasteMix.isNotEmpty()) {
+        val fromPicks = stringResource(R.string.baaja_home_tag_picks)
+        val fromHistory = stringResource(R.string.baaja_home_tag_history)
+        val newText = stringResource(R.string.baaja_home_new)
+        val historyIds = historyArtists.map { it.id }.toSet()
+        val pickedIds = pickedArtists.map { it.id }.toSet()
+        fun playSongs(title: String, songs: List<SongItem>, start: Int = 0) {
+            playerConnection?.playQueue(
+                ListQueue(title = title, items = songs.map { it.toMediaItem() }, startIndex = start),
+            )
+        }
+        fun songCards(songs: List<SongItem>) =
+            songs.map { TasteCard("s_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.thumbnail) }
+        val historyShelf =
+            historySongs.takeIf { it.isNotEmpty() }?.let { songs ->
+                TasteShelf(
+                    title = stringResource(if (tasteStage == TasteStage.HISTORY) R.string.baaja_home_jump_back_in else R.string.baaja_home_listen_again),
+                    label = fromHistory,
+                    cards = songs.take(12).map { TasteCard("h_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.song.thumbnailUrl) },
+                    onClick = { index ->
+                        playerConnection?.playQueue(
+                            ListQueue(title = "History", items = songs.take(12).map { it.toMediaItem() }, startIndex = index),
+                        )
+                    },
+                )
+            }
+        val topHistory = historyArtists.firstOrNull { tasteSongs.containsKey(it.id) }
+        val becauseHistory =
+            topHistory?.let { artist ->
+                val songs = tasteSongs[artist.id].orEmpty()
+                TasteShelf(
+                    title = stringResource(R.string.baaja_home_because_listened, artist.name),
+                    label = fromHistory,
+                    cards = songCards(songs),
+                    onClick = { index -> playSongs(artist.name, songs, index) },
+                )
+            }
+        val becausePicks =
+            pickedArtists.filter { tasteSongs.containsKey(it.id) }.take(2).map { artist ->
+                val songs = tasteSongs[artist.id].orEmpty()
+                TasteShelf(
+                    title = stringResource(R.string.baaja_home_because, artist.name),
+                    label = fromPicks,
+                    cards = songCards(songs),
+                    onClick = { index -> playSongs(artist.name, songs, index) },
+                )
+            }
+        val releaseAlbums = historyArtists.flatMap { tasteAlbums[it.id].orEmpty().take(1) }.take(6)
+        val releasesShelf =
+            releaseAlbums.takeIf { it.isNotEmpty() }?.let { albums ->
+                TasteShelf(
+                    title = stringResource(R.string.baaja_home_new_from_artists),
+                    label = fromHistory,
+                    cards = albums.map { TasteCard("a_${it.id}", it.title, it.artists?.joinToString { a -> a.name }.orEmpty(), it.thumbnail, newText) },
+                    onClick = { index -> navController.navigate("album/${albums[index].id}") },
+                )
+            }
+        val discoverSongs =
+            pickedArtists
+                .filter { it.id !in historyIds }
+                .flatMap { tasteSongs[it.id].orEmpty().take(3) }
+                .distinctBy { it.id }
+        val discoverShelf =
+            discoverSongs.takeIf { it.isNotEmpty() }?.let { songs ->
+                TasteShelf(
+                    title = stringResource(R.string.baaja_home_discover),
+                    label = fromPicks,
+                    cards = songCards(songs),
+                    onClick = { index -> playSongs("Discover", songs, index) },
+                )
+            }
+        val mixTiles =
+            mixArtists.take(4).map { artist ->
+                val isNew = tasteStage != TasteStage.PICKS && artist.id in historyIds && artist.id !in pickedIds
+                TasteMix(
+                    artist = artist,
+                    badge = if (isNew) newText else null,
+                    tagline = stringResource(if (isNew) R.string.baaja_home_mix_tagline_history else R.string.baaja_home_mix_tagline),
+                    onClick = { playSongs(artist.name, tasteSongs[artist.id].orEmpty()) },
+                )
+            }
+        val tasteTints = listOf(BaajaTileColors.lilac(), BaajaTileColors.peach(), BaajaTileColors.liked(), BaajaTileColors.mint())
+        val tasteBlock: LazyListScope.() -> Unit = {
+        tasteHome(
+            stage = tasteStage,
+            heroArtists = mixArtists,
+            onPlayMix = { playSongs("Your mix", tasteMix) },
+            mixes = mixTiles,
+            mixesLabel = if (tasteStage == TasteStage.PICKS) fromPicks else null,
+            historyShelf = historyShelf,
+            releasesShelf = releasesShelf,
+            becauseHistory = becauseHistory,
+            becausePicks = becausePicks,
+            discoverShelf = discoverShelf,
+            tints = tasteTints,
+        )
+        }
+        tasteBlock
+
+        } else {
+            null
+        }
+
+
     val popularArtistEntries =
-        remember(popularArtists, homePage?.sections) {
-            popularArtists
+        remember(popularArtists, homePage?.sections, pickedArtists) {
+            pickedArtists.map { PopularArtistEntry(it.id, it.name, it.thumbnail) } + (popularArtists
                 ?.takeIf { it.isNotEmpty() }
                 ?.map { PopularArtistEntry(it.id, it.title, it.thumbnailUrl, local = it) }
                 ?: homePage
@@ -935,7 +1135,8 @@ fun HomeScreen(
                     ?.distinctBy { it.id }
                     ?.take(12)
                     ?.map { PopularArtistEntry(it.id, it.title, it.thumbnail, remote = it) }
-                    .orEmpty()
+                    .orEmpty())
+                .distinctBy { it.id }
         }
 
     LaunchedEffect(quickPicks) {
@@ -1346,10 +1547,12 @@ fun HomeScreen(
 }
                     }
 
+                    tasteUi?.invoke(this)
+
                     if (popularArtistEntries.isNotEmpty()) {
                         item(key = "popular_artists_title") {
  BaajaEntranceBox(3, entranceKey) {
-                            BaajaHomeSectionTitle(title = stringResource(R.string.baaja_home_popular_artists))
+                            BaajaHomeSectionTitle(title = stringResource(if (tasteStage == TasteStage.HISTORY && tasteActive) R.string.baaja_home_your_top_artists else if (tasteActive) R.string.baaja_home_your_artists else R.string.baaja_home_popular_artists))
                         }
 }
                         item(key = "popular_artists_list") {
@@ -1828,29 +2031,28 @@ fun HomeScreen(
                                 item(key = "community_playlists_title") {
                                     BaajaHomeSectionTitle(
                                         title = stringResource(R.string.from_the_community),
+                                        label = stringResource(R.string.baaja_home_community_label),
                                     )
                                 }
 
                                 item(key = "community_playlists_content") {
                                     LazyRow(
-                                        contentPadding = PaddingValues(horizontal = 16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        contentPadding = PaddingValues(horizontal = BaajaHomeGutter, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                                     ) {
-                                        items(playlists) { item ->
-                                            CommunityPlaylistCard(
-                                                item = item,
+                                        items(playlists, key = { "community_${it.playlist.id}" }) { item ->
+                                            BaajaCommunityCard(
+                                                title = item.playlist.title,
+                                                author =
+                                                    item.playlist.author
+                                                        ?.let { ArtistNameAliases.resolve(artistNameAliases, it.id, it.name) }
+                                                        .orEmpty(),
+                                                covers =
+                                                    item.songs.mapNotNull { it.thumbnail?.resize(200, 200) }.ifEmpty {
+                                                        listOfNotNull(item.playlist.thumbnail?.resize(400, 400))
+                                                    },
                                                 onClick = {
                                                     navController.navigate("online_playlist/${item.playlist.id.removePrefix("VL")}")
-                                                },
-                                                onSongClick = { song ->
-                                                    if (!isListenTogetherGuest) {
-                                                        playerConnection.playQueue(
-                                                            YouTubeQueue(
-                                                                song.endpoint ?: WatchEndpoint(videoId = song.id),
-                                                                song.toMediaMetadata(),
-                                                            ),
-                                                        )
-                                                    }
                                                 },
                                             )
                                         }

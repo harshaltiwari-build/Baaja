@@ -211,9 +211,9 @@ internal fun LyricsLine(
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = agentAlignment) {
                 // On Baaja's cream lyrics screen the other lines stay readable but muted.
                 val muted = baajaStyle != null
-                val inactiveAlpha = if (item.isBackground) 0.08f else if (muted) 0.4f else 0.2f
+                val inactiveAlpha = if (item.isBackground) 0.08f else if (muted) 0.6f else 0.55f
                 val activeAlpha = 1f
-                val focusedAlpha = if (item.isBackground) 0.5f else if (muted) 0.55f else 0.3f
+                val focusedAlpha = if (item.isBackground) 0.5f else if (muted) 0.75f else 0.7f
                 val targetAlpha = if (!isSynced || item.isBackground || isActiveLine) {
                     activeAlpha
                 } else if (isAutoScrollEnabled && displayedCurrentLineIndex >= 0) {

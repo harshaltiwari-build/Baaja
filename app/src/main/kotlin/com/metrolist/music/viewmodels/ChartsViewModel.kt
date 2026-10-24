@@ -17,11 +17,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
-private const val CHARTS_TIMEOUT_MS = 20_000L
+private const val CHARTS_TIMEOUT_MS = 30_000L
 
 /**
  * Builds a charts-shaped page from the YouTube Music home feed, keeping only sections that
@@ -45,6 +48,36 @@ internal fun HomePage.toTrendingChartsPage(more: List<HomePage.Section> = emptyL
             .take(8)
     return if (sections.isEmpty()) null else ChartsPage(sections = sections, continuation = null)
 }
+
+/** Builds a few "trending" song lists from song searches, used when charts and the home feed have none. */
+private suspend fun trendingBySearch(): ChartsPage? =
+    coroutineScope {
+        val queries =
+            listOf(
+                "Trending songs" to "top trending songs this week",
+                "New songs" to "new songs 2026",
+                "Top Hindi songs" to "top hindi songs",
+                "Top Punjabi songs" to "top punjabi songs",
+            )
+        val sections =
+            queries
+                .map { (title, query) ->
+                    async {
+                        val songs =
+                            YouTube
+                                .search(query, YouTube.SearchFilter.FILTER_SONG)
+                                .getOrNull()
+                                ?.items
+                                ?.filterIsInstance<SongItem>()
+                                ?.distinctBy { it.id }
+                                ?.take(15)
+                                .orEmpty()
+                        if (songs.size < 2) null else ChartsPage.ChartSection(title, songs, ChartsPage.ChartType.TRENDING)
+                    }
+                }.awaitAll()
+                .filterNotNull()
+        if (sections.isEmpty()) null else ChartsPage(sections = sections, continuation = null)
+    }
 
 @HiltViewModel
 class ChartsViewModel @Inject constructor() : ViewModel() {
@@ -84,11 +117,11 @@ class ChartsViewModel @Inject constructor() : ViewModel() {
                             YouTube
                                 .home()
                                 .onSuccess { home ->
-                                    // The first home page often holds a single song list, so read a few more pages to fill the screen.
+                                    // The first home page often holds a single song list, so read one more page; every extra page makes Explore wait longer.
                                     val more = mutableListOf<HomePage.Section>()
                                     var next = home.continuation
                                     var pages = 0
-                                    while (next != null && pages < 3) {
+                                    while (next != null && pages < 1) {
                                         val extra = YouTube.home(continuation = next).getOrNull() ?: break
                                         more += extra.sections
                                         next = extra.continuation
@@ -99,6 +132,14 @@ class ChartsViewModel @Inject constructor() : ViewModel() {
                                         _isFallback.value = true
                                     }
                                 }.onFailure { if (failure == null) failure = it }
+                        }
+                        // The home feed can come back as playlists only; search always has songs, so charts never stay empty.
+                        if (page?.sections.isNullOrEmpty()) {
+                            val searched = trendingBySearch()
+                            if (searched != null) {
+                                page = searched
+                                _isFallback.value = true
+                            }
                         }
                     }
                 } catch (e: TimeoutCancellationException) {

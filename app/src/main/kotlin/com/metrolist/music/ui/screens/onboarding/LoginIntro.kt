@@ -157,7 +157,11 @@ internal fun BaajaLoginIntro(
                                 .baajaSurface(BaajaInk, androidx.compose.ui.graphics.Color.White, CircleShape, shadowOffset = 0.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text("G", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = BaajaInk)
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(R.drawable.google_g),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                            )
                         }
                     },
                 )

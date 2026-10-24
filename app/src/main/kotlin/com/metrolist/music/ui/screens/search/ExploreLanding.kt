@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -83,8 +84,14 @@ fun ExploreLanding(
     val chartsPage by chartsViewModel.chartsPage.collectAsStateWithLifecycle()
     val newReleases by newReleaseViewModel.newReleaseAlbums.collectAsStateWithLifecycle()
     // Loaded once per back-stack entry; the ViewModel keeps the result so re-opening Explore is instant.
+    // A first load that fails (slow network, YouTube hiccup) is retried a few times instead of leaving a blank tile.
     LaunchedEffect(chartsViewModel) {
-        if (chartsViewModel.chartsPage.value == null) chartsViewModel.loadCharts()
+        var attempt = 0
+        while (chartsViewModel.chartsPage.value == null && attempt < 4) {
+            chartsViewModel.loadCharts()
+            delay(if (attempt == 0) 8_000L else 5_000L)
+            attempt++
+        }
     }
     val chartCovers =
         remember(chartsPage) {

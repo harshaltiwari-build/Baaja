@@ -25,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,7 +56,11 @@ private data class AboutLink(
     val url: String,
 )
 
+private const val BAAJA_WEBSITE = "https://harshaltiwari47-dot.github.io/Baaja/"
+private const val BAAJA_REPO = "https://github.com/harshaltiwari47-dot/Baaja"
+
 private val baajaLinks = listOf(
+    AboutLink(R.string.baaja_about_website, R.drawable.language, BAAJA_WEBSITE),
     AboutLink(R.string.baaja_about_baaja_repo, R.drawable.github, "https://github.com/harshaltiwari47-dot/Baaja"),
     AboutLink(R.string.baaja_about_license, R.drawable.info, "https://github.com/harshaltiwari47-dot/Baaja/blob/main/LICENSE"),
 )
@@ -142,6 +147,25 @@ fun AboutScreen(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 )
                             }
+                        }
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = { uriHandler.openUri(BAAJA_REPO) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.github),
+                                contentDescription = stringResource(R.string.baaja_about_baaja_repo),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        IconButton(onClick = { uriHandler.openUri(BAAJA_WEBSITE) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.language),
+                                contentDescription = stringResource(R.string.baaja_about_website),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
                         }
                     }
                 }

@@ -85,6 +85,8 @@ import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
 import com.metrolist.music.constants.AppBarHeight
 import com.metrolist.music.ui.component.rememberListenTogetherNoticeGate
+import com.metrolist.music.constants.AccountNameKey
+import com.metrolist.music.constants.BaajaProfileNameKey
 import com.metrolist.music.constants.ListenTogetherUsernameKey
 import com.metrolist.music.listentogether.ConnectionState
 import com.metrolist.music.listentogether.JoinRequestPayload
@@ -124,7 +126,10 @@ fun ListenTogetherScreen(
 
     var savedUsername by rememberPreference(ListenTogetherUsernameKey, "")
     var roomCodeInput by rememberSaveable { mutableStateOf("") }
-    var usernameInput by rememberSaveable { mutableStateOf(savedUsername) }
+    val profileName by rememberPreference(BaajaProfileNameKey, "")
+    val accountName by rememberPreference(AccountNameKey, "")
+    val suggestedName = savedUsername.ifBlank { profileName.ifBlank { accountName } }
+    var usernameInput by rememberSaveable { mutableStateOf(suggestedName) }
 
     var isCreatingRoom by rememberSaveable { mutableStateOf(false) }
     var isJoiningRoom by rememberSaveable { mutableStateOf(false) }
@@ -137,9 +142,9 @@ fun ListenTogetherScreen(
     val invalidRoomCodeText = stringResource(R.string.invalid_room_code)
     val joinRequestDeniedText = stringResource(R.string.join_request_denied)
 
-    LaunchedEffect(savedUsername) {
-        if (usernameInput.isBlank() && savedUsername.isNotBlank()) {
-            usernameInput = savedUsername
+    LaunchedEffect(suggestedName) {
+        if (usernameInput.isBlank() && suggestedName.isNotBlank()) {
+            usernameInput = suggestedName
         }
     }
 
@@ -1025,7 +1030,6 @@ private fun JoinCreateRoomSection(
         BaajaPillButton(
             text = stringResource(R.string.baaja_ai_together_start),
             onClick = onCreateRoom,
-            enabled = hasUsername,
             icon = R.drawable.add,
             height = 60.dp,
             modifier = Modifier.fillMaxWidth(),

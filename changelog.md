@@ -1,3 +1,23 @@
+---v1.2.0
+# Baaja 1.2.0
+Home now learns your taste, starting from the moment you open the app.
+
+## New features
+- Tell Baaja what you like: after "Continue as guest" you pick your music languages and then at least 5 artists. Every pick brings in more artists like it
+- A Home made for you: a "Your mix" card, an artist mix for each artist you picked, and "Because you like…" rows you can scroll sideways
+- Home keeps learning by itself. At first it follows your picks, then it adds what you listen to ("Listen again", "Because you listened to…"), and after a while your listening leads, with new releases from artists you play
+- Settings > Content has Music languages and Favourite artists, so you can change your picks or clear them all at any time
+- After you sign in with Google, a Welcome back screen shows your account and what is being brought over from YouTube Music
+- About has Website and GitHub buttons
+
+## Changes
+- Mixes are longer: each artist now brings up to 40 songs
+- The Google sign-in button shows the real Google logo
+- Lyrics you are not on are easier to read
+- Listen Together fills in your name from your profile and the Start a room button is always ready
+- The Explore charts tile tries again if the first load fails
+- Artist names under avatars can wrap to two lines
+
 ---v1.1.2
 # Baaja 1.1.2
 Updates now install from inside the app, plus a round of fixes.
