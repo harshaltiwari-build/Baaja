@@ -379,6 +379,10 @@ class MainActivity : FragmentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // The in-app splash already starts as an exact copy of the system one, so drop it without its own exit animation.
+            splashScreen.setOnExitAnimationListener { it.remove() }
+        }
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -1066,7 +1070,12 @@ class MainActivity : FragmentActivity() {
                                     onSearchLongClick = onRailSearchLongClick,
                                 )
                             }
-                            Box(Modifier.weight(1f)) {
+                            // The page colour sits behind the NavHost so cross-fading screens never show the window behind them.
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.background),
+                            ) {
                                 // NavHost with animations (Material 3 Expressive style)
                                 NavHost(
                                     navController = navController,

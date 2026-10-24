@@ -66,7 +66,7 @@ internal object BaajaSplashState {
 }
 
 /** How long the splash stays before fading out; the app underneath is already starting. */
-internal const val SPLASH_MILLIS = 1800L
+internal const val SPLASH_MILLIS = 2600L
 
 /** Normal launches only; widget, shortcut, deep-link and share launches go straight into the app. */
 internal fun Activity?.isPlainLauncherStart(): Boolean {
@@ -114,6 +114,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
             Modifier
                 .offset(36.dp, h * 0.13f)
                 .graphicsLayer {
+                    alpha = clock.enter(0.35f, 0.5f)
                     val w = clock.wave(4.2f)
                     translationY = -16.dp.toPx() * w
                     rotationZ = 10f * w
@@ -125,6 +126,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                 .align(Alignment.TopEnd)
                 .offset((-44).dp, h * 0.2f)
                 .graphicsLayer {
+                    alpha = clock.enter(0.35f, 0.5f)
                     val w = clock.wave(3.6f, 0.6f)
                     translationY = -16.dp.toPx() * w
                     rotationZ = 18f + 10f * w
@@ -136,6 +138,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                 .align(Alignment.TopEnd)
                 .offset((-36).dp, h * 0.71f)
                 .graphicsLayer {
+                    alpha = clock.enter(0.35f, 0.5f)
                     val s = 1f + 0.22f * clock.wave(2.6f)
                     scaleX = s
                     scaleY = s
@@ -146,6 +149,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
             Modifier
                 .offset(58.dp, h * 0.76f)
                 .graphicsLayer {
+                    alpha = clock.enter(0.35f, 0.5f)
                     val a = clock.loop(5f) * 2f * PI.toFloat()
                     translationX = 14.dp.toPx() * cos(a)
                     translationY = 14.dp.toPx() * sin(a)
@@ -156,6 +160,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
         Canvas(
             Modifier
                 .offset(150.dp, h * 0.133f)
+                .graphicsLayer { alpha = clock.enter(0.35f, 0.5f) }
                 .size(64.dp, 40.dp),
         ) {
             val u = density
@@ -187,8 +192,8 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                     .align(Alignment.TopCenter)
                     .padding(top = logoTop)
                     .graphicsLayer {
-                        val seconds = clock.loop(2.4f, delay)
-                        val started = clock.enabled && clock.enter(delay, 0.01f) > 0f
+                        val seconds = clock.loop(2.4f, 1.0f + delay)
+                        val started = clock.enabled && clock.enter(1.0f + delay, 0.01f) > 0f
                         val s = lerpF(0.8f, 2.4f, seconds)
                         scaleX = s
                         scaleY = s
@@ -207,19 +212,17 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
         ) {
             BaajaLogo(
                 Modifier.graphicsLayer {
-                    val t = clock.enter(0f, 0.9f)
-                    if (t < 1f) {
-                        // Pop: scale .35 -> 1.1 (at 60%) -> 1, tilt -14 -> 4 -> 0, fading in.
-                        val pop = (t * 0.9f / 0.8f).coerceAtMost(1f)
-                        val first = (pop / 0.6f).coerceAtMost(1f)
-                        val second = ((pop - 0.6f) / 0.4f).coerceIn(0f, 1f)
-                        val scale = if (pop < 0.6f) lerpF(0.35f, 1.1f, first.coerceIn(0f, 1f)) else lerpF(1.1f, 1f, second)
-                        scaleX = scale
-                        scaleY = scale
-                        rotationZ = if (pop < 0.6f) lerpF(-14f, 4f, first) else lerpF(4f, 0f, second)
-                        alpha = first
+                    // Starts where the system splash leaves the logo (screen centre, same size) so the hand-off has no jump,
+                    // then glides up into place with a small overshoot while the rest of the scene arrives.
+                    val m = clock.enter(0.3f, 0.85f)
+                    if (m < 1f) {
+                        val eased = easeOutBack(m, 1.2f)
+                        translationY = (1f - eased) * (h.toPx() * 0.5f - (logoTop.toPx() + 64.dp.toPx()))
+                        val bump = 1f + 0.08f * sin(PI.toFloat() * m)
+                        scaleX = bump
+                        scaleY = bump
                     } else if (clock.enabled) {
-                        val w = clock.wave(3.4f, 0.9f)
+                        val w = clock.wave(3.4f, 1.15f)
                         translationY = -10.dp.toPx() * w
                         rotationZ = -2f + 4f * w
                     }
@@ -242,8 +245,8 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                                 ),
                             modifier =
                                 Modifier.graphicsLayer {
-                                    val p = clock.enter(0.55f + 0.1f * index, 0.7f)
-                                    if (p < 1f || clock.enter(1.6f + 0.2f * index, 0.01f) == 0f) {
+                                    val p = clock.enter(0.8f + 0.09f * index, 0.7f)
+                                    if (p < 1f || clock.enter(1.95f + 0.2f * index, 0.01f) == 0f) {
                                         // Drop: +46dp & small -> overshoot at 70% -> rest.
                                         val a = (p / 0.7f).coerceAtMost(1f)
                                         val b = ((p - 0.7f) / 0.3f).coerceIn(0f, 1f)
@@ -253,7 +256,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                                         scaleY = s
                                         alpha = a
                                     } else {
-                                        translationY = -7.dp.toPx() * clock.wave(2.2f, 1.6f + 0.2f * index)
+                                        translationY = -7.dp.toPx() * clock.wave(2.2f, 1.95f + 0.2f * index)
                                     }
                                 },
                         )
@@ -269,7 +272,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                         Modifier
                             .padding(horizontal = 24.dp)
                             .graphicsLayer {
-                                val p = clock.enter(1.3f, 0.7f)
+                                val p = clock.enter(1.5f, 0.7f)
                                 alpha = p
                                 translationY = (1f - p) * 14.dp.toPx()
                             },
@@ -292,6 +295,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                         .width(10.dp)
                         .height(56.dp)
                         .graphicsLayer {
+                            alpha = clock.enter(0.9f, 0.5f)
                             transformOrigin = TransformOrigin(0.5f, 1f)
                             scaleY = 0.22f + 0.78f * clock.wave(EqSplashPeriods[index], EqSplashDelays[index])
                         }.background(color, RoundedCornerShape(6.dp))
@@ -318,7 +322,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                                 val s = 0.7f + 0.6f * w
                                 scaleX = s
                                 scaleY = s
-                                alpha = 0.55f + 0.45f * w
+                                alpha = (0.55f + 0.45f * w) * clock.enter(1.0f, 0.5f)
                             }.background(fill, CircleShape)
                             .border(2.dp, BaajaInk, CircleShape),
                     )
@@ -329,6 +333,7 @@ fun BaajaSplash(modifier: Modifier = Modifier) {
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
+                modifier = Modifier.graphicsLayer { alpha = clock.enter(1.1f, 0.5f) },
             )
         }
     }

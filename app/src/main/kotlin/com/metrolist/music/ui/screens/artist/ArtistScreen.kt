@@ -61,6 +61,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -405,51 +406,25 @@ fun ArtistScreen(
                             artistKind
                         }
 
+                    val surface = MaterialTheme.colorScheme.surface
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            // Banner reaches up under the (transparent) top bar.
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(ArtistBannerHeight + systemBarsTopPadding + AppBarHeight),
+                        ) {
+                            // The photo reaches up under the (transparent) top bar and fades into the page.
                             Box(
                                 modifier =
                                     Modifier
-                                        .fillMaxWidth()
-                                        .height(ArtistBannerHeight + systemBarsTopPadding + AppBarHeight)
+                                        .fillMaxSize()
                                         .pullUp(-headerOffset)
-                                        .drawWithContent {
-                                            drawContent()
-                                            val stroke = 2.5.dp.toPx()
-                                            drawRect(
-                                                color = ink,
-                                                topLeft = Offset(0f, size.height - stroke),
-                                                size = Size(size.width, stroke),
-                                            )
-                                        }.background(bannerColor),
-                            ) {
-                                if (thumbnail != null) {
-                                    AsyncImage(
-                                        model = thumbnail.resize(1200, 1200),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize(),
-                                    )
-                                }
-                            }
-
-                            // Outlined round avatar overlapping the banner's bottom edge.
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .align(Alignment.BottomStart)
-                                        .padding(start = 20.dp)
-                                        .offset(y = ArtistAvatarSize / 2)
-                                        .size(ArtistAvatarSize)
-                                        .baajaOutline(ink, CircleShape, borderWidth = 3.dp, shadowOffset = 3.dp)
-                                        .clip(CircleShape)
                                         .background(bannerColor),
                             ) {
                                 if (thumbnail != null) {
                                     AsyncImage(
-                                        model = thumbnail.resize(544, 544),
+                                        model = thumbnail.resize(1200, 1200),
                                         contentDescription = stringResource(R.string.baaja_library_artist_avatar),
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier.fillMaxSize(),
@@ -457,51 +432,60 @@ fun ArtistScreen(
                                 } else {
                                     Text(
                                         text = (displayArtistName ?: "?").take(2).uppercase(),
-                                        fontSize = 34.sp,
+                                        fontSize = 64.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.align(Alignment.Center),
                                     )
                                 }
                             }
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxWidth()
+                                        .height(190.dp)
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(Color.Transparent, surface.copy(alpha = 0.78f), surface),
+                                            ),
+                                        ),
+                            )
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomStart)
+                                        .padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    text = displayArtistName ?: "Unknown",
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 38.sp,
+                                    lineHeight = 42.sp,
+                                )
+                                Text(
+                                    text = headerMeta,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(ArtistAvatarSize / 2 + 14.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = displayArtistName ?: "Unknown",
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 34.sp,
-                                lineHeight = 38.sp,
-                            )
-                            Text(
-                                text = headerMeta,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        FlowRow(
+                        Row(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 20.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            itemVerticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (canPlayAll) {
                                 BaajaPill(
@@ -510,6 +494,7 @@ fun ArtistScreen(
                                     onClick = onPlayAllClick,
                                     primary = true,
                                     height = 52.dp,
+                                    modifier = Modifier.weight(1f),
                                 )
                             }
 
@@ -519,6 +504,7 @@ fun ArtistScreen(
                                 primary = false,
                                 selected = isChannelSubscribed,
                                 height = 52.dp,
+                                modifier = if (canPlayAll) Modifier else Modifier.weight(1f),
                             )
 
                             if (!showLocal && !isGuest) {
@@ -1037,8 +1023,7 @@ fun ArtistScreen(
     )
 }
 
-private val ArtistBannerHeight = 210.dp
-private val ArtistAvatarSize = 108.dp
+private val ArtistBannerHeight = 300.dp
 
 /** Lays the content out [shiftPx] higher than its slot and shrinks the slot to match. */
 private fun Modifier.pullUp(shiftPx: Int): Modifier =

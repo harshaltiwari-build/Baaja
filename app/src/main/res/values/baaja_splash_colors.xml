@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="baaja_splash_background">#7B4DFF</color>
+    <color name="baaja_window_background">#FFFFFF</color>
 </resources>

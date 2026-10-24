@@ -1,3 +1,29 @@
+---v1.1.2
+# Baaja 1.1.2
+Updates now install from inside the app, plus a round of fixes.
+
+## New features
+- In-app updater: download the new version and install it without leaving Baaja. The file is checked to be Baaja's own before the installer opens
+
+## Changes
+- Update checks now read the release version, so new versions are found reliably
+- The settings button is now an outlined circle that matches the profile picture, and Explore has it too
+- The sign-in page no longer has its top covered by the title bar
+- Charts fill the screen with trending songs when charts are not available in your region
+- Listen Together: a short "How it works" card sits at the top and connecting happens when you start or join a room
+- An empty Library now explains how to add playlists
+- Lyrics options have their own page in Appearance
+- People updating Baaja skip the Welcome screen
+- The profile dot only shows when a newer version exists
+- The launch screen shows the whole logo tile
+- Your sign-in is no longer included in cloud backups
+- The artist page has a larger photo with the name on it, and Play, Subscribe and radio on one row
+- Plain-HTTP traffic is now blocked except to this device, and one background receiver is no longer open to other apps
+- A smoother launch: the logo is already in place when Baaja opens and then glides up as the rest of the splash arrives
+- The player progress bar has a clearer track and an outlined thumb
+- No white flash behind screens while they change, in dark mode too
+- Removed Import from Spotify, since it could not be made reliable
+
 ---v1.1.1
 # Baaja 1.1.1
 A small clean-up after 1.1.0.
