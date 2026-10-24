@@ -42,7 +42,7 @@ constructor(
     val topSongs =
         combine(
             topPeriod,
-            context.dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged()
+            context.dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged()
         ) { period, hideVideoSongs -> period to hideVideoSongs }
             .flatMapLatest { (period, hideVideoSongs) ->
                 val now = LocalDateTime.now()

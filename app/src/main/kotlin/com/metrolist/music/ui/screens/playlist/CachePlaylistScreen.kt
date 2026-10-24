@@ -125,7 +125,7 @@ fun CachePlaylistScreen(
         SongSortType.CREATE_DATE
     )
     val (sortDescending, onSortDescendingChange) = rememberPreference(SongSortDescendingKey, true)
-    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = true)
 
     val sortedSongs = remember(cachedSongs, sortType, sortDescending) {
         val sorted = when (sortType) {

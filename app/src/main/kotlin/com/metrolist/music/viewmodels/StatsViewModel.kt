@@ -69,7 +69,7 @@ constructor(
         combine(
             selectedOption,
             indexChips,
-            context.dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged()
+            context.dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged()
         ) { first, second, third -> Triple(first, second, third) }
             .flatMapLatest { (selection, t, hideVideoSongs) ->
                 database
@@ -91,7 +91,7 @@ constructor(
         combine(
             selectedOption,
             indexChips,
-            context.dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged()
+            context.dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged()
         ) { first, second, third -> Triple(first, second, third) }
             .flatMapLatest { (selection, t, hideVideoSongs) ->
                 database
@@ -245,7 +245,7 @@ constructor(
                 val now = LocalDateTime.now()
                 val nowEpochMillis = System.currentTimeMillis()
                 val preferences = context.dataStore.data.first()
-                val hideVideoSongs = preferences[HideVideoSongsKey] ?: false
+                val hideVideoSongs = preferences[HideVideoSongsKey] ?: true
                 val shouldShowMostStatsPlaylists = preferences[ShowMostStatsPlaylistsKey] ?: true
 
                 if (!shouldShowMostStatsPlaylists) {

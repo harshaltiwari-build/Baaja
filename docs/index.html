@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baaja - a free YouTube Music client for Android</title>
+<meta name="description" content="Baaja is a free, ad-free and open-source YouTube Music client for Android, designed and built by Harshal Tiwari.">
+<link rel="icon" href="img/logo.png">
+<style>
+:root{--ink:#17151F;--paper:#FFFFFF;--soft:#F4F2FA;--muted:#5E5A6B;--purple:#7B4DFF;--yellow:#FFE066;--pink:#FFD3DE;--mint:#BDEFE6}
+@media (prefers-color-scheme:dark){:root{--ink:#CFC9DC;--paper:#121016;--soft:#1C1A22;--muted:#C9C5D3;--purple:#A58BFF}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:24px;text-decoration:none}
+.brand img{width:40px;height:40px}
+nav a{margin-left:18px;font-weight:600;text-decoration:none}
+nav a:hover{text-decoration:underline}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center;padding:34px 0 56px}
+h1{font-size:clamp(34px,6vw,60px);line-height:1.05;margin:0 0 16px;letter-spacing:-.02em}
+.lead{font-size:19px;color:var(--muted);max-width:520px}
+.btn{display:inline-flex;align-items:center;gap:8px;height:54px;padding:0 24px;border-radius:27px;font-weight:700;font-size:17px;text-decoration:none;border:2.5px solid var(--ink);box-shadow:4px 5px 0 var(--ink);background:var(--purple);color:#fff;margin:6px 10px 6px 0}
+@media (prefers-color-scheme:dark){.btn{color:#17151F}}
+.btn.alt{background:var(--paper);color:var(--ink)}
+.btn:active{transform:translate(2px,3px);box-shadow:2px 2px 0 var(--ink)}
+.meta{font-size:14px;color:var(--muted);margin-top:10px}
+.phones{display:flex;gap:14px;justify-content:center}
+.phones img{width:46%;max-width:210px;border-radius:26px;border:2.5px solid var(--ink);box-shadow:5px 6px 0 var(--ink);background:var(--soft)}
+.phones img:nth-child(2){margin-top:34px}
+section{padding:40px 0}
+h2{font-size:32px;margin:0 0 20px;letter-spacing:-.01em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{border:2.5px solid var(--ink);border-radius:22px;padding:18px 20px;background:var(--soft);box-shadow:4px 5px 0 var(--ink)}
+.card h3{margin:0 0 6px;font-size:19px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.dl .card{display:flex;flex-direction:column;gap:10px}
+.dl .btn{height:48px;font-size:16px;margin:0;justify-content:center}
+code{background:var(--soft);padding:2px 7px;border-radius:8px;font-size:.92em}
+footer{border-top:2.5px solid var(--ink);margin-top:40px;padding:26px 0 50px;color:var(--muted);font-size:14px}
+footer p{margin:6px 0}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.phones{order:-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="brand" href="./"><img src="img/logo.png" alt="">baaja</a>
+  <nav><a href="#features">Features</a><a href="#download">Download</a><a href="#credits">Credits</a><a href="https://github.com/harshaltiwari47-dot/Baaja">GitHub</a></nav>
+</header>
+
+<div class="hero">
+  <div>
+    <h1>बाजा बजाओ.<br>Music for every mood.</h1>
+    <p class="lead">Baaja is a free, ad-free and open-source YouTube Music client for Android, with a bold light and dark design. Designed and built by Harshal Tiwari.</p>
+    <a class="btn" id="hero-dl" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest">Download Baaja</a>
+    <a class="btn alt" href="#features">See features</a>
+    <p class="meta" id="hero-meta">Android 8.0 or newer · Free forever · GPL-3.0</p>
+  </div>
+  <div class="phones">
+    <img src="img/home.png" alt="Baaja home screen with speed dial" width="210" height="467">
+    <img src="img/player.png" alt="Baaja now playing screen" width="210" height="467">
+  </div>
+</div>
+
+<section id="features">
+  <h2>What you get</h2>
+  <div class="grid">
+    <div class="card"><h3>Your YouTube Music</h3><p>Sign in with Google to bring likes, playlists and subscriptions with you, or just continue as a guest.</p></div>
+    <div class="card"><h3>Bold light and dark design</h3><p>Ink outlines, offset shadows and a purple accent, with a matching dark mode.</p></div>
+    <div class="card"><h3>Speed dial</h3><p>Your favourite playlists a tap away, plus a "Surprise me" card.</p></div>
+    <div class="card"><h3>Lyrics</h3><p>Synced lyrics that follow the song, with a share card.</p></div>
+    <div class="card"><h3>Listen together</h3><p>Start a room, share the code, and everyone hears the same song in sync.</p></div>
+    <div class="card"><h3>Import from YouTube</h3><p>Copy any YouTube Music playlist into your Library by link.</p></div>
+    <div class="card"><h3>Sound</h3><p>Equalizer with quick tone, normalization, skip silence and transitions.</p></div>
+    <div class="card"><h3>Updates inside the app</h3><p>Baaja tells you when a new version is out and installs it in one tap.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>A look inside</h2>
+  <div class="phones">
+    <img src="img/library.png" alt="Library" width="210" height="467">
+    <img src="img/launch.png" alt="Launch screen" width="210" height="467">
+  </div>
+</section>
+
+<section id="download">
+  <h2>Download</h2>
+  <p id="release-line">Fetching the latest version…</p>
+  <div class="dl" id="dl-list">
+    <div class="card"><h3>Baaja</h3><p>The standard build.</p><a class="btn" href="https://github.com/harshaltiwari47-dot/Baaja/releases/latest">Open releases</a></div>
+  </div>
+  <p class="meta">If Android blocks the install, allow "install unknown apps" for your browser. Every file is signed with the same key, so new versions install over old ones.</p>
+</section>
+
+<section id="credits">
+  <h2>Credits</h2>
+  <p>Baaja is designed, built and maintained by <a href="https://github.com/harshaltiwari47-dot">Harshal Tiwari</a>, on top of the open-source <a href="https://github.com/MetrolistGroup/Metrolist">Metrolist</a>, <a href="https://github.com/z-huang/InnerTune">InnerTune</a> and <a href="https://github.com/DD3Boh/OuterTune">OuterTune</a> projects. Thank you to everyone who built them.</p>
+  <p>Baaja is free software under the <a href="https://github.com/harshaltiwari47-dot/Baaja/blob/main/LICENSE">GNU GPL v3</a>.</p>
+</section>
+
+<footer>
+  <p>Baaja is not affiliated with, endorsed by, or associated with YouTube, Google LLC or Metrolist Group LLC. All trademarks belong to their owners.</p>
+  <p><a href="https://github.com/harshaltiwari47-dot/Baaja">Source code</a> · <a href="https://github.com/harshaltiwari47-dot/Baaja/releases">All releases</a> · <a href="https://github.com/harshaltiwari47-dot/Baaja/issues">Report a problem</a></p>
+</footer>
+</div>
+
+<script>
+(function () {
+  var NAMES = {
+    "Baaja.apk": ["Baaja", "The standard build. Best for most phones."],
+    "Baaja-with-Google-Cast.apk": ["Baaja with Google Cast", "Adds casting to Chromecast and other Cast devices."],
+    "Baaja-izzy.apk": ["Baaja (IzzyOnDroid)", "Same app without the in-app updater, for F-Droid style stores."]
+  };
+  function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
+  fetch("https://api.github.com/repos/harshaltiwari47-dot/Baaja/releases/latest")
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (rel) {
+      var list = document.getElementById("dl-list");
+      list.textContent = "";
+      var first = null;
+      (rel.assets || []).forEach(function (a) {
+        var info = NAMES[a.name]; if (!info) return;
+        if (!first) first = a;
+        var card = document.createElement("div"); card.className = "card";
+        var h = document.createElement("h3"); h.textContent = info[0];
+        var p = document.createElement("p"); p.textContent = info[1] + " " + mb(a.size) + ".";
+        var l = document.createElement("a"); l.className = "btn"; l.href = a.browser_download_url; l.textContent = "Download " + rel.tag_name;
+        card.appendChild(h); card.appendChild(p); card.appendChild(l); list.appendChild(card);
+      });
+      var when = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric"}) : "";
+      document.getElementById("release-line").textContent = "Latest version: " + rel.tag_name + (when ? " · " + when : "");
+      if (first) {
+        document.getElementById("hero-dl").href = first.browser_download_url;
+        document.getElementById("hero-dl").textContent = "Download Baaja " + rel.tag_name;
+      }
+    })
+    .catch(function () {
+      document.getElementById("release-line").textContent = "Open the releases page to download the latest version.";
+    });
+})();
+</script>
+</body>
+</html>

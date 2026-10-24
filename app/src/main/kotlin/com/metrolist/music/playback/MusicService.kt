@@ -1007,10 +1007,10 @@ class MusicService :
             dataStore.data.map { it.keepPlayingSimilar() }.distinctUntilChanged().collect { cachedKeepPlayingSimilar = it }
         }
         scope.launch {
-            dataStore.data.map { it[HideExplicitKey] ?: false }.distinctUntilChanged().collect { cachedHideExplicit = it }
+            dataStore.data.map { it[HideExplicitKey] ?: true }.distinctUntilChanged().collect { cachedHideExplicit = it }
         }
         scope.launch {
-            dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged().collect { cachedHideVideoSongs = it }
+            dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged().collect { cachedHideVideoSongs = it }
         }
         scope.launch {
             dataStore.data.map { it[ShufflePlaylistFirstKey] ?: false }.distinctUntilChanged().collect { cachedShufflePlaylistFirst = it }
@@ -1695,8 +1695,8 @@ class MusicService :
                 withContext(Dispatchers.IO) {
                     queue
                         .getInitialStatus()
-                        .filterExplicit(dataStore.get(HideExplicitKey, false))
-                        .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
+                        .filterExplicit(dataStore.get(HideExplicitKey, true))
+                        .filterVideoSongs(dataStore.get(HideVideoSongsKey, true))
                 }
             if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
             if (initialStatus.title != null) {
@@ -1771,8 +1771,8 @@ class MusicService :
                     withContext(Dispatchers.IO) {
                         radioQueue
                             .getInitialStatus()
-                            .filterExplicit(dataStore.get(HideExplicitKey, false))
-                            .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
+                            .filterExplicit(dataStore.get(HideExplicitKey, true))
+                            .filterVideoSongs(dataStore.get(HideVideoSongsKey, true))
                     }
 
                 if (initialStatus.title != null) {

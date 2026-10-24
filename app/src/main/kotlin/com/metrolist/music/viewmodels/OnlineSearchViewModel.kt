@@ -101,9 +101,9 @@ constructor(
                             resolvedSummary
                         }
                     val resolvedPage = page.copy(summaries = resolvedSummaries)
-                    val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                    val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                    val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                    val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+                    val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+                    val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
                     summaryPage =
                         resolvedPage
                             .filterExplicit(hideExplicit)
@@ -143,9 +143,9 @@ constructor(
                             .search(query, filter, recordSearchHistory = !context.dataStore.get(PauseSearchHistoryKey, false))
                             .onSuccess { result ->
                                 val resolvedItems = resolveSearchMetadata(result.items)
-                                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                                val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+                                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+                                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
                                 viewStateMap[filter.value] =
                                     ItemsPage(
                                         resolvedItems
@@ -176,9 +176,9 @@ constructor(
                     recordSearchHistory = !context.dataStore.get(PauseSearchHistoryKey, false),
                 ).getOrNull() ?: return@launch
             val resolvedItems = resolveSearchMetadata(searchResult.items)
-            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+            val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
             val newItems = resolvedItems
                 .filterExplicit(hideExplicit)
                 .filterVideoSongs(hideVideoSongs)

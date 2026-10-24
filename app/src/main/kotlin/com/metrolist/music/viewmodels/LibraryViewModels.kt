@@ -99,8 +99,8 @@ constructor(
                         it[SongSortTypeKey].toEnum(SongSortType.CREATE_DATE),
                         (it[SongSortDescendingKey] ?: true),
                     ),
-                    it[HideExplicitKey] ?: false,
-                    it[HideVideoSongsKey] ?: false
+                    it[HideExplicitKey] ?: true,
+                    it[HideVideoSongsKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (filterSort, hideExplicit, hideVideoSongs) ->
@@ -224,7 +224,7 @@ constructor(
                         it[AlbumSortTypeKey].toEnum(AlbumSortType.CREATE_DATE),
                         it[AlbumSortDescendingKey] ?: true,
                     ),
-                    it[HideExplicitKey] ?: false
+                    it[HideExplicitKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (filterSort, hideExplicit) ->
@@ -287,7 +287,7 @@ constructor(
                 Triple(
                     it[PlaylistSortTypeKey].toEnum(PlaylistSortType.CREATE_DATE),
                     it[PlaylistSortDescendingKey] ?: true,
-                    it[HideYoutubeShortsKey] ?: false
+                    it[HideYoutubeShortsKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (sortType, descending, hideYoutubeShorts) ->
@@ -321,8 +321,8 @@ constructor(
                 Triple(
                     it[ArtistSongSortTypeKey].toEnum(ArtistSongSortType.CREATE_DATE) to (it[ArtistSongSortDescendingKey]
                         ?: true),
-                    it[HideExplicitKey] ?: false,
-                    it[HideVideoSongsKey] ?: false
+                    it[HideExplicitKey] ?: true,
+                    it[HideVideoSongsKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (sortDesc, hideExplicit, hideVideoSongs) ->
@@ -374,13 +374,13 @@ constructor(
                 true,
             ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     var albums = context.dataStore.data
-        .map { it[HideExplicitKey] ?: false }
+        .map { it[HideExplicitKey] ?: true }
         .distinctUntilChanged()
         .flatMapLatest { hideExplicit ->
             database.albumsLiked(AlbumSortType.CREATE_DATE, true).map { it.filterExplicitAlbums(hideExplicit) }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     var songs = context.dataStore.data
-        .map { Triple(it[HideExplicitKey] ?: false, it[HideVideoSongsKey] ?: false, it[HideYoutubeShortsKey] ?: false) }
+        .map { Triple(it[HideExplicitKey] ?: true, it[HideVideoSongsKey] ?: true, it[HideYoutubeShortsKey] ?: true) }
         .distinctUntilChanged()
         .flatMapLatest { (hideExplicit, hideVideoSongs, _) ->
             combine(
@@ -394,7 +394,7 @@ constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     var playlists = context.dataStore.data
-        .map { it[HideYoutubeShortsKey] ?: false }
+        .map { it[HideYoutubeShortsKey] ?: true }
         .distinctUntilChanged()
         .flatMapLatest { hideYoutubeShorts ->
             database.playlists(PlaylistSortType.CREATE_DATE, true).map { it.filterYoutubeShorts(hideYoutubeShorts) }
@@ -495,7 +495,7 @@ constructor(
             .map {
                 Pair(
                     it[SongSortTypeKey].toEnum(SongSortType.CREATE_DATE) to (it[SongSortDescendingKey] ?: true),
-                    it[HideExplicitKey] ?: false
+                    it[HideExplicitKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (sortDesc, hideExplicit) ->
@@ -509,7 +509,7 @@ constructor(
             .map {
                 Pair(
                     it[SongSortTypeKey].toEnum(SongSortType.CREATE_DATE) to (it[SongSortDescendingKey] ?: true),
-                    it[HideExplicitKey] ?: false
+                    it[HideExplicitKey] ?: true
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (sortDesc, hideExplicit) ->

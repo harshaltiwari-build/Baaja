@@ -50,8 +50,8 @@ class CachePlaylistViewModel
         val cachedSongs: StateFlow<List<Song>> =
             combine(
                 database.cachePlaylistSongs(),
-                context.dataStore.data.map { it[HideExplicitKey] ?: false }.distinctUntilChanged(),
-                context.dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged(),
+                context.dataStore.data.map { it[HideExplicitKey] ?: true }.distinctUntilChanged(),
+                context.dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged(),
                 ::Inputs,
             ).mapLatest { (flagged, hideExplicit, hideVideoSongs) ->
                 val partition =

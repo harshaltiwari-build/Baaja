@@ -125,7 +125,7 @@ fun LibrarySongsScreen(
     val (sortDescending, onSortDescendingChange) = rememberPreference(SongSortDescendingKey, true)
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
-    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = true)
 
     val songs by viewModel.allSongs.collectAsStateWithLifecycle()
     var isSearchActive by rememberSaveable { mutableStateOf(false) }

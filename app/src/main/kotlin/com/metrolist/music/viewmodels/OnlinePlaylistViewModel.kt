@@ -266,7 +266,7 @@ class OnlinePlaylistViewModel @Inject constructor(
     }
 
     private fun applySongFilters(songs: List<SongItem>): List<SongItem> {
-        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
         return songs
             .distinctBy { it.id }
             .filterVideoSongs(hideVideoSongs)

@@ -249,7 +249,7 @@ class HomeViewModel @Inject constructor(
     val accountImageUrl = MutableStateFlow<String?>(null)
 
     private suspend fun getDailyDiscover() {
-        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
         val likedSongs = database.likedSongsByCreateDateAsc().first()
         if (likedSongs.isEmpty()) return
 
@@ -297,7 +297,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun getQuickPicks() {
-        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
+        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
         when (quickPicksEnum.first()) {
             QuickPicks.QUICK_PICKS -> {
                 val relatedSongs = database.quickPicks().first().filterVideoSongs(hideVideoSongs)
@@ -417,9 +417,9 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun load() {
         isLoading.value = true
-        val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+        val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
         val fromTimeStamp = LocalDateTime.now().minusWeeks(2)
 
         // Phase 1: Load essential sections in parallel — local DB (fast) + YouTube home page.
@@ -561,9 +561,9 @@ class HomeViewModel @Inject constructor(
     private val _isLoadingMore = MutableStateFlow(false)
     fun loadMoreYouTubeItems(continuation: String?) {
         if (continuation == null || _isLoadingMore.value) return
-        val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+        val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+        val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
 
         viewModelScope.launch(Dispatchers.IO) {
             _isLoadingMore.value = true
@@ -600,9 +600,9 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+            val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
             val nextSections = YouTube.home(params = chip.endpoint?.params).getOrNull() ?: return@launch
 
             homePage.value = nextSections.copy(
@@ -646,7 +646,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun loadAccountPlaylists() {
-        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
         YouTube.library("FEmusic_liked_playlists").completed().onSuccess {
             accountPlaylists.value = it.items.filterIsInstance<PlaylistItem>()
                 .filterOutNulls()
@@ -672,9 +672,9 @@ class HomeViewModel @Inject constructor(
             // If a chip is selected, reload the chip's content instead of the default home
             val currentChip = selectedChip.value
             if (currentChip != null) {
-                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
                 val nextSections = YouTube.home(params = currentChip.endpoint?.params).getOrNull()
                 if (nextSections != null) {
                     homePage.value = nextSections.copy(
@@ -734,7 +734,7 @@ class HomeViewModel @Inject constructor(
         // Listen for HideYoutubeShorts preference changes and reload account playlists instantly
         viewModelScope.launch(Dispatchers.IO) {
             context.dataStore.data
-                .map { it[HideYoutubeShortsKey] ?: false }
+                .map { it[HideYoutubeShortsKey] ?: true }
                 .distinctUntilChanged()
                 .collect {
                     if (YouTube.cookie != null && accountPlaylists.value != null) {

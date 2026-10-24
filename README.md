@@ -9,7 +9,7 @@
 [![Latest release](https://img.shields.io/github/v/release/harshaltiwari47-dot/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](https://github.com/harshaltiwari47-dot/Baaja/releases)
 [![License](https://img.shields.io/github/license/harshaltiwari47-dot/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](LICENSE)
 
-[**Download**](#download) · [**Features**](#features) · [**Build**](#build-from-source) · [**Credits**](#credits) · [**License**](#license)
+[**Website**](https://harshaltiwari47-dot.github.io/Baaja/) · [**Download**](#download) · [**Features**](#features) · [**Build**](#build-from-source) · [**Credits**](#credits) · [**License**](#license)
 
 </div>
 

@@ -82,14 +82,14 @@ class ArtistViewModel @Inject constructor(
         locallyBookmarked || (apiState == true)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val librarySongs = context.dataStore.data
-        .map { (it[HideExplicitKey] ?: false) to (it[HideVideoSongsKey] ?: false) }
+        .map { (it[HideExplicitKey] ?: true) to (it[HideVideoSongsKey] ?: true) }
         .distinctUntilChanged()
         .flatMapLatest { (hideExplicit, hideVideoSongs) ->
             database.artistSongsPreview(artistId).map { it.filterExplicit(hideExplicit).filterVideoSongsLocal(hideVideoSongs) }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val libraryAlbums = context.dataStore.data
-        .map { it[HideExplicitKey] ?: false }
+        .map { it[HideExplicitKey] ?: true }
         .distinctUntilChanged()
         .flatMapLatest { hideExplicit ->
             database.artistAlbumsPreview(artistId).map { it.filterExplicitAlbums(hideExplicit) }
@@ -104,9 +104,9 @@ class ArtistViewModel @Inject constructor(
             context.dataStore.data
                 .map {
                     Triple(
-                        it[HideExplicitKey] ?: false,
-                        it[HideVideoSongsKey] ?: false,
-                        it[HideYoutubeShortsKey] ?: false
+                        it[HideExplicitKey] ?: true,
+                        it[HideVideoSongsKey] ?: true,
+                        it[HideYoutubeShortsKey] ?: true
                     )
                 }
                 .distinctUntilChanged()
@@ -122,9 +122,9 @@ class ArtistViewModel @Inject constructor(
             if (cachedJson != null) {
                 val cachedDto = withContext(Dispatchers.IO) { deserializeArtistPage(cachedJson) }
                 val page = cachedDto.toArtistPage()
-                val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+                val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+                val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
 
                 val filteredSections = page.sections
                     .map { section ->
@@ -142,9 +142,9 @@ class ArtistViewModel @Inject constructor(
 
     fun fetchArtistsFromYTM() {
         viewModelScope.launch {
-            val hideExplicit = context.dataStore.get(HideExplicitKey, false)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
-            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+            val hideExplicit = context.dataStore.get(HideExplicitKey, true)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+            val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
             YouTube.artist(artistId)
                 .onSuccess { page ->
                     // Collect all items from all sections and resolve artist IDs once

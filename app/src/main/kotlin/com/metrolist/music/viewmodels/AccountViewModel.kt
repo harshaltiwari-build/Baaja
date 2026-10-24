@@ -58,7 +58,7 @@ class AccountViewModel @Inject constructor(
     val selectedContentType = MutableStateFlow(AccountContentType.PLAYLISTS)
 
     private suspend fun loadPlaylists() {
-        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, false)
+        val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
         YouTube.library("FEmusic_liked_playlists").completed().onSuccess {
             val all = it.items.filterIsInstance<PlaylistItem>()
             // Extract SE playlist separately for Podcasts tab
@@ -107,7 +107,7 @@ class AccountViewModel @Inject constructor(
         // Listen for HideYoutubeShorts preference changes and reload playlists instantly
         viewModelScope.launch(Dispatchers.IO) {
             context.dataStore.data
-                .map { it[HideYoutubeShortsKey] ?: false }
+                .map { it[HideYoutubeShortsKey] ?: true }
                 .distinctUntilChanged()
                 .collect {
                     if (playlists.value != null) {

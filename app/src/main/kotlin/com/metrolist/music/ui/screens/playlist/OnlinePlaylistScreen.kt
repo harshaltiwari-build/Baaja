@@ -145,7 +145,7 @@ fun OnlinePlaylistScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isPodcastPlaylist = viewModel.isPodcastPlaylist
 
-    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = true)
 
     val lazyListState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }

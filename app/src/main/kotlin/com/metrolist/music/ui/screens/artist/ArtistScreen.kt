@@ -174,7 +174,7 @@ fun ArtistScreen(
     val librarySongs by viewModel.librarySongs.collectAsStateWithLifecycle()
     val libraryAlbums by viewModel.libraryAlbums.collectAsStateWithLifecycle()
     val isChannelSubscribed by viewModel.isChannelSubscribed.collectAsStateWithLifecycle()
-    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = true)
     val showArtistDescription = true
     val showArtistSubscriberCount = true
     val showMonthlyListeners = true

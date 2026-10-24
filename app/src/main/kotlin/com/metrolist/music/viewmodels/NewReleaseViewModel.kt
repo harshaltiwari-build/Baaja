@@ -80,7 +80,7 @@ constructor(
                                         }
                                     } ?: Int.MAX_VALUE
                                 firstArtistKey
-                            }.filterExplicit(context.dataStore.get(HideExplicitKey, false))
+                            }.filterExplicit(context.dataStore.get(HideExplicitKey, true))
                     if (_newReleaseAlbums.value.isEmpty()) _hasError.value = true
                 }.onFailure {
                     _hasError.value = true

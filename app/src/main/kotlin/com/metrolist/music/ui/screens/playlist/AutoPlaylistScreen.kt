@@ -181,7 +181,7 @@ fun AutoPlaylistScreen(
         }
     }
 
-    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = false)
+    val hideExplicit by rememberPreference(key = HideExplicitKey, defaultValue = true)
 
     val (ytmSync) = rememberPreference(YtmSyncKey, true)
 
