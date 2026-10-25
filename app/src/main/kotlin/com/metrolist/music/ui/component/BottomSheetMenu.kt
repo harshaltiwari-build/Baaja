@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -128,7 +129,8 @@ fun BottomSheetMenu(
     background: Color = MaterialTheme.colorScheme.surface,
 ) {
     val focusManager = LocalFocusManager.current
-    val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
+    // Open straight to the menu's own height; a half-open step left a tall empty sheet that could be dragged up.
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     AnimatedBottomSheet(
         isVisible = state.isVisible,
@@ -148,12 +150,13 @@ fun BottomSheetMenu(
                     .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
             )
         },
-        modifier = modifier.fillMaxHeight()
+        modifier = modifier,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
+                .navigationBarsPadding()
         ) {
             state.content(this)
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -128,19 +129,27 @@ val BaajaShapes =
         extraLarge = RoundedCornerShape(32.dp),
     )
 
+/** The display font joins letter pairs such as "tt" into one glyph, which reads oddly in short labels, so ligatures are off. */
+private fun TextStyle.plain() = copy(fontFeatureSettings = "liga 0, clig 0, calt 0")
+
 val BaajaTypography: Typography =
     Typography().run {
         copy(
-            displayLarge = displayLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp),
-            displayMedium = displayMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
-            displaySmall = displaySmall.copy(fontWeight = FontWeight.ExtraBold),
-            headlineLarge = headlineLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
-            headlineMedium = headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp),
-            headlineSmall = headlineSmall.copy(fontWeight = FontWeight.Bold),
-            titleLarge = titleLarge.copy(fontWeight = FontWeight.Bold),
-            titleMedium = titleMedium.copy(fontWeight = FontWeight.SemiBold),
-            titleSmall = titleSmall.copy(fontWeight = FontWeight.SemiBold),
-            labelLarge = labelLarge.copy(fontWeight = FontWeight.SemiBold),
+            displayLarge = displayLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp).plain(),
+            displayMedium = displayMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp).plain(),
+            displaySmall = displaySmall.copy(fontWeight = FontWeight.ExtraBold).plain(),
+            headlineLarge = headlineLarge.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp).plain(),
+            headlineMedium = headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp).plain(),
+            headlineSmall = headlineSmall.copy(fontWeight = FontWeight.Bold).plain(),
+            titleLarge = titleLarge.copy(fontWeight = FontWeight.Bold).plain(),
+            titleMedium = titleMedium.copy(fontWeight = FontWeight.SemiBold).plain(),
+            titleSmall = titleSmall.copy(fontWeight = FontWeight.SemiBold).plain(),
+            bodyLarge = bodyLarge.plain(),
+            bodyMedium = bodyMedium.plain(),
+            bodySmall = bodySmall.plain(),
+            labelLarge = labelLarge.copy(fontWeight = FontWeight.SemiBold).plain(),
+            labelMedium = labelMedium.plain(),
+            labelSmall = labelSmall.plain(),
         )
     }
 

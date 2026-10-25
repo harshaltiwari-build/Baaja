@@ -37,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -111,6 +112,15 @@ fun ProfileScreen(navController: NavController) {
         }
     }.collectAsStateWithLifecycle(emptyList())
     val firstEvent by remember(database) { database.firstEvent() }.collectAsStateWithLifecycle(null)
+    // Top artists from history may have no saved photo; fetch it from their artist page.
+    var artistPhotos by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    LaunchedEffect(topArtists.map { it.id }) {
+        topArtists.filter { it.artist.thumbnailUrl.isNullOrBlank() }.forEach { artist ->
+            com.metrolist.innertube.YouTube.artist(artist.id).getOrNull()?.artist?.thumbnail?.let { photo ->
+                artistPhotos = artistPhotos + (artist.id to photo)
+            }
+        }
+    }
 
     val numberFormat = remember { NumberFormat.getIntegerInstance() }
     val displayName = profile.name
@@ -281,7 +291,7 @@ fun ProfileScreen(navController: NavController) {
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             BaajaArtwork(
-                                model = artist.artist.thumbnailUrl,
+                                model = artist.artist.thumbnailUrl ?: artistPhotos[artist.id],
                                 shape = CircleShape,
                                 shadowOffset = 0.dp,
                                 modifier = Modifier.size(66.dp),

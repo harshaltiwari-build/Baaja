@@ -1270,7 +1270,8 @@ fun YouTubeGridItem(
             Icon.Download(download?.state)
         }
     },
-    thumbnailRatio: Float = if (item is SongItem) 16f / 9 else 1f,
+    // Song covers are square like albums; a 16:9 box let the square cover spill over the title.
+    thumbnailRatio: Float = 1f,
     isActive: Boolean = false,
     isPlaying: Boolean = false,
     fillMaxWidth: Boolean = false,

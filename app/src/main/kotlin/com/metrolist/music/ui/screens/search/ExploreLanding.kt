@@ -35,6 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.metrolist.music.ui.component.home.BaajaYourArtistsRow
+import com.metrolist.music.ui.component.home.rememberTasteArtists
+import com.metrolist.music.ui.component.home.BaajaCoverCard
+import com.metrolist.music.ui.component.home.TasteCard
 import coil3.compose.AsyncImage
 import com.metrolist.music.ui.utils.resize
 import com.metrolist.music.viewmodels.ChartsViewModel
@@ -93,6 +97,15 @@ fun ExploreLanding(
             attempt++
         }
     }
+    // New releases can also come back empty on the first try; ask again a few times.
+    LaunchedEffect(newReleaseViewModel) {
+        var attempt = 0
+        while (newReleaseViewModel.newReleaseAlbums.value.isEmpty() && attempt < 4) {
+            delay(8_000L)
+            if (newReleaseViewModel.newReleaseAlbums.value.isEmpty()) newReleaseViewModel.load()
+            attempt++
+        }
+    }
     val chartCovers =
         remember(chartsPage) {
             chartsPage
@@ -108,7 +121,12 @@ fun ExploreLanding(
             newReleases.mapNotNull { it.thumbnail }.distinct().take(EXPLORE_COVER_COUNT)
         }
     LazyColumn(
-        contentPadding = contentPadding,
+        // Extra room at the end so the last mood row can scroll clear of the mini player and the bottom bar.
+        contentPadding =
+            PaddingValues(
+                top = contentPadding.calculateTopPadding(),
+                bottom = contentPadding.calculateBottomPadding() + 96.dp,
+            ),
         verticalArrangement = Arrangement.spacedBy(18.dp),
         modifier = modifier.fillMaxSize(),
     ) {

@@ -949,18 +949,78 @@ fun HomeScreen(
     val historySongs by remember(database) {
         database.mostPlayedSongs(fromTimeStamp = LocalDateTime.now().minusWeeks(8), limit = 24)
     }.collectAsStateWithLifecycle(emptyList())
+    // Signed in with Google: the account's own YouTube Music history, liked songs and followed artists
+    // shape Home from the very first launch, before Baaja has recorded any plays.
+    var accountSongs by remember { mutableStateOf<List<SongItem>>(emptyList()) }
+    val likedLocal by remember(database) { database.likedSongsByCreateDateAsc() }.collectAsStateWithLifecycle(emptyList())
+    val bookmarkedArtists by remember(database) { database.artistsBookmarkedByCreateDateAsc() }.collectAsStateWithLifecycle(emptyList())
+    LaunchedEffect(isLoggedIn) {
+        accountSongs =
+            if (isLoggedIn) {
+                YouTube.musicHistory().getOrNull()?.sections.orEmpty().flatMap { it.songs }.distinctBy { it.id }.take(40)
+            } else {
+                emptyList()
+            }
+    }
+    // "Similar to your likes": the radio YouTube Music builds from your two most recent liked songs.
+    var likeRadios by remember { mutableStateOf<List<Pair<String, List<SongItem>>>>(emptyList()) }
+    val recentLikes = remember(likedLocal) { likedLocal.takeLast(12).reversed().distinctBy { it.artists.firstOrNull()?.id }.take(2) }
+    LaunchedEffect(isLoggedIn, recentLikes.map { it.id }) {
+        likeRadios =
+            if (!isLoggedIn) {
+                emptyList()
+            } else {
+                recentLikes
+                    .map { liked ->
+                        async {
+                            val songs =
+                                YouTube
+                                    .next(WatchEndpoint(videoId = liked.id, playlistId = "RDAMVM" + liked.id))
+                                    .getOrNull()
+                                    ?.items
+                                    .orEmpty()
+                                    .filter { it.id != liked.id }
+                                    .take(15)
+                            liked.song.title to songs
+                        }
+                    }.awaitAll().filter { it.second.size >= 4 }
+            }
+    }
+    val accountArtists =
+        remember(isLoggedIn, accountSongs, likedLocal, bookmarkedArtists) {
+            if (!isLoggedIn) {
+                emptyList()
+            } else {
+                val scores = LinkedHashMap<String, Pair<BaajaArtist, Int>>()
+
+                fun add(id: String?, name: String, thumb: String?, weight: Int) {
+                    if (id.isNullOrBlank() || name.isBlank()) return
+                    val current = scores[id]
+                    scores[id] = (current?.first ?: BaajaArtist(id, name, thumb)) to ((current?.second ?: 0) + weight)
+                }
+                accountSongs.forEach { song -> song.artists.forEach { add(it.id, it.name, null, 2) } }
+                bookmarkedArtists.forEach { add(it.id, it.title, it.thumbnailUrl, 5) }
+                likedLocal.forEachIndexed { index, song ->
+                    song.artists.forEach { add(it.id, it.name, it.thumbnailUrl, if (index >= likedLocal.size - 30) 4 else 2) }
+                }
+                scores.values.sortedByDescending { it.second }.map { it.first }.take(8)
+            }
+        }
     val historyArtists =
-        remember(popularArtists) {
-            popularArtists.orEmpty().take(5).map { BaajaArtist(it.id, it.title, it.thumbnailUrl) }
+        remember(popularArtists, accountArtists) {
+            (accountArtists + popularArtists.orEmpty().map { BaajaArtist(it.id, it.title, it.thumbnailUrl) })
+                .distinctBy { it.id }
+                .take(6)
         }
     val tasteStage =
         when {
+            accountArtists.size >= 3 -> TasteStage.HISTORY
             historySongs.size >= 10 -> TasteStage.HISTORY
             historySongs.isNotEmpty() -> TasteStage.MIXED
             else -> TasteStage.PICKS
         }
     val tasteArtists =
-        remember(tasteStage, historyArtists, pickedArtists) {
+        remember(tasteStage, historyArtists, pickedArtists, accountArtists) {
             when (tasteStage) {
                 TasteStage.PICKS -> pickedArtists
                 TasteStage.MIXED ->
@@ -976,6 +1036,8 @@ fun HomeScreen(
         }
     var tasteSongs by remember { mutableStateOf<Map<String, List<SongItem>>>(emptyMap()) }
     var tasteAlbums by remember { mutableStateOf<Map<String, List<AlbumItem>>>(emptyMap()) }
+    // Artists that come from listening history often have no saved photo, so use the one on their artist page.
+    var tasteThumbs by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     LaunchedEffect(tasteArtists.map { it.id }) {
         val fetched =
             tasteArtists
@@ -1002,13 +1064,19 @@ fun HomeScreen(
                                 ?.filterIsInstance<AlbumItem>()
                                 ?.take(4)
                                 .orEmpty()
+                        page?.artist?.thumbnail?.let { thumb -> tasteThumbs = tasteThumbs + (artist.id to thumb) }
                         Triple(artist.id, songs, albums)
                     }
                 }.awaitAll()
         tasteSongs = fetched.filter { it.second.isNotEmpty() }.associate { it.first to it.second }
         tasteAlbums = fetched.filter { it.third.isNotEmpty() }.associate { it.first to it.third }
     }
-    val mixArtists = remember(tasteArtists, tasteSongs) { tasteArtists.filter { tasteSongs.containsKey(it.id) } }
+    val mixArtists =
+        remember(tasteArtists, tasteSongs, tasteThumbs) {
+            tasteArtists
+                .filter { tasteSongs.containsKey(it.id) }
+                .map { artist -> if (artist.thumbnail.isNullOrBlank()) artist.copy(thumbnail = tasteThumbs[artist.id]) else artist }
+        }
     val tasteMix =
         remember(mixArtists, tasteSongs) {
             val lists = mixArtists.mapNotNull { tasteSongs[it.id] }
@@ -1016,7 +1084,7 @@ fun HomeScreen(
             for (i in 0 until 20) lists.forEach { list -> list.getOrNull(i)?.let(mixed::add) }
             mixed.distinctBy { it.id }.take(100)
         }
-    val tasteActive = pickedArtists.isNotEmpty() || historySongs.isNotEmpty()
+    val tasteActive = pickedArtists.isNotEmpty() || historySongs.isNotEmpty() || accountArtists.isNotEmpty()
 
     val tasteUi: (LazyListScope.() -> Unit)? =
         if (tasteMix.isNotEmpty()) {
@@ -1032,11 +1100,20 @@ fun HomeScreen(
         }
         fun songCards(songs: List<SongItem>) =
             songs.map { TasteCard("s_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.thumbnail) }
+        val accountShelf =
+            accountSongs.takeIf { it.isNotEmpty() }?.let { songs ->
+                TasteShelf(
+                    title = stringResource(R.string.baaja_home_jump_back_in),
+                    label = null,
+                    cards = songs.take(12).map { TasteCard("a_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.thumbnail) },
+                    onClick = { index -> playSongs("History", songs.take(12), index) },
+                )
+            }
         val historyShelf =
-            historySongs.takeIf { it.isNotEmpty() }?.let { songs ->
+            if (historySongs.isEmpty()) accountShelf else historySongs.takeIf { it.isNotEmpty() }?.let { songs ->
                 TasteShelf(
                     title = stringResource(if (tasteStage == TasteStage.HISTORY) R.string.baaja_home_jump_back_in else R.string.baaja_home_listen_again),
-                    label = fromHistory,
+                    label = null,
                     cards = songs.take(12).map { TasteCard("h_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.song.thumbnailUrl) },
                     onClick = { index ->
                         playerConnection?.playQueue(
@@ -1051,7 +1128,7 @@ fun HomeScreen(
                 val songs = tasteSongs[artist.id].orEmpty()
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_because_listened, artist.name),
-                    label = fromHistory,
+                    label = null,
                     cards = songCards(songs),
                     onClick = { index -> playSongs(artist.name, songs, index) },
                 )
@@ -1061,7 +1138,7 @@ fun HomeScreen(
                 val songs = tasteSongs[artist.id].orEmpty()
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_because, artist.name),
-                    label = fromPicks,
+                    label = null,
                     cards = songCards(songs),
                     onClick = { index -> playSongs(artist.name, songs, index) },
                 )
@@ -1071,7 +1148,7 @@ fun HomeScreen(
             releaseAlbums.takeIf { it.isNotEmpty() }?.let { albums ->
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_new_from_artists),
-                    label = fromHistory,
+                    label = null,
                     cards = albums.map { TasteCard("a_${it.id}", it.title, it.artists?.joinToString { a -> a.name }.orEmpty(), it.thumbnail, newText) },
                     onClick = { index -> navController.navigate("album/${albums[index].id}") },
                 )
@@ -1085,7 +1162,7 @@ fun HomeScreen(
             discoverSongs.takeIf { it.isNotEmpty() }?.let { songs ->
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_discover),
-                    label = fromPicks,
+                    label = null,
                     cards = songCards(songs),
                     onClick = { index -> playSongs("Discover", songs, index) },
                 )
@@ -1107,7 +1184,7 @@ fun HomeScreen(
             heroArtists = mixArtists,
             onPlayMix = { playSongs("Your mix", tasteMix) },
             mixes = mixTiles,
-            mixesLabel = if (tasteStage == TasteStage.PICKS) fromPicks else null,
+            mixesLabel = null,
             historyShelf = historyShelf,
             releasesShelf = releasesShelf,
             becauseHistory = becauseHistory,
@@ -1124,7 +1201,7 @@ fun HomeScreen(
 
 
     val popularArtistEntries =
-        remember(popularArtists, homePage?.sections, pickedArtists) {
+        remember(popularArtists, homePage?.sections, pickedArtists, tasteThumbs) {
             pickedArtists.map { PopularArtistEntry(it.id, it.name, it.thumbnail) } + (popularArtists
                 ?.takeIf { it.isNotEmpty() }
                 ?.map { PopularArtistEntry(it.id, it.title, it.thumbnailUrl, local = it) }
@@ -1137,6 +1214,7 @@ fun HomeScreen(
                     ?.map { PopularArtistEntry(it.id, it.title, it.thumbnail, remote = it) }
                     .orEmpty())
                 .distinctBy { it.id }
+                .map { entry -> if (entry.thumbnailUrl.isNullOrBlank()) entry.copy(thumbnailUrl = tasteThumbs[entry.id]) else entry }
         }
 
     LaunchedEffect(quickPicks) {
@@ -1266,7 +1344,7 @@ fun HomeScreen(
                 item(key = "home_chips") {
  BaajaEntranceBox(0, entranceKey) {
                     BaajaChipsRow(
-                        chips = homePage?.chips?.map { it to it.title } ?: emptyList(),
+                        chips = homePage?.chips?.filterNot { it.title.contains("Podcast", ignoreCase = true) }?.map { it to it.title } ?: emptyList(),
                         currentValue = selectedChip,
                         onValueUpdate = {
                             viewModel.toggleChip(it)
@@ -1547,7 +1625,6 @@ fun HomeScreen(
 }
                     }
 
-                    tasteUi?.invoke(this)
 
                     if (popularArtistEntries.isNotEmpty()) {
                         item(key = "popular_artists_title") {
@@ -1592,6 +1669,7 @@ fun HomeScreen(
                     }
                 }
 
+                var tasteShown = false
                 homeSections.forEach { section ->
                     when (section) {
                         HomeSection.SpeedDial -> {
@@ -1914,6 +1992,10 @@ fun HomeScreen(
                                 }
 }
                             }
+
+                            // Like YouTube Music: Speed dial first, then the shelves made for you.
+                            tasteShown = true
+                            tasteUi?.invoke(this)
                         }
 
                         HomeSection.QuickPicks -> {

@@ -202,10 +202,6 @@ import com.metrolist.music.utils.InnerTubeXPlayer
 import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
-import com.metrolist.music.widget.BaajaWidgetManager
-import com.metrolist.music.widget.BaajaWidgetRenderer
-import com.metrolist.music.widget.MusicWidgetReceiver
-import com.metrolist.music.widget.PlaylistWidgetReceiver
 import com.metrolist.music.ui.utils.resize
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CancellationException
@@ -279,8 +275,6 @@ class MusicService :
     @Inject
     lateinit var eqProfileRepository: EQProfileRepository
 
-    @Inject
-    lateinit var widgetManager: BaajaWidgetManager
 
     @Inject
     lateinit var listenTogetherManager: com.metrolist.music.listentogether.ListenTogetherManager
@@ -540,13 +534,11 @@ class MusicService :
                 when (intent.action) {
                     Intent.ACTION_SCREEN_OFF -> {
                         isScreenOff = true
-                        stopWidgetUpdates()
                     }
 
                     Intent.ACTION_SCREEN_ON -> {
                         isScreenOff = false
                         if (::player.isInitialized && player.isPlaying) {
-                            startWidgetUpdates()
                         }
                     }
                 }
@@ -854,7 +846,6 @@ class MusicService :
 
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
-            updateWidgetUI(player.isPlaying)
         }
 
         combine(
@@ -2086,7 +2077,6 @@ class MusicService :
                 val song = songEntity.toggleLike(syncToYouTube = false)
 
                 updateNotification(isLiked = song.liked)
-                updateWidgetUI(player.isPlaying, isLiked = song.liked)
 
                 database.query {
                     update(song)
@@ -2138,7 +2128,6 @@ class MusicService :
         val shouldBeSaved = !isCurrentlySaved
 
         updateNotification(isLiked = shouldBeSaved)
-        updateWidgetUI(player.isPlaying, isLiked = shouldBeSaved)
 
         // Update database first (optimistic update)
         // Also ensure isEpisode = true so it appears in saved episodes list
@@ -2673,11 +2662,8 @@ class MusicService :
         }
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
-            updateWidgetUI(player.isPlaying)
             if (player.isPlaying) {
-                startWidgetUpdates()
             } else {
-                stopWidgetUpdates()
             }
         }
     }
@@ -4056,176 +4042,14 @@ class MusicService :
             ACTION_ALARM_TRIGGER -> {
                 handleAlarmTrigger(intent)
             }
-
-            MusicWidgetReceiver.ACTION_PLAY_PAUSE -> {
-                if (player.isPlaying) player.pause() else player.play()
-                updateWidgetUI(player.isPlaying)
-            }
-
-            MusicWidgetReceiver.ACTION_LIKE -> {
-                toggleLike()
-            }
-
-            MusicWidgetReceiver.ACTION_NEXT -> {
-                player.seekToNext()
-                updateWidgetUI(player.isPlaying)
-            }
-
-            MusicWidgetReceiver.ACTION_PREVIOUS -> {
-                player.seekToPrevious()
-                updateWidgetUI(player.isPlaying)
-            }
-
-            MusicWidgetReceiver.ACTION_UPDATE_WIDGET,
-            PlaylistWidgetReceiver.ACTION_UPDATE_WIDGET -> {
-                updateWidgetUI(player.isPlaying)
-            }
-
-            PlaylistWidgetReceiver.ACTION_PLAY_TARGET -> {
-                handlePlaylistWidgetPlay(intent)
-            }
-
-            BaajaWidgetRenderer.ACTION_SLEEP_SET -> {
-                sleepTimer?.start(intent.getIntExtra(BaajaWidgetRenderer.EXTRA_MINUTES, 30))
-                updateExtraWidgets()
-            }
-
-            BaajaWidgetRenderer.ACTION_SLEEP_ADD -> {
-                sleepTimer?.let { timer ->
-                    val leftMs = if (timer.triggerTime > 0) timer.triggerTime - System.currentTimeMillis() else 0L
-                    timer.start(((leftMs.coerceAtLeast(0L) + 59_999L) / 60_000L).toInt() + 15)
-                }
-                updateExtraWidgets()
-            }
-
-            BaajaWidgetRenderer.ACTION_SLEEP_CANCEL -> {
-                sleepTimer?.clear()
-                updateExtraWidgets()
-            }
-
-            BaajaWidgetRenderer.ACTION_SLEEP_TOGGLE -> {
-                sleepTimer?.let { timer -> if (timer.isActive) timer.clear() else timer.start(30) }
-                updateExtraWidgets()
-            }
-
-            BaajaWidgetRenderer.ACTION_JUMP -> {
-                val index = player.currentMediaItemIndex + intent.getIntExtra(BaajaWidgetRenderer.EXTRA_OFFSET, 0)
-                if (index in 0 until player.mediaItemCount) {
-                    player.seekTo(index, 0L)
-                    player.play()
-                }
-                updateWidgetUI(player.isPlaying)
-            }
         }
 
         return super.onStartCommand(intent, flags, startId)
     }
 
 
-    private fun handlePlaylistWidgetPlay(intent: Intent) {
-        scope.launch {
-            try {
-                val queue = withContext(Dispatchers.IO) {
-                    buildPlaylistWidgetQueue(intent)
-                }
-                if (queue == null) {
-                    openPlaylistWidgetTarget(intent)
-                    return@launch
-                }
-                playQueue(queue, playWhenReady = true)
-                updateWidgetUI(true)
-            } catch (t: Throwable) {
-                Timber.tag(TAG).e(t, "Failed to start playlist widget target")
-                openPlaylistWidgetTarget(intent)
-            }
-        }
-    }
 
-    private fun openPlaylistWidgetTarget(source: Intent) {
-        val activityIntent = Intent(this, MainActivity::class.java).apply {
-            action = MainActivity.ACTION_OPEN_WIDGET_TARGET
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra(
-                MainActivity.EXTRA_WIDGET_TARGET_TYPE,
-                source.getStringExtra(PlaylistWidgetReceiver.EXTRA_TARGET_TYPE),
-            )
-            putExtra(
-                MainActivity.EXTRA_WIDGET_TARGET_ID,
-                source.getStringExtra(PlaylistWidgetReceiver.EXTRA_TARGET_ID),
-            )
-        }
-        try {
-            startActivity(activityIntent)
-        } catch (t: Throwable) {
-            Timber.tag(TAG).e(t, "Failed to open playlist widget target")
-        }
-    }
 
-    private suspend fun buildPlaylistWidgetQueue(intent: Intent): Queue? {
-        val targetType = intent.getStringExtra(PlaylistWidgetReceiver.EXTRA_TARGET_TYPE) ?: return null
-        val targetId = intent.getStringExtra(PlaylistWidgetReceiver.EXTRA_TARGET_ID).orEmpty()
-        val targetTitle = intent.getStringExtra(PlaylistWidgetReceiver.EXTRA_TARGET_TITLE)
-
-        return when (targetType) {
-            PlaylistWidgetReceiver.TARGET_TYPE_LOCAL -> {
-                if (targetId.isBlank()) return null
-                val songs = database.playlistSongs(targetId).first()
-                if (songs.isEmpty()) return null
-                val playlistName = database.playlist(targetId).first()?.playlist?.name ?: targetTitle
-                ListQueue(
-                    title = playlistName,
-                    items = songs.map { it.song.toMediaItem() },
-                )
-            }
-
-            PlaylistWidgetReceiver.TARGET_TYPE_ONLINE -> {
-                if (targetId.isBlank()) return null
-                val cachedPlaylist = database.playlistByBrowseId(targetId).first()
-                val cachedSongs = cachedPlaylist?.let { database.playlistSongs(it.playlist.id).first() }.orEmpty()
-                if (cachedSongs.isNotEmpty()) {
-                    ListQueue(
-                        title = cachedPlaylist?.playlist?.name ?: targetTitle,
-                        items = cachedSongs.map { it.song.toMediaItem() },
-                    )
-                } else {
-                    YouTubePlaylistQueue(
-                        playlistId = targetId,
-                        playlistTitle = targetTitle,
-                    )
-                }
-            }
-
-            PlaylistWidgetReceiver.TARGET_TYPE_LIKED -> {
-                val songs = database.likedSongsByCreateDateAsc().first()
-                if (songs.isEmpty()) return null
-                ListQueue(
-                    title = getString(R.string.liked_songs),
-                    items = songs.map { it.toMediaItem() },
-                )
-            }
-
-            PlaylistWidgetReceiver.TARGET_TYPE_DOWNLOADED -> {
-                val songs = database.downloadedSongsByCreateDateAsc().first()
-                if (songs.isEmpty()) return null
-                ListQueue(
-                    title = getString(R.string.downloaded_songs),
-                    items = songs.map { it.toMediaItem() },
-                )
-            }
-
-            PlaylistWidgetReceiver.TARGET_TYPE_TOP -> {
-                val limit = targetId.toIntOrNull() ?: 50
-                val songs = database.mostPlayedSongs(LocalDateTime.of(1970, 1, 1, 0, 0), limit = limit).first()
-                if (songs.isEmpty()) return null
-                ListQueue(
-                    title = getString(R.string.my_top),
-                    items = songs.map { it.toMediaItem() },
-                )
-            }
-
-            else -> null
-        }
-    }
 
     private fun handleAlarmTrigger(intent: Intent) {
         scope.launch(Dispatchers.IO) {
@@ -4350,111 +4174,9 @@ class MusicService :
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             error.javaClass.name == ForegroundServiceStartNotAllowedException::class.java.name
 
-    /**
-     * Updates all app widgets with current playback state
-     */
-    private var widgetUpdateInFlight = false
-    private var pendingWidgetUpdate: Pair<Boolean, Boolean?>? = null
 
-    private fun updateWidgetUI(
-        isPlaying: Boolean,
-        isLiked: Boolean? = currentSong.value?.song?.let { if (it.isEpisode) it.inLibrary != null else it.liked }
-    ) {
-        pendingWidgetUpdate = isPlaying to isLiked
-        if (widgetUpdateInFlight) return
-        widgetUpdateInFlight = true
 
-        scope.launch {
-            try {
-                while (true) {
-                    val (playing, isLikedRequested) = pendingWidgetUpdate ?: break
-                    pendingWidgetUpdate = null
 
-                    val songData = currentSong.value
-                    val song = songData?.song
-                    val songTitle = song?.title ?: getString(R.string.no_song_playing)
-                    val artistName = songData?.artists?.joinToArtistString(getArtistSeparator(this@MusicService)) { it.name } ?: getString(R.string.tap_to_open)
-                    val resolvedIsLiked = isLikedRequested == true
-
-                    widgetManager.updateWidgets(
-                        title = songTitle,
-                        artist = artistName,
-                        artworkUri = song?.thumbnailUrl,
-                        isPlaying = playing,
-                        isLiked = resolvedIsLiked,
-                        duration = if (player.duration != C.TIME_UNSET) player.duration else 0,
-                        currentPosition = player.currentPosition,
-                    )
-                    updateExtraWidgets()
-                }
-            } catch (e: Exception) {
-            } finally {
-                widgetUpdateInFlight = false
-            }
-        }
-    }
-
-    /** Refreshes the sleep timer, Up next, Listen together and Quick play widgets. */
-    private fun updateExtraWidgets() {
-        scope.launch {
-            try {
-                val timer = sleepTimer
-                val rows = mutableListOf<BaajaWidgetManager.UpNextRow>()
-                val start = player.currentMediaItemIndex.coerceAtLeast(0)
-                for (i in start until minOf(player.mediaItemCount, start + 4)) {
-                    val meta = player.getMediaItemAt(i).mediaMetadata
-                    rows +=
-                        BaajaWidgetManager.UpNextRow(
-                            title = meta.title?.toString().orEmpty(),
-                            artist = (meta.artist ?: meta.subtitle)?.toString().orEmpty(),
-                            artworkUri = meta.artworkUri?.toString(),
-                        )
-                }
-                val inRoom = listenTogetherManager.isInRoom
-                val room = if (inRoom) listenTogetherManager.roomState.value else null
-                widgetManager.updateExtras(
-                    sleepEndAt = timer?.triggerTime ?: -1L,
-                    sleepUntilSongEnd = timer?.pauseWhenSongEnd == true,
-                    rows = rows,
-                    queueTotal = player.mediaItemCount,
-                    togetherCode = room?.roomCode.orEmpty(),
-                    togetherCount = room?.usersCount ?: 0,
-                )
-            } catch (e: Exception) {
-                Timber.tag(TAG).w(e, "Failed to update extra widgets")
-            }
-        }
-    }
-
-    private var widgetUpdateJob: Job? = null
-
-    private fun startWidgetUpdates() {
-        widgetUpdateJob?.cancel()
-        if (isScreenOff) {
-            widgetUpdateJob = null
-            return
-        }
-        widgetUpdateJob =
-            scope.launch {
-                var ticks = 0
-                while (isActive) {
-                    delay(1.seconds)
-                    ticks++
-                    if (ticks % 15 == 0) updateExtraWidgets()
-                    if (player.isPlaying) {
-                        widgetManager.updateProgress(
-                            duration = if (player.duration != C.TIME_UNSET) player.duration else 0,
-                            currentPosition = player.currentPosition,
-                        )
-                    }
-                }
-            }
-    }
-
-    private fun stopWidgetUpdates() {
-        widgetUpdateJob?.cancel()
-        widgetUpdateJob = null
-    }
 
     /**
      * Get the stream URL for a given media ID.

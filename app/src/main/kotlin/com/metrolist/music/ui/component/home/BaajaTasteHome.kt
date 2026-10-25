@@ -35,6 +35,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.lazy.items
 import coil3.compose.AsyncImage
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.music.R
@@ -326,6 +330,7 @@ fun androidx.compose.foundation.lazy.LazyListScope.tasteHome(
     becausePicks: List<TasteShelf>,
     discoverShelf: TasteShelf?,
     tints: List<Color>,
+    extraShelves: List<TasteShelf> = emptyList(),
 ) {
     fun shelf(key: String, shelf: TasteShelf) {
         item(key = "${key}_title") { BaajaHomeSectionTitle(title = shelf.title, label = shelf.label) }
@@ -382,6 +387,7 @@ fun androidx.compose.foundation.lazy.LazyListScope.tasteHome(
             historyShelf?.let { shelf("history", it) }
             hero()
             becauseHistory?.let { shelf("because_history", it) }
+            extraShelves.forEachIndexed { i, e -> shelf("extra_$i", e) }
             mixesBlock()
             becausePicks.take(1).forEachIndexed { i, s -> shelf("because_pick_$i", s) }
         }
@@ -390,6 +396,7 @@ fun androidx.compose.foundation.lazy.LazyListScope.tasteHome(
             hero()
             releasesShelf?.let { shelf("releases", it) }
             becauseHistory?.let { shelf("because_history", it) }
+            extraShelves.forEachIndexed { i, e -> shelf("extra_$i", e) }
             mixesBlock()
             discoverShelf?.let { shelf("discover", it) }
         }
@@ -441,6 +448,93 @@ fun BaajaCommunityCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+    }
+}
+
+/**
+ * The artists this listener cares about most, shared by Home, Explore and Library. Signed in, it is the
+ * account's own YouTube Music history, followed artists and liked songs; picks and Baaja plays fill the gaps.
+ */
+@Composable
+fun rememberTasteArtists(limit: Int = 10): List<BaajaArtist> {
+    val database = com.metrolist.music.LocalDatabase.current
+    val (cookie) = com.metrolist.music.utils.rememberPreference(com.metrolist.music.constants.InnerTubeCookieKey, "")
+    val (pickedRaw) = com.metrolist.music.utils.rememberPreference(com.metrolist.music.constants.BaajaPickedArtistsKey, "")
+    val isLoggedIn = androidx.compose.runtime.remember(cookie) { "SAPISID" in com.metrolist.innertube.utils.parseCookieString(cookie) }
+    val liked by androidx.compose.runtime.remember(database) { database.likedSongsByCreateDateAsc() }
+        .collectAsStateWithLifecycle(emptyList())
+    val bookmarked by androidx.compose.runtime.remember(database) { database.artistsBookmarkedByCreateDateAsc() }
+        .collectAsStateWithLifecycle(emptyList())
+    val played by androidx.compose.runtime.remember(database) {
+        database.mostPlayedArtists(java.time.LocalDateTime.now().minusWeeks(8), limit = 8)
+    }.collectAsStateWithLifecycle(emptyList())
+    var history by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<List<SongItem>>(emptyList()) }
+    androidx.compose.runtime.LaunchedEffect(isLoggedIn) {
+        history =
+            if (isLoggedIn) {
+                com.metrolist.innertube.YouTube.musicHistory().getOrNull()?.sections.orEmpty().flatMap { it.songs }.take(60)
+            } else {
+                emptyList()
+            }
+    }
+    // Artists found through history have no photo yet; fetch it from the artist page once and remember it.
+    var photos by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Map<String, String>>(emptyMap()) }
+    val ranked = androidx.compose.runtime.remember(isLoggedIn, liked, bookmarked, played, history, pickedRaw) {
+        val scores = LinkedHashMap<String, Pair<BaajaArtist, Int>>()
+
+        fun add(id: String?, name: String, thumb: String?, weight: Int) {
+            if (id.isNullOrBlank() || name.isBlank()) return
+            val current = scores[id]
+            scores[id] = (current?.first?.let { if (it.thumbnail == null && thumb != null) it.copy(thumbnail = thumb) else it }
+                ?: BaajaArtist(id, name, thumb)) to ((current?.second ?: 0) + weight)
+        }
+        if (isLoggedIn) {
+            history.forEach { song -> song.artists.forEach { add(it.id, it.name, null, 2) } }
+            bookmarked.forEach { add(it.id, it.title, it.thumbnailUrl, 5) }
+            liked.forEachIndexed { index, song ->
+                // A like is an explicit signal, and a recent one says more about current taste.
+                song.artists.forEach { add(it.id, it.name, it.thumbnailUrl, if (index >= liked.size - 30) 4 else 2) }
+            }
+        }
+        played.forEach { add(it.id, it.title, it.thumbnailUrl, 3) }
+        com.metrolist.music.ui.screens.onboarding.decodeArtists(pickedRaw).forEach { add(it.id, it.name, it.thumbnail, 2) }
+        scores.values.sortedByDescending { it.second }.map { it.first }.take(limit)
+    }
+    androidx.compose.runtime.LaunchedEffect(ranked.map { it.id }) {
+        ranked.filter { it.thumbnail.isNullOrBlank() && it.id !in photos }.forEach { artist ->
+            com.metrolist.innertube.YouTube.artist(artist.id).getOrNull()?.artist?.thumbnail?.let { photo ->
+                photos = photos + (artist.id to photo)
+            }
+        }
+    }
+    return androidx.compose.runtime.remember(ranked, photos) {
+        ranked.map { if (it.thumbnail.isNullOrBlank()) it.copy(thumbnail = photos[it.id]) else it }
+    }
+}
+
+/** A scrolling row of the listener's top artists; tapping one opens that artist. */
+@Composable
+fun BaajaYourArtistsRow(
+    artists: List<BaajaArtist>,
+    onArtist: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (artists.isEmpty()) return
+    Column(modifier) {
+        BaajaHomeSectionTitle(title = stringResource(R.string.baaja_home_your_artists))
+        androidx.compose.foundation.lazy.LazyRow(
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = BaajaHomeGutter - 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(artists.size, key = { "taste_artist_${artists[it].id}" }) { index ->
+                val artist = artists[index]
+                BaajaArtistAvatar(
+                    name = artist.name,
+                    thumbnailUrl = artist.thumbnail,
+                    onClick = { onArtist(artist.id) },
+                )
+            }
         }
     }
 }

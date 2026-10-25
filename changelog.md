@@ -1,3 +1,23 @@
+---v1.3.1
+# Baaja 1.3.1
+Home, Explore and Library follow your YouTube Music account, plus a round of fixes.
+
+## Changes
+- Signed in with Google, Home is built from your YouTube Music listening history, the artists you follow and your liked songs, from the very first launch
+- New "Because you liked…" shelves on Home, built from your most recent likes
+- Home starts with Speed dial, like YouTube Music, followed by your mix, artist mixes and "Jump back in"
+- The Podcasts chip is gone from Home; the mood chips come from your account
+- A new look for the Surprise me tile
+- Artist photos now show in Your mix, artist mixes and your top artists on Home and Profile
+- Removed the home screen widgets
+- The Baaja GitHub page moved to github.com/harshaltiwari-build/Baaja and the website to harshaltiwari-build.github.io/Baaja
+
+## Fixes
+- Explore: New releases no longer comes up empty, and Charts keeps trying until it loads
+- Explore scrolls all the way down past the mini player
+- Mood and genre pages: song covers no longer cover the titles or overlap each other
+- Menus (like the one on Liked songs) are only as tall as their options, with no empty white area
+
 ---v1.3.0
 # Baaja 1.3.0
 Widgets that do real jobs, in Baaja's own look.

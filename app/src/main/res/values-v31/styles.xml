@@ -7,9 +7,6 @@
         <item name="android:windowSplashScreenIconBackgroundColor">@color/baaja_splash_background</item>
     </style>
 
-    <!-- Widget Theme for Android 12+ with Dynamic Colors -->
-    <style name="Theme.Widget.Baaja" parent="@android:style/Theme.DeviceDefault.DayNight" />
-
     <style name="Theme.Baaja.Transparent" parent="@android:style/Theme.Translucent.NoTitleBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>

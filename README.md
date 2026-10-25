@@ -6,12 +6,12 @@
 
 ### बाजा बजाओ. A free, ad-free YouTube Music client for Android with a bold, playful design.
 
-[![Latest release](https://img.shields.io/github/v/release/harshaltiwari47-dot/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](https://github.com/harshaltiwari47-dot/Baaja/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/harshaltiwari47-dot/Baaja/total?style=for-the-badge&labelColor=17151F&color=FFE066)](https://github.com/harshaltiwari47-dot/Baaja/releases)
-[![License](https://img.shields.io/github/license/harshaltiwari47-dot/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/harshaltiwari-build/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](https://github.com/harshaltiwari-build/Baaja/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/harshaltiwari-build/Baaja/total?style=for-the-badge&labelColor=17151F&color=FFE066)](https://github.com/harshaltiwari-build/Baaja/releases)
+[![License](https://img.shields.io/github/license/harshaltiwari-build/Baaja?style=for-the-badge&labelColor=17151F&color=7B4DFF)](LICENSE)
 [![Android](https://img.shields.io/badge/Android-8.0%2B-17151F?style=for-the-badge&labelColor=17151F&color=BDEFE6)](#download)
 
-[**Website**](https://harshaltiwari47-dot.github.io/Baaja/) · [**Download**](#download) · [**Features**](#features) · [**Build**](#build-from-source) · [**Credits**](#credits) · [**License**](#license)
+[**Website**](https://harshaltiwari-build.github.io/Baaja/) · [**Download**](#download) · [**Features**](#features) · [**Build**](#build-from-source) · [**Credits**](#credits) · [**License**](#license)
 
 <br>
 
@@ -23,14 +23,14 @@
 
 ---
 
-Baaja is a free and open-source YouTube Music client for Android, **designed, built and maintained by [Harshal Tiwari](https://github.com/harshaltiwari47-dot)**. It is built on the open-source [Metrolist](https://github.com/MetrolistGroup/Metrolist) project and other forks (see [Credits](#credits)), with its own identity: light and dark themes, bold ink outlines, offset shadows and a purple accent.
+Baaja is a free and open-source YouTube Music client for Android, **designed, built and maintained by [Harshal Tiwari](https://github.com/harshaltiwari-build)**. It is built on the open-source [Metrolist](https://github.com/MetrolistGroup/Metrolist) project and other forks (see [Credits](#credits)), with its own identity: light and dark themes, bold ink outlines, offset shadows and a purple accent.
 
 > [!WARNING]
 > **Regional restriction:** if YouTube Music isn't available in your region, Baaja won't work without a VPN or proxy that connects through a supported region.
 
 ## Download
 
-Get the latest APK from the [**Releases page**](https://github.com/harshaltiwari47-dot/Baaja/releases/latest), or from the [website](https://harshaltiwari47-dot.github.io/Baaja/), which always lists the newest version.
+Get the latest APK from the [**Releases page**](https://github.com/harshaltiwari-build/Baaja/releases/latest), or from the [website](https://harshaltiwari-build.github.io/Baaja/), which always lists the newest version.
 
 | File | For |
 |---|---|
@@ -116,7 +116,7 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 You need JDK 21 and the Android SDK (platform 37).
 
 ```bash
-git clone https://github.com/harshaltiwari47-dot/Baaja.git
+git clone https://github.com/harshaltiwari-build/Baaja.git
 cd Baaja
 ./gradlew :app:assembleFossDebug
 ```

@@ -27,6 +27,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.metrolist.music.ui.theme.BaajaPurple
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.music.R
@@ -56,36 +60,55 @@ fun RandomizeGridItem(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .baajaOutline(baajaInk, shape, borderWidth = 2.dp, shadowOffset = 3.dp)
+                    .baajaOutline(baajaInk, shape, borderWidth = 2.5.dp, shadowOffset = 3.dp)
                     .clip(shape)
-                    .background(BaajaYellow)
+                    .background(Brush.linearGradient(listOf(BaajaPurple, Color(0xFFB79CFF))))
                     .clickable(role = Role.Button, onClick = onClick),
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
                 modifier = Modifier.padding(8.dp).alpha(1f - loadingAlpha),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.baaja_sd_dice),
-                    contentDescription = null,
-                    tint = BaajaInk,
-                    modifier = Modifier.size(36.dp),
-                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier =
+                        Modifier
+                            .size(46.dp)
+                            .baajaOutline(BaajaInk, CircleShape, borderWidth = 2.dp, shadowOffset = 2.dp)
+                            .clip(CircleShape)
+                            .background(BaajaYellow),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.baaja_sd_dice),
+                        contentDescription = null,
+                        tint = BaajaInk,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
                 Text(
                     text = stringResource(R.string.baaja_sd_surprise),
-                    color = BaajaInk,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.baaja_sd_surprise_hint),
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
             if (loadingAlpha > 0f) {
                 LoadingIndicator(
                     modifier = Modifier.size(44.dp).alpha(loadingAlpha),
-                    color = BaajaInk,
+                    color = Color.White,
                 )
             }
         }

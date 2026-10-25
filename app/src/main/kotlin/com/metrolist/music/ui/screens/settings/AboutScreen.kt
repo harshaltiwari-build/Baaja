@@ -56,13 +56,13 @@ private data class AboutLink(
     val url: String,
 )
 
-private const val BAAJA_WEBSITE = "https://harshaltiwari47-dot.github.io/Baaja/"
-private const val BAAJA_REPO = "https://github.com/harshaltiwari47-dot/Baaja"
+private const val BAAJA_WEBSITE = "https://harshaltiwari-build.github.io/Baaja/"
+private const val BAAJA_REPO = "https://github.com/harshaltiwari-build/Baaja"
 
 private val baajaLinks = listOf(
     AboutLink(R.string.baaja_about_website, R.drawable.language, BAAJA_WEBSITE),
-    AboutLink(R.string.baaja_about_baaja_repo, R.drawable.github, "https://github.com/harshaltiwari47-dot/Baaja"),
-    AboutLink(R.string.baaja_about_license, R.drawable.info, "https://github.com/harshaltiwari47-dot/Baaja/blob/main/LICENSE"),
+    AboutLink(R.string.baaja_about_baaja_repo, R.drawable.github, "https://github.com/harshaltiwari-build/Baaja"),
+    AboutLink(R.string.baaja_about_license, R.drawable.info, "https://github.com/harshaltiwari-build/Baaja/blob/main/LICENSE"),
 )
 
 private val upstreamLinks = listOf(

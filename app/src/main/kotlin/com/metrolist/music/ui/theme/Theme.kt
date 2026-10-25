@@ -46,8 +46,13 @@ fun BaajaTheme(
         colorScheme = colorScheme,
         shapes = BaajaShapes,
         typography = BaajaTypography,
-        content = content,
-    )
+    ) {
+        // Text that sets only a size or weight uses the default style, so ligatures are switched off there too.
+        androidx.compose.material3.ProvideTextStyle(
+            androidx.compose.material3.LocalTextStyle.current.copy(fontFeatureSettings = "liga 0, clig 0, calt 0"),
+            content = content,
+        )
+    }
 }
 
 fun Bitmap.extractThemeColor(): Color = Color(

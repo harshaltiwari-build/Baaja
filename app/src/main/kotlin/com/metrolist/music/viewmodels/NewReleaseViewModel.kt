@@ -52,8 +52,31 @@ constructor(
         loadJob = viewModelScope.launch {
             _isLoading.value = true
             _hasError.value = false
-            YouTube
-                .newReleaseAlbums()
+            // The dedicated page sometimes comes back empty (especially when signed in), so fall back to the
+            // Explore feed and then to an album search; New releases should never be blank.
+            var failure: Throwable? = null
+            val loaded: Result<List<AlbumItem>> =
+                YouTube.newReleaseAlbums().let { first ->
+                    first.exceptionOrNull()?.let { failure = it }
+                    if (first.getOrNull().orEmpty().isNotEmpty()) {
+                        first
+                    } else {
+                        val fromExplore = YouTube.explore().getOrNull()?.newReleaseAlbums.orEmpty()
+                        if (fromExplore.isNotEmpty()) {
+                            Result.success(fromExplore)
+                        } else {
+                            val searched =
+                                YouTube
+                                    .search("new albums 2026", YouTube.SearchFilter.FILTER_ALBUM)
+                                    .getOrNull()
+                                    ?.items
+                                    ?.filterIsInstance<AlbumItem>()
+                                    .orEmpty()
+                            if (searched.isNotEmpty()) Result.success(searched) else failure?.let { Result.failure(it) } ?: first
+                        }
+                    }
+                }
+            loaded
                 .onSuccess { albums ->
                     val artists: MutableMap<Int, String> = mutableMapOf()
                     val favouriteArtists: MutableMap<Int, String> = mutableMapOf()

@@ -52,7 +52,7 @@ class UpdateInstaller(
             fail("No download for this build")
             return
         }
-        if (!asset.downloadUrl.startsWith(ALLOWED_PREFIX)) {
+        if (ALLOWED_PREFIXES.none { asset.downloadUrl.startsWith(it) }) {
             fail("Unexpected download address")
             return
         }
@@ -170,6 +170,11 @@ class UpdateInstaller(
     }
 
     private companion object {
-        const val ALLOWED_PREFIX = "https://github.com/harshaltiwari47-dot/Baaja/releases/download/"
+        // Baaja's repository moved to a new GitHub username; GitHub reports download links under the new name.
+        val ALLOWED_PREFIXES =
+            listOf(
+                "https://github.com/harshaltiwari-build/Baaja/releases/download/",
+                "https://github.com/harshaltiwari47-dot/Baaja/releases/download/",
+            )
     }
 }
