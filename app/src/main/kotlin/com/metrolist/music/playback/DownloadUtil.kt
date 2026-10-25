@@ -284,17 +284,12 @@ constructor(
                         val downloadId = download.request.id
                         songUrlCache.invalidate(downloadId)
 
-                        runCatching {
-                            database.updateDownloadedInfo(downloadId, false, null)
-                        }.onSuccess {
-                            downloads.update { map ->
-                                map.toMutableMap().apply {
-                                    remove(downloadId)
-                                }
-                            }
-                            Timber.tag(TAG).d("Successfully removed download $downloadId from in-memory map")
-                        }.onFailure { error ->
-                            Timber.tag(TAG).e(error, "Failed to update database for removed download $downloadId, keeping in-memory entry")
+                        // This callback runs on the main thread, where Room refuses queries, so the database
+                        // write has to go to the IO scope; the in-memory entry is dropped right away.
+                        downloads.update { map -> map - downloadId }
+                        scope.launch {
+                            runCatching { database.updateDownloadedInfo(downloadId, false, null) }
+                                .onFailure { Timber.tag(TAG).e(it, "Failed to update database for removed download $downloadId") }
                         }
                     }
                 }
@@ -324,8 +319,8 @@ constructor(
 
     fun download(mediaMetadata: MediaMetadata) {
         scope.launch {
-            downloadPreparations.withPermit {
-                if (!shouldPrepareDownload(downloads.value[mediaMetadata.id]?.state)) return@withPermit
+            val queued = downloadPreparations.withPermit {
+                if (!shouldPrepareDownload(downloads.value[mediaMetadata.id]?.state)) return@withPermit false
 
                 mediaMetadata.album?.let { album ->
                     if (database.albumEntity(album.id) == null) {
@@ -354,7 +349,7 @@ constructor(
                 }
 
                 if (!shouldPrepareDownload(downloadManager.downloadIndex.getDownload(mediaMetadata.id)?.state)) {
-                    return@withPermit
+                    return@withPermit false
                 }
 
                 val request =
@@ -369,20 +364,23 @@ constructor(
                     request,
                     false,
                 )
+                true
+            }
+            if (!queued) return@launch
 
-                val albumArtwork = database.getSongByIdBlocking(mediaMetadata.id)?.album?.thumbnailUrl
-                downloadArtworkUrls(mediaMetadata.thumbnailUrl, albumArtwork).forEach { artworkUrl ->
-                    runCatching {
-                        context.imageLoader.execute(
-                            ImageRequest
-                                .Builder(context)
-                                .data(artworkUrl)
-                                .memoryCachePolicy(CachePolicy.DISABLED)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .networkCachePolicy(CachePolicy.ENABLED)
-                                .build(),
-                        )
-                    }
+            // Artwork is fetched after the song is queued so a large playlist isn't held back by images.
+            val albumArtwork = database.getSongByIdBlocking(mediaMetadata.id)?.album?.thumbnailUrl
+            downloadArtworkUrls(mediaMetadata.thumbnailUrl, albumArtwork).forEach { artworkUrl ->
+                runCatching {
+                    context.imageLoader.execute(
+                        ImageRequest
+                            .Builder(context)
+                            .data(artworkUrl)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .networkCachePolicy(CachePolicy.ENABLED)
+                            .build(),
+                    )
                 }
             }
         }
@@ -394,6 +392,14 @@ constructor(
                 download(song)
             }
         }
+    }
+
+    /** Stops the songs that have not finished downloading. Songs already downloaded are kept. */
+    fun cancelUnfinished(songIds: Iterable<String>) {
+        val current = downloads.value
+        songIds
+            .filter { id -> current[id]?.let { it.state != Download.STATE_COMPLETED } == true }
+            .forEach { id -> DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, id, false) }
     }
 
     fun release() {

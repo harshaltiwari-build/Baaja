@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,6 +55,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.media3.exoplayer.offline.Download
+import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.ui.component.BaajaHeroCard
@@ -62,6 +65,8 @@ import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaOutline
 import com.metrolist.music.ui.theme.baajaSurface
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
 /** Joins the non-blank parts of a meta line with Baaja's middle dot. */
@@ -225,7 +230,9 @@ internal fun BaajaSwitchCard(
 
 /**
  * Yellow storage summary for Downloads: size of the download cache against free device space.
- * Reads `cacheSpace` once (a cheap in-memory counter) and StatFs off the main thread.
+ * While songs are downloading the bar shows that batch's progress instead, since storage barely
+ * moves against a whole phone's free space. Sizes are re-read (`cacheSpace` is a cheap in-memory
+ * counter) whenever a download changes state and every couple of seconds while one is running.
  */
 @Composable
 internal fun BaajaStorageCard(
@@ -234,19 +241,45 @@ internal fun BaajaStorageCard(
 ) {
     val context = LocalContext.current
     val downloadCache = LocalPlayerConnection.current?.service?.downloadCache
+    val downloadUtil = LocalDownloadUtil.current
     var used by remember { mutableLongStateOf(0L) }
     var free by remember { mutableLongStateOf(0L) }
+    var batchDone by remember { mutableIntStateOf(0) }
+    var batchTotal by remember { mutableIntStateOf(0) }
     LaunchedEffect(downloadCache) {
-        withContext(Dispatchers.IO) {
-            used = runCatching { downloadCache?.cacheSpace ?: 0L }.getOrDefault(0L)
-            free = runCatching { StatFs(context.filesDir.path).availableBytes }.getOrDefault(0L)
+        downloadUtil.downloads.collectLatest { downloads ->
+            val running = downloads.values.filter { it.state == Download.STATE_DOWNLOADING || it.state == Download.STATE_QUEUED }
+            // The batch is everything added since the oldest download still waiting.
+            val batchStart = running.minOfOrNull { it.startTimeMs }
+            val batch = batchStart?.let { start -> downloads.values.filter { it.startTimeMs >= start && it.state != Download.STATE_REMOVING } }.orEmpty()
+            batchTotal = batch.size
+            batchDone = batch.count { it.state == Download.STATE_COMPLETED }
+            val active = running.isNotEmpty()
+            do {
+                withContext(Dispatchers.IO) {
+                    used = runCatching { downloadCache?.cacheSpace ?: 0L }.getOrDefault(0L)
+                    free = runCatching { StatFs(context.filesDir.path).availableBytes }.getOrDefault(0L)
+                }
+                if (active) delay(2_000)
+            } while (active)
         }
     }
-    val fraction = if (used + free > 0) used.toFloat() / (used + free) else 0f
+    val downloading = batchTotal > 0
+    val fraction =
+        when {
+            downloading -> batchDone.toFloat() / batchTotal
+            used + free > 0 -> used.toFloat() / (used + free)
+            else -> 0f
+        }
     val usedText = Formatter.formatShortFileSize(context, used)
     val freeText = Formatter.formatShortFileSize(context, free)
     val percent = (fraction * 100).toInt()
-    val barDescription = stringResource(R.string.baaja_library_storage_desc, usedText, percent)
+    val barDescription =
+        if (downloading) {
+            stringResource(R.string.baaja_downloads_progress_desc, batchDone, batchTotal)
+        } else {
+            stringResource(R.string.baaja_library_storage_desc, usedText, percent)
+        }
     val ink = baajaInk
 
     BaajaHeroCard(containerColor = BaajaTileColors.downloads(), modifier = modifier) {
@@ -275,9 +308,17 @@ internal fun BaajaStorageCard(
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(fraction.coerceIn(if (used > 0) 0.03f else 0f, 1f))
+                    .fillMaxWidth(fraction.coerceIn(if (used > 0 || downloading) 0.03f else 0f, 1f))
                     .clip(RoundedCornerShape(5.dp))
                     .background(MaterialTheme.colorScheme.primary),
+            )
+        }
+        if (downloading) {
+            Text(
+                text = stringResource(R.string.baaja_downloads_progress, batchDone, batchTotal),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
         }
         footer()

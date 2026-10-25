@@ -361,7 +361,7 @@ fun YouTubeSelectionSongMenu(
                                     )
                                 },
                                 onClick = {
-                                    showRemoveDownloadDialog = true
+                                    downloadUtil.cancelUnfinished(songSelection.map { it.id })
                                 },
                             )
                         }

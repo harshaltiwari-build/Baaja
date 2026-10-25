@@ -49,10 +49,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.exoplayer.offline.Download
 import com.metrolist.music.LocalDatabase
-import com.metrolist.music.LocalDownloadUtil
 import com.metrolist.music.R
+import com.metrolist.music.constants.HideExplicitKey
+import com.metrolist.music.constants.HideVideoSongsKey
 import com.metrolist.music.constants.LibraryFilter
 import com.metrolist.music.constants.LibraryViewType
 import com.metrolist.music.ui.component.BaajaTileColors
@@ -62,6 +62,7 @@ import com.metrolist.music.ui.theme.BaajaIconButton
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaOutline
 import com.metrolist.music.ui.theme.baajaSurface
+import com.metrolist.music.utils.rememberPreference
 
 /** Routes owned by other parts of Baaja that the Library links to. */
 internal object BaajaLibraryRoutes {
@@ -288,9 +289,12 @@ internal fun BaajaLibraryCollections(
                     )
                 }
                 if (showDownloaded) {
-                    val downloads by LocalDownloadUtil.current.downloads.collectAsStateWithLifecycle()
-                    val downloadedCount =
-                        remember(downloads) { downloads.values.count { it.state == Download.STATE_COMPLETED } }
+                    val database = LocalDatabase.current
+                    val hideExplicit by rememberPreference(HideExplicitKey, defaultValue = true)
+                    val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = true)
+                    val downloadedCount by remember(database, hideExplicit, hideVideoSongs) {
+                        database.downloadedSongsCount(hideExplicit, hideVideoSongs)
+                    }.collectAsStateWithLifecycle(initialValue = 0)
                     BigTile(
                         title = stringResource(R.string.filter_downloaded),
                         subtitle = pluralStringResource(R.plurals.n_song, downloadedCount, downloadedCount),

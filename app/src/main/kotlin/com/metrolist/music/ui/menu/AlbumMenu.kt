@@ -513,14 +513,7 @@ fun AlbumMenu(
                                         )
                                     },
                                     onClick = {
-                                        songs.forEach { song ->
-                                            DownloadService.sendRemoveDownload(
-                                                context,
-                                                ExoDownloadService::class.java,
-                                                song.id,
-                                                false,
-                                            )
-                                        }
+                                        downloadUtil.cancelUnfinished(songs.map { it.id })
                                     },
                                 )
                             }

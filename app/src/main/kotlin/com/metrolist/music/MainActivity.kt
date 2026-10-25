@@ -117,6 +117,8 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadService
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -163,6 +165,7 @@ import com.metrolist.music.db.entities.SearchHistory
 import com.metrolist.music.extensions.toEnum
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.DownloadUtil
+import com.metrolist.music.playback.ExoDownloadService
 import com.metrolist.music.playback.MusicService
 import com.metrolist.music.playback.MusicService.MusicBinder
 import com.metrolist.music.playback.PlayerConnection
@@ -319,6 +322,12 @@ class MainActivity : FragmentActivity() {
             } catch (e: IllegalStateException) {
                 Timber.w(e, "Failed to start foreground service")
             }
+        }
+
+        // Downloads left waiting when the app was closed don't resume on their own; wake the service for them.
+        if (downloadUtil.downloads.value.values.any { it.state == Download.STATE_QUEUED || it.state == Download.STATE_DOWNLOADING }) {
+            runCatching { DownloadService.start(this, ExoDownloadService::class.java) }
+                .onFailure { Timber.w(it, "Failed to resume downloads") }
         }
 
         // Bind to service - if already bound, this is a no-op but ensures we stay connected
@@ -1103,10 +1112,9 @@ class MainActivity : FragmentActivity() {
                         }
                     }
 
-                    BottomSheetMenu(
-                        state = LocalMenuState.current,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+                    // No alignment here: the sheet sizes to its menu, and ModalBottomSheet already places it
+                    // with an offset from the top, so a bottom alignment pushes short menus off screen.
+                    BottomSheetMenu(state = LocalMenuState.current)
 
                     BottomSheetPage(
                         state = LocalBottomSheetPageState.current,

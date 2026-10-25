@@ -535,7 +535,7 @@ fun SelectionSongMenu(
                                             )
                                         },
                                         onClick = {
-                                            showRemoveDownloadDialog = true
+                                            downloadUtil.cancelUnfinished(songSelection.map { it.song.id })
                                         },
                                     )
                                 }
@@ -954,7 +954,7 @@ fun SelectionMediaMetadataMenu(
                                             )
                                         },
                                         onClick = {
-                                            showRemoveDownloadDialog = true
+                                            downloadUtil.cancelUnfinished(songSelection.map { it.id })
                                         },
                                     )
                                 }

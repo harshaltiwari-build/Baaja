@@ -1673,7 +1673,12 @@ fun HomeScreen(
                 homeSections.forEach { section ->
                     when (section) {
                         HomeSection.SpeedDial -> {
-                            speedDialItems.takeIf { it.isNotEmpty() }?.let { items ->
+                            // The artists row above already shows your artists, so Speed dial keeps only
+                            // the artists you pinned to it yourself.
+                            val pinnedIds = pinnedSpeedDialItems.mapTo(HashSet()) { it.id }
+                            speedDialItems
+                                .filterNot { popularArtistEntries.isNotEmpty() && it is ArtistItem && it.id !in pinnedIds }
+                                .takeIf { it.isNotEmpty() }?.let { items ->
                                 item(key = "speed_dial_title") {
  BaajaEntranceBox(5, entranceKey) {
                                     Row(

@@ -1249,6 +1249,16 @@ interface DatabaseDao {
     @Query("SELECT * FROM song WHERE isDownloaded = 1 AND (isEpisode = 0 OR isEpisode IS NULL) ORDER BY dateDownload")
     fun downloadedSongsByCreateDateAsc(): Flow<List<Song>>
 
+    /** Same songs, and the same explicit/video filters, as the Downloaded screen shows. */
+    @Query(
+        """
+        SELECT COUNT(1) FROM song
+        WHERE isDownloaded = 1 AND (isEpisode = 0 OR isEpisode IS NULL)
+            AND (:hideExplicit = 0 OR explicit = 0) AND (:hideVideoSongs = 0 OR isVideo = 0)
+        """,
+    )
+    fun downloadedSongsCount(hideExplicit: Boolean, hideVideoSongs: Boolean): Flow<Int>
+
     @Transaction
     @Query("SELECT * FROM song WHERE isDownloaded = 1 AND (isEpisode = 0 OR isEpisode IS NULL) ORDER BY title")
     fun downloadedSongsByNameAsc(): Flow<List<Song>>

@@ -80,13 +80,10 @@ fun AnimatedBottomSheet(
     properties: ModalBottomSheetProperties = ModalBottomSheetDefaults.properties,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    // Swap in the new content during composition, not a frame later, so the sheet measures its real
+    // height before it opens. Keep the old content while hiding so it does not blank out mid-animation.
     var lastContent by remember { mutableStateOf(content) }
-
-    LaunchedEffect(content) {
-        if (isVisible) {
-            lastContent = content
-        }
-    }
+    if (isVisible && lastContent !== content) lastContent = content
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
@@ -129,8 +126,7 @@ fun BottomSheetMenu(
     background: Color = MaterialTheme.colorScheme.surface,
 ) {
     val focusManager = LocalFocusManager.current
-    // Open straight to the menu's own height; a half-open step left a tall empty sheet that could be dragged up.
-    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
 
     AnimatedBottomSheet(
         isVisible = state.isVisible,

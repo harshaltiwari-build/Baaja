@@ -475,14 +475,7 @@ fun YouTubeAlbumMenu(
                                         )
                                     },
                                     onClick = {
-                                        album?.songs?.forEach { song ->
-                                            DownloadService.sendRemoveDownload(
-                                                context,
-                                                ExoDownloadService::class.java,
-                                                song.id,
-                                                false,
-                                            )
-                                        }
+                                        downloadUtil.cancelUnfinished(album?.songs.orEmpty().map { it.id })
                                     },
                                 )
                             }

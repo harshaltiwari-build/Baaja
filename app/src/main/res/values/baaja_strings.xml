@@ -342,6 +342,9 @@
     <string name="play_next_desc">Play next in the queue</string>
     <string name="add_to_queue_desc">Add to the end of the queue</string>
     <string name="add_to_library_desc">Save to your library</string>
+    <string name="remove_from_library_desc">Take it out of your library</string>
+    <string name="baaja_downloads_progress">Downloading %1$d of %2$d songs</string>
+    <string name="baaja_downloads_progress_desc">Downloaded %1$d of %2$d songs</string>
     <string name="download_desc">Download for offline playback</string>
     <string name="add_to_playlist_desc">Add to a playlist</string>
     <string name="refetch_desc">Refresh metadata from YouTube Music</string>

@@ -910,16 +910,7 @@ private fun AutoPlaylistHeader(
     val onDownload = {
         when (downloadState) {
             Download.STATE_COMPLETED -> onShowRemoveDownloadDialog()
-            Download.STATE_DOWNLOADING -> {
-                songs.forEach { song ->
-                    DownloadService.sendRemoveDownload(
-                        context,
-                        ExoDownloadService::class.java,
-                        song.song.id,
-                        false,
-                    )
-                }
-            }
+            Download.STATE_DOWNLOADING -> downloadUtil.cancelUnfinished(songs.map { it.song.id })
             else -> songs.forEach { downloadUtil.download(it) }
         }
     }

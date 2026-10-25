@@ -1217,14 +1217,7 @@ fun LocalPlaylistHeader(
                 }
 
                 Download.STATE_DOWNLOADING -> {
-                    songs.forEach { song ->
-                        DownloadService.sendRemoveDownload(
-                            context,
-                            ExoDownloadService::class.java,
-                            song.song.id,
-                            false,
-                        )
-                    }
+                    downloadUtil.cancelUnfinished(songs.map { it.song.id })
                 }
 
                 else -> {

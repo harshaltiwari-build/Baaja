@@ -1,3 +1,22 @@
+---v1.3.2
+# Baaja 1.3.2
+Downloads you can trust, and menus that open every time.
+
+## Downloads
+- The Downloaded bar now shows your download as it happens: "Downloading 61 of 202 songs", and the size goes up live
+- Stopping a playlist download only stops the songs still waiting; songs already downloaded stay
+- Big playlists queue up much faster, so they no longer stall partway
+- Downloads left waiting when the app closed carry on by themselves when you open it again
+- The Downloaded count on Library now matches the number inside Downloaded
+
+## Fixes
+- The ⋮ menu on Liked and Downloaded opens again (it only dimmed the screen before)
+- Song, playlist and selection menus open at the right height instead of jumping up and down
+- "Remove from library" now says "Take it out of your library" underneath
+- Home: the Your mix card lines up properly and the whole card plays your mix when tapped
+- Artist mix tiles on Home are all the same height
+- Speed dial no longer repeats the artists already shown at the top of Home (artists you pin yourself stay)
+
 ---v1.3.1
 # Baaja 1.3.1
 Home, Explore and Library follow your YouTube Music account, plus a round of fixes.

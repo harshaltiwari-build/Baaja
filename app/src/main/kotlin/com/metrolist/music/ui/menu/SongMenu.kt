@@ -769,7 +769,14 @@ fun SongMenu(
                                                 ),
                                         )
                                     },
-                                    description = { Text(text = stringResource(R.string.add_to_library_desc)) },
+                                    description = {
+                                        Text(
+                                            text =
+                                                stringResource(
+                                                    if (song.song.inLibrary == null) R.string.add_to_library_desc else R.string.remove_from_library_desc,
+                                                ),
+                                        )
+                                    },
                                     icon = {
                                         Icon(
                                             painter =

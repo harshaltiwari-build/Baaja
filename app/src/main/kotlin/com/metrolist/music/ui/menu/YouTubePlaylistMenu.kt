@@ -627,7 +627,7 @@ fun YouTubePlaylistMenu(
                                                 )
                                             },
                                             onClick = {
-                                                showRemoveDownloadDialog = true
+                                                downloadUtil.cancelUnfinished(songs.map { it.id })
                                             },
                                         )
                                     }

@@ -245,7 +245,10 @@ fun AlbumScreen(
                             downloadState = downloadState,
                             onClick = {
                                 when (downloadState) {
-                                    Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING -> {
+                                    Download.STATE_QUEUED, Download.STATE_DOWNLOADING ->
+                                        downloadUtil.cancelUnfinished(albumWithSongs.songs.map { it.id })
+
+                                    Download.STATE_COMPLETED -> {
                                         albumWithSongs.songs.forEach { song ->
                                             DownloadService.sendRemoveDownload(
                                                 context,

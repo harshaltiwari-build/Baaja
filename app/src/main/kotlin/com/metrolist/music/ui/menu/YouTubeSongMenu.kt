@@ -533,7 +533,9 @@ fun YouTubeSongMenu(
                             title = {
                                 Text(text = if (librarySong?.song?.inLibrary != null) stringResource(R.string.remove_from_library) else stringResource(R.string.add_to_library))
                             },
-                            description = { Text(text = stringResource(R.string.add_to_library_desc)) },
+                            description = {
+                                Text(text = stringResource(if (librarySong?.song?.inLibrary != null) R.string.remove_from_library_desc else R.string.add_to_library_desc))
+                            },
                             icon = {
                                 Icon(
                                     painter = painterResource(if (librarySong?.song?.inLibrary != null) R.drawable.library_add_check else R.drawable.library_add),

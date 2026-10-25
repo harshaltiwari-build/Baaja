@@ -10,7 +10,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -63,21 +65,23 @@ fun BaajaMixHero(
             .fillMaxWidth()
             .padding(horizontal = BaajaHomeGutter)
             .baajaSurface(ink, BaajaTileColors.lilac(), shape, shadowOffset = 3.dp, borderWidth = 2.5.dp)
+            .clip(shape)
+            .clickable(role = Role.Button, onClick = onPlay)
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
             Modifier
-                .size(104.dp)
+                .size(120.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             repeat(2) { r ->
-                Row(Modifier.weight(1f)) {
+                Row(Modifier.weight(1f).fillMaxWidth()) {
                     repeat(2) { c ->
                         val url = covers.getOrNull(r * 2 + c)
-                        Box(Modifier.weight(1f).fillMaxWidth().height(52.dp).background(BaajaTileColors.sky())) {
+                        Box(Modifier.weight(1f).fillMaxHeight().background(BaajaTileColors.sky())) {
                             if (url != null) {
                                 AsyncImage(url, null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
                             }
@@ -86,7 +90,7 @@ fun BaajaMixHero(
                 }
             }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 stringResource(R.string.baaja_home_made_for_you).uppercase(),
                 fontSize = 12.sp,
@@ -103,10 +107,16 @@ fun BaajaMixHero(
                 artists.take(3).joinToString { it.name },
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            BaajaPillButton(text = stringResource(R.string.baaja_home_play), onClick = onPlay, icon = R.drawable.play, height = 44.dp)
+            BaajaPillButton(
+                text = stringResource(R.string.baaja_home_play),
+                onClick = onPlay,
+                icon = R.drawable.play,
+                height = 44.dp,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
     }
 }
@@ -357,8 +367,11 @@ fun androidx.compose.foundation.lazy.LazyListScope.tasteHome(
         }
         mixes.take(4).chunked(2).forEachIndexed { rowIndex, pair ->
             item(key = "taste_mix_row_$rowIndex") {
+                // Equal heights so a tile with a "New" badge or a longer name doesn't sit taller than its neighbour.
                 Row(
-                    Modifier.padding(start = BaajaHomeGutter, end = BaajaHomeGutter, bottom = 12.dp),
+                    Modifier
+                        .padding(start = BaajaHomeGutter, end = BaajaHomeGutter, bottom = 12.dp)
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     pair.forEachIndexed { col, mix ->
@@ -368,7 +381,7 @@ fun androidx.compose.foundation.lazy.LazyListScope.tasteHome(
                             onClick = mix.onClick,
                             badge = mix.badge,
                             tagline = mix.tagline,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
                     }
                     if (pair.size == 1) androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
