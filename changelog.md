@@ -15,6 +15,8 @@ Better sound, a Home like YouTube Music's, and a calmer look.
 - New "Not interested" in song menus: YouTube Music suggests less like it
 - Home refreshes when you come back after a while, and after signing in or out
 - Search shows trending searches before you type
+- Charts work again: chart playlists (Trending 20, Top 100…), language charts and a ranked Top artists list, like YouTube Music (before, India got "Charts aren't available in your region")
+- New releases matches YouTube Music: the featured playlist, "Albums & singles" in YouTube's order, and music videos when video songs aren't hidden
 
 ## Design
 - Speed dial titles sit on the artwork and fit on two lines
@@ -26,9 +28,14 @@ Better sound, a Home like YouTube Music's, and a calmer look.
 - The Immersive player is gone
 
 ## Fixes
-- Fixed a crash on Home when two artists you listen to share an album
+- Fixed a crash on Home when two artists you listen to share an album, and the same risk in search suggestions
+- A shared song link opened while Baaja is closed now plays that song instead of your old queue
+- Tapping two songs quickly plays the one you tapped last
+- Songs whose best quality is already low are no longer downloaded again on every play
+- Signing out and back in quickly no longer leaves Home on the old account
+- "Not interested" on a liked song removes the like here too
 - Switching from Home to Search no longer jumps
-- The crash screen can open a ready-to-send GitHub report
+- The crash screen can open a ready-to-send GitHub report, with account cookies, tokens, emails and file names blanked out first
 
 ---v1.3.2
 # Baaja 1.3.2

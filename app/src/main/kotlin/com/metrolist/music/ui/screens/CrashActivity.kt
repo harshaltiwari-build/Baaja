@@ -52,6 +52,7 @@ import com.metrolist.music.BuildConfig
 import com.metrolist.music.R
 import com.metrolist.music.ui.theme.BaajaTheme
 import com.metrolist.music.utils.CrashHandler
+import com.metrolist.music.utils.crashIssueUrl
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -78,28 +79,16 @@ class CrashActivity : ComponentActivity() {
         }
     }
     
-    /**
-     * Opens Baaja's bug report form with the crash already filled in. Nothing is sent until the person
-     * reviews it and submits it on GitHub themselves.
-     */
+    /** Opens Baaja's bug report form with the crash filled in (private data blanked out); nothing is sent until the person submits it. */
     private fun reportOnGitHub(crashLog: String) {
-        val error =
-            crashLog.lineSequence()
-                .map { it.trim() }
-                .firstOrNull { it.contains("Exception") || it.contains("Error:") }
-                ?.take(MAX_TITLE_CHARS)
-                ?: getString(R.string.crash_title)
-        val uri =
-            Uri.parse(NEW_ISSUE_URL).buildUpon()
-                .appendQueryParameter("template", "bug_report.yml")
-                .appendQueryParameter("title", "[Crash] $error")
-                .appendQueryParameter("app-version", "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-                .appendQueryParameter("android-version", "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
-                // GitHub refuses very long links; the top of the report holds the device and the failing call.
-                .appendQueryParameter("logs", crashLog.take(MAX_LOG_CHARS))
-                .build()
+        val url =
+            crashIssueUrl(
+                crashLog = crashLog,
+                appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                androidVersion = "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})",
+            )
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, uri))
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE))
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(this, R.string.crash_report_no_browser, Toast.LENGTH_LONG).show()
         }
@@ -237,7 +226,3 @@ fun CrashScreen(
         }
     }
 }
-
-private const val NEW_ISSUE_URL = "https://github.com/harshaltiwari-build/Baaja/issues/new"
-private const val MAX_TITLE_CHARS = 120
-private const val MAX_LOG_CHARS = 5000

@@ -17,7 +17,6 @@ import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertube.models.YTItem
 import com.metrolist.innertube.models.filterExplicit
 import com.metrolist.innertube.models.filterVideoSongs
-import com.metrolist.innertube.pages.ChartsPage
 import com.metrolist.innertube.utils.YouTubeUrlParser
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
@@ -53,14 +52,7 @@ class OnlineSearchSuggestionViewModel
 
         init {
             viewModelScope.launch {
-                val charts = YouTube.getChartsPage().getOrNull()?.sections.orEmpty()
-                trending.value =
-                    (charts.filter { it.chartType == ChartsPage.ChartType.TRENDING } + charts.filter { it.chartType == ChartsPage.ChartType.TOP })
-                        .flatMap { it.items }
-                        .filterIsInstance<SongItem>()
-                        .map { it.title }
-                        .distinct()
-                        .take(8)
+                trending.value = TrendingCache.shared.get()
             }
             viewModelScope.launch {
                 query
@@ -101,12 +93,7 @@ class OnlineSearchSuggestionViewModel
                                     .map { history ->
                                         SearchSuggestionViewState(
                                             history = history,
-                                            suggestions =
-                                                result
-                                                    ?.queries
-                                                    ?.filter { suggestionQuery ->
-                                                        history.none { it.query == suggestionQuery }
-                                                    }.orEmpty(),
+                                            suggestions = suggestionQueries(result?.queries.orEmpty(), history),
                                             items =
                                                 result
                                                     ?.recommendedItems
@@ -177,6 +164,18 @@ class OnlineSearchSuggestionViewModel
                 }
             }
     }
+
+/**
+ * YouTube's typing suggestions minus blanks and recent searches. Each one is a list key on the search
+ * screen, so repeats are dropped: a duplicate key crashes the list.
+ */
+internal fun suggestionQueries(
+    queries: List<String>,
+    history: List<SearchHistory>,
+): List<String> =
+    queries
+        .filter { it.isNotBlank() && history.none { recent -> recent.query == it } }
+        .distinct()
 
 data class SearchSuggestionViewState(
     val history: List<SearchHistory> = emptyList(),

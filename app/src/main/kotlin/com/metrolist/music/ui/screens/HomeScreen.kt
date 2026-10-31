@@ -1151,8 +1151,7 @@ fun HomeScreen(
                     onClick = { index -> playSongs(artist.name, songs, index) },
                 )
             }
-        // Artists who share an album return the same one; a repeated id crashes the row.
-        val releaseAlbums = historyArtists.flatMap { tasteAlbums[it.id].orEmpty().take(1) }.distinctBy { it.id }.take(6)
+        val releaseAlbums = newReleaseAlbums(historyArtists.map { it.id }, tasteAlbums)
         val releasesShelf =
             releaseAlbums.takeIf { it.isNotEmpty() }?.let { albums ->
                 TasteShelf(
@@ -2737,7 +2736,21 @@ private val HomeSongRowHeight = 84.dp
 private val HomeYtRowHeight = 76.dp
 
 /** Drops items already on Speed dial's first page, unless that would leave the row too thin to be useful. */
-private fun <T> List<T>.withoutSpeedDial(speedDialIds: Set<String>, id: (T) -> String?): List<T> {
+internal fun <T> List<T>.withoutSpeedDial(speedDialIds: Set<String>, id: (T) -> String?): List<T> {
     val fresh = filterNot { item -> id(item)?.let { it in speedDialIds } == true }
     return if (fresh.size >= 8 || fresh.size == size) fresh else this
 }
+
+/**
+ * "New from artists you play": each artist's newest album, in artist order, at most six. Artists who
+ * share an album return the same one, and a repeated id in the row's keys crashes it, so each album
+ * appears once.
+ */
+internal fun newReleaseAlbums(
+    artistIds: List<String>,
+    albumsByArtist: Map<String, List<AlbumItem>>,
+): List<AlbumItem> =
+    artistIds
+        .mapNotNull { albumsByArtist[it]?.firstOrNull() }
+        .distinctBy { it.id }
+        .take(6)

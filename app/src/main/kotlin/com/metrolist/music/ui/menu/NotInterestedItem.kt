@@ -10,9 +10,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.utils.parseCookieString
+import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.InnerTubeCookieKey
+import com.metrolist.music.db.entities.SongEntity
 import com.metrolist.music.ui.component.Material3MenuItemData
 import com.metrolist.music.utils.rememberPreference
 import com.metrolist.music.utils.reportException
@@ -30,9 +32,10 @@ fun rememberNotInterestedItem(
     onDismiss: () -> Unit,
 ): Material3MenuItemData? {
     val context = LocalContext.current
+    val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current
     val cookie by rememberPreference(InnerTubeCookieKey, "")
-    if ("SAPISID" !in parseCookieString(cookie)) return null
+    if (!isSignedIn(cookie)) return null
     return Material3MenuItemData(
         title = { Text(stringResource(R.string.baaja_not_interested)) },
         description = { Text(stringResource(R.string.baaja_not_interested_desc)) },
@@ -40,6 +43,12 @@ fun rememberNotInterestedItem(
         onClick = {
             CoroutineScope(Dispatchers.IO).launch {
                 YouTube.dislikeVideo(videoId).onFailure(::reportException)
+            }
+            // YouTube drops the like on a thumbs down; mirror that here without syncing a separate unlike.
+            database.query {
+                getSongByIdBlocking(videoId)?.song?.let { song ->
+                    songAfterNotInterested(song).takeIf { it !== song }?.let(::update)
+                }
             }
             playerConnection?.player?.let { player ->
                 if (player.currentMediaItem?.mediaId == videoId && player.hasNextMediaItem()) player.seekToNext()
@@ -49,3 +58,10 @@ fun rememberNotInterestedItem(
         },
     )
 }
+
+internal fun isSignedIn(cookie: String?): Boolean =
+    !cookie.isNullOrEmpty() && !parseCookieString(cookie)["SAPISID"].isNullOrEmpty()
+
+/** The song as stored after "Not interested": no longer liked, everything else unchanged. */
+internal fun songAfterNotInterested(song: SongEntity): SongEntity =
+    if (song.liked) song.copy(liked = false, likedDate = null) else song

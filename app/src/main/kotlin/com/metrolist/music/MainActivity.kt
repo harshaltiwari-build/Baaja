@@ -208,7 +208,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -227,6 +230,7 @@ private data class AvailableUpdate(
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     companion object {
+        private const val PLAYER_CONNECT_TIMEOUT_MS = 10_000L
         private const val ACTION_SEARCH = "com.baaja.music.action.SEARCH"
         private const val ACTION_LIBRARY = "com.baaja.music.action.LIBRARY"
         const val ACTION_RECOGNITION = "com.baaja.music.action.RECOGNITION"
@@ -1263,6 +1267,15 @@ class MainActivity : FragmentActivity() {
 
 
 
+    /**
+     * The player service binds a moment after a cold start; a link opened then used to find no player and
+     * was silently dropped. Waits up to [PLAYER_CONNECT_TIMEOUT_MS] for it instead.
+     */
+    private suspend fun awaitPlayerConnection(): PlayerConnection? =
+        playerConnection ?: withTimeoutOrNull(PLAYER_CONNECT_TIMEOUT_MS) {
+            snapshotFlow { playerConnectionSnapshot }.filterNotNull().first()
+        }
+
     private fun handleDeepLinkIntent(
         intent: Intent,
         navController: NavHostController,
@@ -1343,7 +1356,7 @@ class MainActivity : FragmentActivity() {
                             .queue(listOf(videoId), playlistId)
                             .onSuccess { queue ->
                                 withContext(Dispatchers.Main) {
-                                    playerConnection?.playQueue(
+                                    awaitPlayerConnection()?.playQueue(
                                         YouTubeQueue(
                                             WatchEndpoint(videoId = queue.firstOrNull()?.id, playlistId = playlistId),
                                             queue.firstOrNull()?.toMediaMetadata(),
@@ -1361,7 +1374,7 @@ class MainActivity : FragmentActivity() {
                             .onSuccess { queue ->
                                 val firstItem = queue.firstOrNull()
                                 withContext(Dispatchers.Main) {
-                                    playerConnection?.playQueue(
+                                    awaitPlayerConnection()?.playQueue(
                                         YouTubeQueue(
                                             WatchEndpoint(videoId = firstItem?.id, playlistId = playlistId),
                                             firstItem?.toMediaMetadata(),

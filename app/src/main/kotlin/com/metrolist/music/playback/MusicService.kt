@@ -491,6 +491,7 @@ class MusicService :
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     private val songUrlCache = StreamUrlCache()
+    private val cachedStreamUpgrader = CachedStreamUpgrader()
 
     // Tracks mediaIds for which a recoverSong() coroutine is currently in flight.
     //
@@ -1691,6 +1692,9 @@ class MusicService :
                         .filterVideoSongs(dataStore.get(HideVideoSongsKey, true))
                 }
             if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
+            // A newer queue was asked for while this one loaded (a link opened during the start-up
+            // restore, or two songs tapped quickly): the newest request wins, not the slowest.
+            if (currentQueue !== queue) return@launch
             if (initialStatus.title != null) {
                 queueTitle = initialStatus.title
             }
@@ -3438,14 +3442,16 @@ class MusicService :
                     return@Factory dataSpec
                 }
 
-                // A song first played on a data-saving stream stays cached at that bitrate; refetch it once
+                // A song first played on a data-saving stream stays cached at that quality; refetch it once
                 // the user wants better sound, otherwise High keeps replaying the low-quality copy.
-                if (dataSpec.position == 0L &&
-                    storedFormat != null &&
-                    storedFormat.bitrate < LOW_QUALITY_BITRATE &&
-                    !InnerTubeXPlayer.prefersLowQuality(audioQuality, mobileAudioQuality, connectivityManager)
+                if (cachedStreamUpgrader.shouldUpgrade(
+                        mediaId = mediaId,
+                        position = dataSpec.position,
+                        storedItag = storedFormat?.itag,
+                        prefersLowQuality = InnerTubeXPlayer.prefersLowQuality(audioQuality, mobileAudioQuality, connectivityManager),
+                    )
                 ) {
-                    Timber.tag(TAG).i("UPGRADING low-quality cache for $mediaId (${storedFormat.bitrate} bps)")
+                    Timber.tag(TAG).i("UPGRADING low-quality cache for $mediaId (itag ${storedFormat?.itag})")
                     playerCache.removeResource(mediaId)
                     songUrlCache.invalidate(mediaId)
                 } else if (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, requiredLength)) {
@@ -4563,7 +4569,6 @@ class MusicService :
         const val NOTIFICATION_ID = 888
         const val ERROR_CODE_NO_STREAM = 1000001
         const val CHUNK_LENGTH = 512 * 1024L
-        private const val LOW_QUALITY_BITRATE = 100_000
         const val PERSISTENT_QUEUE_FILE = "persistent_queue.data"
         const val PERSISTENT_AUTOMIX_FILE = "persistent_automix.data"
         const val PERSISTENT_PLAYER_STATE_FILE = "persistent_player_state.data"

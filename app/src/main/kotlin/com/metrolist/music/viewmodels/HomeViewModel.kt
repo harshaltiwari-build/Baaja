@@ -46,6 +46,7 @@ import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
+import kotlinx.coroutines.plus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +76,23 @@ data class CommunityPlaylistItem(
     val songs: List<SongItem>
 )
 
+/**
+ * Takes YouTube Music's personal Speed dial row out of its Home feed. YouTube labels that row with the
+ * account name, so only an exact (case- and space-insensitive) match counts, never a partial one.
+ */
+internal fun splitYouTubeSpeedDial(
+    sections: List<HomePage.Section>,
+    accountName: String,
+    signedIn: Boolean,
+): Pair<List<YTItem>, List<HomePage.Section>> {
+    val name = accountName.normalizedLabel()
+    if (!signedIn || name.isEmpty()) return emptyList<YTItem>() to sections
+    val (personal, rest) = sections.partition { it.label?.normalizedLabel() == name }
+    return personal.flatMap { it.items } to rest
+}
+
+private fun String.normalizedLabel() = trim().replace(Regex("\\s+"), " ").lowercase()
+
 internal fun buildSpeedDialItems(
     pinned: List<YTItem>,
     keepListening: List<YTItem>,
@@ -97,7 +115,7 @@ class HomeViewModel @Inject constructor(
     val isLoading = MutableStateFlow(false)
     /** Bumped on every refresh so Home's own account-based rows reload alongside the feed. */
     val refreshCount = MutableStateFlow(0)
-    @Volatile private var lastLoadedAt = 0L
+    private val homeRefresh = HomeRefresh()
     val isRandomizing = MutableStateFlow(false)
 
     private val quickPicksEnum = context.dataStore.data.map {
@@ -428,7 +446,7 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun load() {
         isLoading.value = true
-        lastLoadedAt = System.currentTimeMillis()
+        homeRefresh.markLoaded()
         val hideExplicit = context.dataStore.get(HideExplicitKey, true)
         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
         val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
@@ -470,11 +488,9 @@ class HomeViewModel @Inject constructor(
                             .filterYoutubeShorts(hideYoutubeShorts)
                         if (filtered.isEmpty()) null else section.copy(items = filtered)
                     }
-                    // YouTube Music labels its personal Speed dial with the account name.
-                    val accountLabel = context.dataStore.get(AccountNameKey, "")
                     val (personal, rest) =
-                        sections.partition { YouTube.cookie != null && accountLabel.isNotBlank() && it.label.equals(accountLabel, ignoreCase = true) }
-                    youTubeSpeedDial.value = personal.flatMap { it.items }
+                        splitYouTubeSpeedDial(sections, context.dataStore.get(AccountNameKey, ""), signedIn = YouTube.cookie != null)
+                    youTubeSpeedDial.value = personal
                     homePage.value = page.copy(sections = rest)
                 }.onFailure { reportException(it) }
             }
@@ -682,10 +698,13 @@ class HomeViewModel @Inject constructor(
         (this as List<T?>).filterNotNull()
 
     fun refresh() {
-        if (isRefreshing.value) return
-        isRefreshing.value = true
-        refreshCount.value++
-        viewModelScope.launch(Dispatchers.IO) {
+        homeRefresh.run(
+            scope = viewModelScope + Dispatchers.IO,
+            onStart = { isRefreshing.value = true },
+            onIdle = { isRefreshing.value = false },
+            onError = ::reportException,
+        ) {
+            refreshCount.value++
             // If a chip is selected, reload the chip's content instead of the default home
             val currentChip = selectedChip.value
             if (currentChip != null) {
@@ -704,7 +723,6 @@ class HomeViewModel @Inject constructor(
             } else {
                 load()
             }
-            isRefreshing.value = false
         }
         // Run sync when user manually refreshes
         viewModelScope.launch(Dispatchers.IO) {
@@ -731,15 +749,13 @@ class HomeViewModel @Inject constructor(
         }
 
         // Listen for cookie changes and reload account data
-        var lastCookie: String? = null
         viewModelScope.launch(Dispatchers.IO) {
             context.dataStore.data
                 .map { it[InnerTubeCookieKey] to it[AccountNameKey] }
                 .distinctUntilChanged()
                 .collect { (cookie, savedAccountName) ->
                     // Signing in or out changes the whole feed, not just the account chip.
-                    val accountChanged = lastLoadedAt > 0 && lastCookie != null && cookie.orEmpty() != lastCookie
-                    lastCookie = cookie.orEmpty()
+                    val accountChanged = homeRefresh.accountChanged(cookie)
                     if (!cookie.isNullOrEmpty()) {
                         YouTube.cookie = cookie
                         accountName.value = savedAccountName.orEmpty().ifBlank { "Guest" }
@@ -770,11 +786,7 @@ class HomeViewModel @Inject constructor(
 
     /** Reloads Home when the app comes back after a while, like YouTube Music does. */
     fun refreshIfStale() {
-        if (lastLoadedAt > 0 && System.currentTimeMillis() - lastLoadedAt > HOME_STALE_MS) refresh()
-    }
-
-    private companion object {
-        const val HOME_STALE_MS = 30 * 60 * 1000L
+        if (homeRefresh.isStale()) refresh()
     }
 
     fun loadHomeData() {

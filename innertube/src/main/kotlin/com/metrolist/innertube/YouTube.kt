@@ -52,6 +52,7 @@ import com.metrolist.innertube.pages.ChartsPage
 import com.metrolist.innertube.pages.ExplorePage
 import com.metrolist.innertube.pages.HistoryPage
 import com.metrolist.innertube.pages.HomePage
+import com.metrolist.innertube.pages.NewReleasesPage
 import com.metrolist.innertube.pages.LibraryContinuationPage
 import com.metrolist.innertube.pages.LibraryPage
 import com.metrolist.innertube.pages.MoodAndGenres
@@ -1656,6 +1657,42 @@ object YouTube {
             )
         }
 
+    suspend fun newReleasesPage(): Result<NewReleasesPage> =
+        runCatching { parseNewReleasesPage(innerTube.browse(WEB_REMIX, browseId = "FEmusic_new_releases").body<BrowseResponse>()) }
+
+    /**
+     * Reads the New releases page the YouTube Music app shows. Rows are told apart by what they hold rather
+     * than by their titles, which are translated.
+     */
+    internal fun parseNewReleasesPage(response: BrowseResponse): NewReleasesPage {
+        val contents =
+            response.contents
+                ?.singleColumnBrowseResultsRenderer
+                ?.tabs
+                ?.firstOrNull()
+                ?.tabRenderer
+                ?.content
+                ?.sectionListRenderer
+                ?.contents
+                .orEmpty()
+        val featured =
+            contents
+                .flatMap { it.gridRenderer?.items.orEmpty() }
+                .mapNotNull { it.musicTwoRowItemRenderer?.let(HomePage.Section::fromMusicTwoRowItemRenderer) as? PlaylistItem }
+        val rows =
+            contents.mapNotNull { content ->
+                content.musicCarouselShelfRenderer?.contents?.mapNotNull { item ->
+                    item.musicTwoRowItemRenderer?.let { convertMusicTwoRowItem(it) ?: HomePage.Section.fromMusicTwoRowItemRenderer(it) }
+                }
+            }
+        return NewReleasesPage(
+            featured = featured.distinctBy { it.id },
+            albums = rows.firstOrNull { row -> row.any { it is AlbumItem } }?.filterIsInstance<AlbumItem>()?.distinctBy { it.id }.orEmpty(),
+            // The videos row mixes plain music videos with other kinds of item; only the playable songs are kept.
+            videos = rows.firstOrNull { row -> row.none { it is AlbumItem } && row.any { it is SongItem } }?.filterIsInstance<SongItem>()?.distinctBy { it.id }.orEmpty(),
+        )
+    }
+
     suspend fun newReleaseAlbums(): Result<List<AlbumItem>> =
         runCatching {
             val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_new_releases_albums").body<BrowseResponse>()
@@ -1938,105 +1975,149 @@ object YouTube {
 
     suspend fun getChartsPage(continuation: String? = null): Result<ChartsPage> =
         runCatching {
-            val response =
+            parseChartsPage(
                 innerTube
                     .browse(
                         client = WEB_REMIX,
                         browseId = "FEmusic_charts",
                         params = "ggMGCgQIgAQ%3D",
                         continuation = continuation,
-                    ).body<BrowseResponse>()
+                    ).body<BrowseResponse>(),
+            )
+        }
 
-            val sections = mutableListOf<ChartsPage.ChartSection>()
+    /**
+     * Reads a Charts page. Since late 2026 YouTube sends charts as rows of chart playlists (Trending 20,
+     * Top 100…) and a ranked Top artists list rather than song lists; all three kinds are kept.
+     */
+    internal fun parseChartsPage(response: BrowseResponse): ChartsPage {
+        val sections = mutableListOf<ChartsPage.ChartSection>()
 
-            response.contents
-                ?.singleColumnBrowseResultsRenderer
-                ?.tabs
-                ?.firstOrNull()
-                ?.tabRenderer
-                ?.content
-                ?.sectionListRenderer
-                ?.contents
-                ?.forEach { content ->
+        response.contents
+            ?.singleColumnBrowseResultsRenderer
+            ?.tabs
+            ?.firstOrNull()
+            ?.tabRenderer
+            ?.content
+            ?.sectionListRenderer
+            ?.contents
+            ?.forEach { content ->
 
-                    content.musicCarouselShelfRenderer?.let { renderer ->
-                        val title =
-                            renderer.header
-                                ?.musicCarouselShelfBasicHeaderRenderer
-                                ?.title
-                                ?.runs
-                                ?.firstOrNull()
-                                ?.text
-                                ?: return@forEach
+                content.musicCarouselShelfRenderer?.let { renderer ->
+                    val title =
+                        renderer.header
+                            ?.musicCarouselShelfBasicHeaderRenderer
+                            ?.title
+                            ?.runs
+                            ?.firstOrNull()
+                            ?.text
+                            ?: return@forEach
 
-                        val items =
-                            renderer.contents
-                                .mapNotNull { item ->
-                                    when {
-                                        item.musicResponsiveListItemRenderer != null -> {
-                                            convertToChartItem(item.musicResponsiveListItemRenderer)
-                                        }
-
-                                        item.musicTwoRowItemRenderer != null -> {
-                                            convertMusicTwoRowItem(item.musicTwoRowItemRenderer)
-                                        }
-
-                                        else -> {
-                                            null
-                                        }
+                    val items =
+                        renderer.contents
+                            .mapNotNull { item ->
+                                when {
+                                    item.musicResponsiveListItemRenderer != null -> {
+                                        convertToChartItem(item.musicResponsiveListItemRenderer)
+                                            ?: convertChartArtist(item.musicResponsiveListItemRenderer)
                                     }
-                                }.filterNotNull()
 
-                        if (items.isNotEmpty()) {
-                            sections.add(
-                                ChartsPage.ChartSection(
-                                    title = title,
-                                    items = items,
-                                    chartType = determineChartType(title),
-                                ),
-                            )
-                        }
-                    }
-
-                    content.gridRenderer?.let { renderer ->
-                        val title =
-                            renderer.header
-                                ?.gridHeaderRenderer
-                                ?.title
-                                ?.runs
-                                ?.firstOrNull()
-                                ?.text
-                                ?: return@let
-
-                        val items =
-                            renderer.items
-                                .mapNotNull { item ->
-                                    item.musicTwoRowItemRenderer?.let { renderer ->
-                                        convertMusicTwoRowItem(renderer)
+                                    item.musicTwoRowItemRenderer != null -> {
+                                        convertMusicTwoRowItem(item.musicTwoRowItemRenderer)
+                                            ?: HomePage.Section.fromMusicTwoRowItemRenderer(item.musicTwoRowItemRenderer)
                                     }
-                                }.filterNotNull()
 
-                        if (items.isNotEmpty()) {
-                            sections.add(
-                                ChartsPage.ChartSection(
-                                    title = title,
-                                    items = items,
-                                    chartType = ChartsPage.ChartType.NEW_RELEASES,
-                                ),
-                            )
-                        }
+                                    else -> {
+                                        null
+                                    }
+                                }
+                            }.filterNotNull()
+
+                    if (items.isNotEmpty()) {
+                        sections.add(
+                            ChartsPage.ChartSection(
+                                title = title,
+                                items = items,
+                                chartType = chartTypeOf(title, items),
+                            ),
+                        )
                     }
                 }
 
-            ChartsPage(
-                sections = sections,
-                continuation =
-                    response.continuationContents
-                        ?.sectionListContinuation
-                        ?.continuations
-                        ?.getContinuation(),
-            )
+                content.gridRenderer?.let { renderer ->
+                    val title =
+                        renderer.header
+                            ?.gridHeaderRenderer
+                            ?.title
+                            ?.runs
+                            ?.firstOrNull()
+                            ?.text
+                            ?: return@let
+
+                    val items =
+                        renderer.items
+                            .mapNotNull { item ->
+                                item.musicTwoRowItemRenderer?.let { renderer ->
+                                    convertMusicTwoRowItem(renderer)
+                                }
+                            }.filterNotNull()
+
+                    if (items.isNotEmpty()) {
+                        sections.add(
+                            ChartsPage.ChartSection(
+                                title = title,
+                                items = items,
+                                chartType = ChartsPage.ChartType.NEW_RELEASES,
+                            ),
+                        )
+                    }
+                }
+            }
+
+        return ChartsPage(
+            sections = sections,
+            continuation =
+                response.continuationContents
+                    ?.sectionListContinuation
+                    ?.continuations
+                    ?.getContinuation(),
+        )
+    }
+
+    private fun chartTypeOf(
+        title: String,
+        items: List<YTItem>,
+    ): ChartsPage.ChartType =
+        when {
+            items.all { it is PlaylistItem } -> ChartsPage.ChartType.PLAYLISTS
+            items.all { it is ArtistItem } -> ChartsPage.ChartType.ARTISTS
+            else -> determineChartType(title)
         }
+
+    /** A Top artists row: name, subscribers and the rank in the index column. */
+    private fun convertChartArtist(renderer: MusicResponsiveListItemRenderer): ArtistItem? {
+        if (!renderer.isArtist) return null
+        val id = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null
+        val columns = renderer.flexColumns.map { it.musicResponsiveListItemFlexColumnRenderer.text?.runs?.joinToString("") { run -> run.text } }
+        val name = columns.getOrNull(0)?.takeIf { it.isNotBlank() } ?: return null
+        return ArtistItem(
+            id = id,
+            title = name,
+            thumbnail = renderer.thumbnail?.getThumbnailUrl(),
+            shuffleEndpoint = null,
+            radioEndpoint = null,
+            chartPosition =
+                renderer.customIndexColumn
+                    ?.musicCustomIndexColumnRenderer
+                    ?.text
+                    ?.runs
+                    ?.firstOrNull()
+                    ?.text
+                    ?.trim()
+                    ?.toIntOrNull(),
+            subscriberText = columns.getOrNull(1)?.takeIf { it.isNotBlank() },
+        )
+    }
 
     private fun determineChartType(title: String): ChartsPage.ChartType =
         when {

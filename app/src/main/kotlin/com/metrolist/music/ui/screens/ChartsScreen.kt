@@ -81,6 +81,11 @@ import com.metrolist.music.ui.component.home.BaajaBrowseTopBar
 import com.metrolist.music.ui.component.home.BaajaHomeSectionTitle
 import com.metrolist.music.ui.component.home.BaajaMoreButton
 import com.metrolist.music.ui.component.home.BaajaYouTubeRow
+import com.metrolist.music.ui.component.home.BaajaChartPlaylistRow
+import com.metrolist.music.ui.component.home.BaajaChartArtistList
+import com.metrolist.innertube.pages.ChartsPage
+import com.metrolist.innertube.models.PlaylistItem
+import com.metrolist.innertube.models.ArtistItem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -239,7 +244,27 @@ fun ChartsScreen(
                                 modifier = Modifier.animateItem(),
                             )
                         }
-                        item(key = "section_content_${sectionIndex}_${section.title}") {
+                        when (section.chartType) {
+                            // YouTube now sends charts as rows of chart playlists and a ranked artist list.
+                            ChartsPage.ChartType.PLAYLISTS ->
+                                item(key = "section_content_${sectionIndex}_${section.title}") {
+                                    BaajaChartPlaylistRow(
+                                        playlists = section.items.filterIsInstance<PlaylistItem>().distinctBy { it.id },
+                                        onOpen = { navController.navigate("online_playlist/${it.id}") },
+                                        modifier = Modifier.animateItem(),
+                                    )
+                                }
+
+                            ChartsPage.ChartType.ARTISTS ->
+                                item(key = "section_content_${sectionIndex}_${section.title}") {
+                                    BaajaChartArtistList(
+                                        artists = section.items.filterIsInstance<ArtistItem>().distinctBy { it.id }.take(TOP_ARTISTS_SHOWN),
+                                        onOpen = { navController.navigate("artist/${it.id}") },
+                                        modifier = Modifier.animateItem(),
+                                    )
+                                }
+
+                            else -> item(key = "section_content_${sectionIndex}_${section.title}") {
                             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                                 val horizontalLazyGridItemWidthFactor = if (maxWidth * 0.475f >= 320.dp) 0.475f else 0.9f
                                 val horizontalLazyGridItemWidth = maxWidth * horizontalLazyGridItemWidthFactor
@@ -323,6 +348,7 @@ fun ChartsScreen(
                                 }
                             }
                         }
+                        }
                     }
 
                     chartsPage?.sections?.find { it.title == "Top music videos" }?.let { topVideosSection ->
@@ -386,3 +412,5 @@ fun ChartsScreen(
 }
 
 private val ChartRowHeight = 76.dp
+
+private const val TOP_ARTISTS_SHOWN = 20

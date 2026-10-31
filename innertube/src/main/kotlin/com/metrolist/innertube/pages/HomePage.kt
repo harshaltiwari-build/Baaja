@@ -166,7 +166,7 @@ data class HomePage(
                 )
             }
 
-            private fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): YTItem? {
+            internal fun fromMusicTwoRowItemRenderer(renderer: MusicTwoRowItemRenderer): YTItem? {
                 // Debug logging for type detection
                 val title = renderer.title.runs?.firstOrNull()?.text ?: "unknown"
                 val pageType = renderer.navigationEndpoint.browseEndpoint

@@ -36,6 +36,10 @@ android {
     namespace = "com.metrolist.music"
     compileSdk = 37
 
+    // Lets Robolectric screen tests resolve strings, drawables, themes and the test host activity.
+    testOptions.unitTests.isIncludeAndroidResources = true
+
+
     defaultConfig {
         applicationId = applicationIdOverride ?: baseApplicationId
         minSdk = 26
@@ -314,4 +318,8 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.ktor.client.mock)
+    // Compose screen tests run on the JVM through Robolectric; the manifest only adds a test host
+    // activity to debug builds.
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

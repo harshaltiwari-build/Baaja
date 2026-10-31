@@ -654,7 +654,7 @@ private fun NewMiniPlayerSongInfo(
 // ============================================================================
 
 @Composable
-private fun NextButton(
+internal fun NextButton(
     enabled: Boolean,
     outlineColor: Color,
     onSurfaceColor: Color,

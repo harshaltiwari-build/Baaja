@@ -770,6 +770,8 @@
     <string name="baaja_player_stream_lossless">%1$s · %2$d-bit · %3$s kHz</string>
     <string name="baaja_player_stream_rate">%1$s · %2$s kHz</string>
     <string name="baaja_search_trending">Trending searches</string>
+    <string name="baaja_new_releases_albums">Albums &amp; singles</string>
+    <string name="baaja_new_releases_videos">Music videos</string>
     <string name="baaja_together_settings">Listen together settings</string>
     <string name="baaja_library_liked_empty">Tap ♡ on any song</string>
     <string name="baaja_library_downloaded_empty">For offline play</string>

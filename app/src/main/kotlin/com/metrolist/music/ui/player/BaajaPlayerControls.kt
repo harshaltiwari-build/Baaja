@@ -76,18 +76,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.R
-import com.metrolist.music.db.entities.FormatEntity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.media3.common.C
-import androidx.media3.common.Format
-import androidx.media3.common.MimeTypes
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import java.util.Locale
 import com.metrolist.music.constants.SliderStyle
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaSurface
@@ -262,10 +259,15 @@ internal fun BaajaStreamQualityText(
 ) {
     val database = LocalDatabase.current
     val format by remember(mediaId) { database.format(mediaId) }.collectAsState(initial = null)
+    // Cleared on every song change so the label never shows the previous song's decoder format.
     val decoded = remember(player) { mutableStateOf(player.audioFormat) }
     DisposableEffect(player) {
         val listener =
             object : Player.Listener {
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    decoded.value = null
+                }
+
                 override fun onTracksChanged(tracks: Tracks) {
                     decoded.value = player.audioFormat
                 }
@@ -273,61 +275,11 @@ internal fun BaajaStreamQualityText(
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
     }
-    val label =
-        format?.takeIf { it.bitrate > 0 }?.let { stringResource(R.string.baaja_player_stream_quality, it.codecLabel(), it.bitrate / 1000) }
-            ?: decoded.value?.takeIf { format == null }?.let { fileQualityLabel(it) }
-    Text(
-        text = label.orEmpty(),
-        color = color,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.SemiBold,
-        style = TextStyle(fontFeatureSettings = "tnum"),
-        maxLines = 1,
-        modifier = modifier,
-    )
+    val quality =
+        format?.let { streamQuality(it.codecs, it.mimeType, it.bitrate) }
+            ?: decoded.value?.takeIf { format == null && player.currentMediaItem?.mediaId == mediaId }?.let(::fileQuality)
+    StreamQualityText(quality, color, modifier)
 }
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-private fun fileQualityLabel(format: Format): String? {
-    val codec =
-        when (format.sampleMimeType) {
-            MimeTypes.AUDIO_FLAC -> "FLAC"
-            MimeTypes.AUDIO_ALAC -> "ALAC"
-            MimeTypes.AUDIO_RAW, MimeTypes.AUDIO_WAV -> "WAV"
-            MimeTypes.AUDIO_MPEG -> "MP3"
-            MimeTypes.AUDIO_AAC -> "AAC"
-            MimeTypes.AUDIO_OPUS -> "OPUS"
-            MimeTypes.AUDIO_VORBIS -> "VORBIS"
-            else -> format.sampleMimeType?.substringAfter('/')?.uppercase() ?: return null
-        }
-    val bitDepth =
-        when (format.pcmEncoding) {
-            C.ENCODING_PCM_16BIT -> 16
-            C.ENCODING_PCM_24BIT -> 24
-            C.ENCODING_PCM_32BIT, C.ENCODING_PCM_FLOAT -> 32
-            else -> null
-        }
-    val khz =
-        format.sampleRate.takeIf { it != Format.NO_VALUE }?.let {
-            if (it % 1000 == 0) (it / 1000).toString() else String.format(Locale.US, "%.1f", it / 1000f)
-        }
-    val bitrate = (if (format.averageBitrate != Format.NO_VALUE) format.averageBitrate else format.bitrate).takeIf { it > 0 }
-    return when {
-        bitDepth != null && khz != null -> stringResource(R.string.baaja_player_stream_lossless, codec, bitDepth, khz)
-        bitrate != null -> stringResource(R.string.baaja_player_stream_quality, codec, bitrate / 1000)
-        khz != null -> stringResource(R.string.baaja_player_stream_rate, codec, khz)
-        else -> codec
-    }
-}
-
-private fun FormatEntity.codecLabel(): String =
-    when {
-        codecs.contains("opus", ignoreCase = true) -> "OPUS"
-        codecs.startsWith("mp4a", ignoreCase = true) -> "AAC"
-        codecs.contains("flac", ignoreCase = true) -> "FLAC"
-        else -> mimeType.substringAfter('/').uppercase()
-    }
 
 /** The big round accent play/pause button with an ink outline and hard shadow. */
 @Composable
