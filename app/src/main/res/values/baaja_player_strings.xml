@@ -4,7 +4,6 @@
     <string name="baaja_player_close">Close player</string>
     <string name="baaja_player_behind_the_song">Behind the song</string>
     <string name="baaja_player_behind_the_song_desc">Facts and your listening history for this track</string>
-    <string name="baaja_player_open_immersive">Open immersive player</string>
     <string name="baaja_player_repeat">Repeat</string>
     <string name="baaja_player_repeat_one">Repeat one</string>
     <string name="baaja_player_more">More options</string>
@@ -16,15 +15,6 @@
     <!-- Lyric preview strip -->
     <string name="baaja_player_show_lyric_preview">Show lyric preview on player</string>
     <string name="baaja_player_show_lyric_preview_desc">Show the current synced lyric line under the artwork</string>
-
-    <!-- Immersive -->
-    <string name="baaja_player_immersive">Immersive</string>
-    <string name="baaja_player_immersive_player">Immersive player</string>
-    <string name="baaja_player_immersive_player_desc">Open the player with full-screen artwork and a spinning record</string>
-    <string name="baaja_player_exit_immersive">Exit immersive view</string>
-    <string name="baaja_player_show_controls">Show controls</string>
-    <string name="baaja_player_hide_controls">Hide controls</string>
-    <string name="baaja_player_tap_record_hint">Tap the record to show controls</string>
 
     <!-- Lyrics screen -->
     <string name="baaja_player_close_lyrics">Back to player</string>

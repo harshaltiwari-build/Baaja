@@ -139,8 +139,8 @@
     <string name="sound_balance_right">%1$d%% right</string>
     <string name="sound_bass">Bass</string>
     <string name="sound_treble">Treble</string>
-    <string name="sound_reset">Reset sound shaping</string>
-    <string name="sound_reset_desc">Return width, balance, bass and treble to normal</string>
+    <string name="sound_reset">Reset sound to default</string>
+    <string name="sound_reset_desc">Turn off the equalizer and return width, balance, bass and treble to normal</string>
     <string name="skip_silence_instant">Instantly skip silence</string>
     <string name="skip_silence_instant_desc">Jump ahead during silent moments instead of speeding up playback</string>
 
@@ -534,6 +534,8 @@
     <string name="crash_title">App crashed</string>
     <string name="crash_description">An unexpected error occurred. Please share the crash report to help us fix the issue</string>
     <string name="crash_share_logs">Share logs</string>
+    <string name="crash_report_github">Report this crash on GitHub</string>
+    <string name="crash_report_no_browser">No browser found. Use Share logs instead.</string>
     <string name="crash_share_title">Share crash report</string>
     <string name="crash_report_subject">Baaja crash report</string>
     <string name="crash_close">Close</string>
@@ -764,4 +766,14 @@
     <string name="baaja_home_tag_likes">FROM YOUR LIKES</string>
     <string name="baaja_explore_from_follows">New from your artists</string>
     <string name="baaja_sd_surprise_hint">Play something new</string>
+    <string name="baaja_player_stream_quality">%1$s · %2$d kbps</string>
+    <string name="baaja_player_stream_lossless">%1$s · %2$d-bit · %3$s kHz</string>
+    <string name="baaja_player_stream_rate">%1$s · %2$s kHz</string>
+    <string name="baaja_search_trending">Trending searches</string>
+    <string name="baaja_together_settings">Listen together settings</string>
+    <string name="baaja_library_liked_empty">Tap ♡ on any song</string>
+    <string name="baaja_library_downloaded_empty">For offline play</string>
+    <string name="baaja_not_interested">Not interested</string>
+    <string name="baaja_not_interested_desc">Suggest less like this on Home and in mixes</string>
+    <string name="baaja_not_interested_done">Got it, you\'ll see less like this</string>
 </resources>

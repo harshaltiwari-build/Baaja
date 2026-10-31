@@ -780,12 +780,10 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
-
-                LaunchedEffect(navBackStackEntry) {
-                    val currentRoute = navBackStackEntry?.destination?.route
-                    shouldShowTopBar = currentRoute in topLevelScreens && currentRoute != "settings"
-                }
+                // Decided in the same frame as the route change: a late or animated top bar shifts the whole
+                // page by its height mid-transition (Home to Search, and the first frame after launch).
+                val shouldShowTopBar =
+                    navBackStackEntry?.destination?.route.let { it in topLevelScreens && it != "settings" }
 
                 val coroutineScope = rememberCoroutineScope()
                 var sharedSong: SongItem? by remember {
@@ -845,11 +843,7 @@ class MainActivity : FragmentActivity() {
                     Scaffold(
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
-                            AnimatedVisibility(
-                                visible = shouldShowTopBar,
-                                enter = fadeIn(animationSpec = tween(durationMillis = 300)),
-                                exit = fadeOut(animationSpec = tween(durationMillis = 200)),
-                            ) {
+                            if (shouldShowTopBar) {
                                 Row {
                                     BaajaMainTopBar(
                                         isHome = navBackStackEntry?.destination?.route == Screens.Home.route,

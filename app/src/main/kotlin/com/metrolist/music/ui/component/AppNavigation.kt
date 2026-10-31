@@ -185,17 +185,20 @@ fun AppNavigationBar(
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
-    // No full-width backdrop: only the floating pill is drawn, so content shows around it.
+    val backdrop = if (pureBlack) Color.Black else colorScheme.surface
+    // A solid backdrop behind the pill, so list content no longer shows around it. The mini player
+    // draws its own backdrop down to this one (see MiniPlayer).
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .drawBehind { drawRect(backdrop) }
             .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .baajaOutline(color = outlineColor, shape = CircleShape)
+                .baajaOutline(color = outlineColor, shape = CircleShape, shadowOffset = 0.dp)
                 .clip(CircleShape)
                 .background(pillColor)
                 .padding(horizontal = 6.dp),

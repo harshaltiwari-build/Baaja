@@ -123,6 +123,8 @@ fun YouTubeSongMenu(
         }
     }
 
+    val notInterestedItem = rememberNotInterestedItem(song.id, onDismiss)
+
     var showChoosePlaylistDialog by rememberSaveable {  
         mutableStateOf(false)  
     }  
@@ -699,6 +701,7 @@ fun YouTubeSongMenu(
                             )
                         )
                     }
+                    notInterestedItem?.let(::add)
                     add(
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.details)) },

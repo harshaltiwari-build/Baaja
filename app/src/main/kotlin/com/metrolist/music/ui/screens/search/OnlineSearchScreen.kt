@@ -406,6 +406,31 @@ fun OnlineSearchScreen(
             )
         }
 
+        if (query.isEmpty() && viewState.trending.isNotEmpty()) {
+            item(key = "trending_header") {
+                BaajaHomeSectionTitle(
+                    title = stringResource(R.string.baaja_search_trending),
+                    modifier = Modifier.animateItem(),
+                )
+            }
+            items(viewState.trending, key = { "trending_$it" }) { title ->
+                SuggestionItem(
+                    query = title,
+                    typed = query,
+                    online = true,
+                    onClick = {
+                        onSearch(title)
+                        onDismiss()
+                    },
+                    onFillTextField = {
+                        onQueryChange(TextFieldValue(title, TextRange(title.length)))
+                    },
+                    modifier = Modifier.animateItem(),
+                    pureBlack = pureBlack,
+                )
+            }
+        }
+
         items(viewState.suggestions, key = { "suggestion_$it" }) { suggestion ->
             SuggestionItem(
                 query = suggestion,

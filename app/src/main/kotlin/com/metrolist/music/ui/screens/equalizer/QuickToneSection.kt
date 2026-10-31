@@ -27,9 +27,16 @@ import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.utils.rememberPreference
 import kotlin.math.roundToInt
 
-/** Stereo width, balance, bass and treble sliders shown above the equalizer profiles. */
+/**
+ * Stereo width, balance, bass and treble sliders shown above the equalizer profiles.
+ * Reset also turns off [eqActive] through [onDisableEq], so one tap gives the untouched sound.
+ */
 @Composable
-fun QuickToneSection(modifier: Modifier = Modifier) {
+fun QuickToneSection(
+    modifier: Modifier = Modifier,
+    eqActive: Boolean = false,
+    onDisableEq: () -> Unit = {},
+) {
     val (soundWidth, onSoundWidthChange) = rememberPreference(SoundWidthKey, defaultValue = 1f)
     val (soundBalance, onSoundBalanceChange) = rememberPreference(SoundBalanceKey, defaultValue = 0f)
     val (soundBass, onSoundBassChange) = rememberPreference(SoundBassKey, defaultValue = 0f)
@@ -83,8 +90,9 @@ fun QuickToneSection(modifier: Modifier = Modifier) {
                     icon = painterResource(R.drawable.close),
                     title = { Text(stringResource(R.string.sound_reset)) },
                     description = { Text(stringResource(R.string.sound_reset_desc)) },
-                    enabled = soundWidth != 1f || soundBalance != 0f || soundBass != 0f || soundTreble != 0f,
+                    enabled = eqActive || soundWidth != 1f || soundBalance != 0f || soundBass != 0f || soundTreble != 0f,
                     onClick = {
+                        if (eqActive) onDisableEq()
                         onSoundWidthChange(1f)
                         onSoundBalanceChange(0f)
                         onSoundBassChange(0f)

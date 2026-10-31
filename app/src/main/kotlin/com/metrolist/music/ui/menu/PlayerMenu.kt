@@ -131,6 +131,7 @@ fun PlayerMenu(
     val castDeviceName by castHandler?.castDeviceName?.collectAsStateWithLifecycle() ?: remember { mutableStateOf<String?>(null) }
 
     val librarySong by database.song(mediaMetadata.id).collectAsStateWithLifecycle(initialValue = null)
+    val notInterestedItem = rememberNotInterestedItem(mediaMetadata.id, onDismiss)
     val coroutineScope = rememberCoroutineScope()
     val downloadUtil = LocalDownloadUtil.current
 
@@ -598,6 +599,7 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     buildList {
+                        if (librarySong?.song?.isLocal != true) notInterestedItem?.let(::add)
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.baaja_player_behind_the_song)) },

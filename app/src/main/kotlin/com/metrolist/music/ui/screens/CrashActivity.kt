@@ -5,8 +5,12 @@
 
 package com.metrolist.music.ui.screens
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,6 +33,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,6 +48,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.metrolist.music.BuildConfig
 import com.metrolist.music.R
 import com.metrolist.music.ui.theme.BaajaTheme
 import com.metrolist.music.utils.CrashHandler
@@ -64,12 +71,40 @@ class CrashActivity : ComponentActivity() {
                 CrashScreen(
                     crashLog = crashLog,
                     onClose = { finishAffinity() },
-                    onShare = { shareCrashLog(crashLog) }
+                    onShare = { shareCrashLog(crashLog) },
+                    onReport = { reportOnGitHub(crashLog) },
                 )
             }
         }
     }
     
+    /**
+     * Opens Baaja's bug report form with the crash already filled in. Nothing is sent until the person
+     * reviews it and submits it on GitHub themselves.
+     */
+    private fun reportOnGitHub(crashLog: String) {
+        val error =
+            crashLog.lineSequence()
+                .map { it.trim() }
+                .firstOrNull { it.contains("Exception") || it.contains("Error:") }
+                ?.take(MAX_TITLE_CHARS)
+                ?: getString(R.string.crash_title)
+        val uri =
+            Uri.parse(NEW_ISSUE_URL).buildUpon()
+                .appendQueryParameter("template", "bug_report.yml")
+                .appendQueryParameter("title", "[Crash] $error")
+                .appendQueryParameter("app-version", "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+                .appendQueryParameter("android-version", "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
+                // GitHub refuses very long links; the top of the report holds the device and the failing call.
+                .appendQueryParameter("logs", crashLog.take(MAX_LOG_CHARS))
+                .build()
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, uri))
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, R.string.crash_report_no_browser, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun shareCrashLog(crashLog: String) {
         try {
             // Create crash log file
@@ -111,7 +146,8 @@ class CrashActivity : ComponentActivity() {
 fun CrashScreen(
     crashLog: String,
     onClose: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onReport: () -> Unit,
 ) {
     val context = LocalContext.current
     
@@ -167,6 +203,14 @@ fun CrashScreen(
             )
             
             Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(onClick = onReport, modifier = Modifier.fillMaxWidth()) {
+                Icon(painter = painterResource(R.drawable.github), contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.crash_report_github))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Crash log container
             Box(
@@ -193,3 +237,7 @@ fun CrashScreen(
         }
     }
 }
+
+private const val NEW_ISSUE_URL = "https://github.com/harshaltiwari-build/Baaja/issues/new"
+private const val MAX_TITLE_CHARS = 120
+private const val MAX_LOG_CHARS = 5000

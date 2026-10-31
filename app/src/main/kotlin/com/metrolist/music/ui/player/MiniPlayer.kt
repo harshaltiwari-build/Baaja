@@ -87,10 +87,11 @@ import com.metrolist.music.LocalListenTogetherManager
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.DarkModeKey
+import com.metrolist.music.constants.MiniPlayerBottomSpacing
 import com.metrolist.music.constants.MiniPlayerHeight
+import com.metrolist.music.constants.PureBlackKey
 import com.metrolist.music.constants.SwipeSensitivityKey
 import com.metrolist.music.constants.SwipeThumbnailKey
-import com.metrolist.music.db.entities.ArtistEntity
 import com.metrolist.music.listentogether.ListenTogetherManager
 import com.metrolist.music.models.MediaMetadata
 import com.metrolist.music.playback.CastConnectionHandler
@@ -187,6 +188,8 @@ private fun NewMiniPlayer(
         remember(darkTheme, isSystemInDarkTheme) {
             if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
         }
+    val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
+    val backdropColor = if (pureBlackEnabled && useDarkTheme) Color.Black else MaterialTheme.colorScheme.surface
 
     // Player states - only collect what's needed at this level
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -307,6 +310,17 @@ private fun NewMiniPlayer(
             modifier
                 .fillMaxWidth()
                 .height(MiniPlayerHeight)
+                // Backdrop from a short fade above down to the nav bar's, so list content doesn't peek
+                // out around and below the mini player.
+                .drawBehind {
+                    val fade = MiniPlayerBackdropFade.toPx()
+                    drawRect(
+                        brush = Brush.verticalGradient(listOf(backdropColor.copy(alpha = 0f), backdropColor), startY = -fade, endY = 0f),
+                        topLeft = Offset(0f, -fade),
+                        size = Size(size.width, fade),
+                    )
+                    drawRect(backdropColor, size = Size(size.width, size.height + MiniPlayerBottomSpacing.toPx()))
+                }
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .padding(horizontal = 12.dp)
                 .let { baseModifier ->
@@ -435,17 +449,14 @@ private fun NewMiniPlayer(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
 
-                // Subscribe button - isolated composable
-                mediaMetadata?.artists?.firstOrNull()?.id?.let { artistId ->
-                    SubscribeButton(
-                        artistId = artistId,
-                        metadata = mediaMetadata!!,
-                        primaryColor = primaryColor,
-                        outlineColor = outlineColor,
-                        onSurfaceColor = onSurfaceColor,
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                }
+                // Next, like YouTube Music's mini player; following the artist lives on the artist page
+                NextButton(
+                    enabled = canSkipNext,
+                    outlineColor = outlineColor,
+                    onSurfaceColor = onSurfaceColor,
+                    onClick = { playerConnection.player.seekToNext() },
+                )
+                Spacer(modifier = Modifier.width(6.dp))
 
                 // Favorite button - isolated composable
                 mediaMetadata?.let {
@@ -643,55 +654,25 @@ private fun NewMiniPlayerSongInfo(
 // ============================================================================
 
 @Composable
-private fun SubscribeButton(
-    artistId: String,
-    metadata: MediaMetadata,
-    primaryColor: Color,
+private fun NextButton(
+    enabled: Boolean,
     outlineColor: Color,
     onSurfaceColor: Color,
+    onClick: () -> Unit,
 ) {
-    val database = LocalDatabase.current
-    val libraryArtist by database.artist(artistId).collectAsStateWithLifecycle(initialValue = null)
-    val isSubscribed = libraryArtist?.artist?.bookmarkedAt != null
-
-
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
-                    shape = CircleShape,
-                ).background(
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.1f) else Color.Transparent,
-                    shape = CircleShape,
-                ).clickable {
-                    database.transaction {
-                        val artist = libraryArtist?.artist
-                        if (artist != null) {
-                            update(artist.toggleLike())
-                        } else {
-                            metadata.artists.firstOrNull()?.let { artistInfo ->
-                                insert(
-                                    ArtistEntity(
-                                        id = artistInfo.id ?: "",
-                                        name = artistInfo.name,
-                                        channelId = null,
-                                        thumbnailUrl = null,
-                                    ).toggleLike(),
-                                )
-                            }
-                        }
-                    }
-                },
+                .border(width = 1.dp, color = outlineColor.copy(alpha = 0.3f), shape = CircleShape)
+                .clickable(enabled = enabled, onClick = onClick),
     ) {
         Icon(
-            painter = painterResource(if (isSubscribed) R.drawable.subscribed else R.drawable.subscribe),
-            contentDescription = null,
-            tint = if (isSubscribed) primaryColor else onSurfaceColor.copy(alpha = 0.7f),
+            painter = painterResource(R.drawable.skip_next),
+            contentDescription = stringResource(R.string.next),
+            tint = onSurfaceColor.copy(alpha = if (enabled) 0.7f else 0.3f),
             modifier = Modifier.size(20.dp),
         )
     }
@@ -736,3 +717,5 @@ private fun FavoriteButton(
         )
     }
 }
+
+private val MiniPlayerBackdropFade = 16.dp

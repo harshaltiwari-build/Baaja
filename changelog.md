@@ -1,3 +1,35 @@
+---v1.3.3
+# Baaja 1.3.3
+Better sound, a Home like YouTube Music's, and a calmer look.
+
+## Sound
+- "High" quality now really plays the best stream on mobile data too (before, it quietly used a 48 kbps stream)
+- Songs played once at low quality are fetched again in better quality when you want it
+- The player shows what is playing, like "OPUS · 154 kbps", and files on your phone show their quality too
+- "Reset sound to default" in the Equalizer now also turns the equalizer off
+
+## Home and recommendations
+- Signed in, Home shows your YouTube Music rows first (Quick picks, Listen again, Mixed for you), just like YouTube Music
+- YouTube Music's own Speed dial joins Baaja's, so it no longer shows up twice
+- Quick picks mixes in new songs, and skips the ones already on Speed dial
+- New "Not interested" in song menus: YouTube Music suggests less like it
+- Home refreshes when you come back after a while, and after signing in or out
+- Search shows trending searches before you type
+
+## Design
+- Speed dial titles sit on the artwork and fit on two lines
+- Share and Like on the player are round buttons, so long song titles fit
+- The mini player has a Next button
+- Lighter chips, and the bar at the bottom no longer lets songs peek through
+- Page titles line up with the content below them
+- Empty Liked and Downloaded tiles tell you how to fill them
+- The Immersive player is gone
+
+## Fixes
+- Fixed a crash on Home when two artists you listen to share an album
+- Switching from Home to Search no longer jumps
+- The crash screen can open a ready-to-send GitHub report
+
 ---v1.3.2
 # Baaja 1.3.2
 Downloads you can trust, and menus that open every time.

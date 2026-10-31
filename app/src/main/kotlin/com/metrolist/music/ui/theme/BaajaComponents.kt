@@ -133,7 +133,10 @@ fun BaajaPillButton(
     }
 }
 
-/** Outlined chip; [selected] chips turn ink-filled like the mockups' mood chips. */
+/**
+ * Outlined chip; [selected] chips turn ink-filled like the mockups' mood chips. Chips are secondary
+ * controls, so they get a thinner outline and no offset shadow; cards and main buttons keep the bold look.
+ */
 @Composable
 fun BaajaChip(
     label: String,
@@ -160,7 +163,7 @@ fun BaajaChip(
     Row(
         modifier
             .defaultMinSize(minHeight = 40.dp)
-            .baajaSurface(ink, container, CircleShape, if (selected) 0.dp else 2.dp, interactionSource = source)
+            .baajaSurface(ink, container, CircleShape, if (accent) 2.dp else 0.dp, borderWidth = 1.5.dp, interactionSource = source)
             .selectable(selected = selected, interactionSource = source, indication = LocalIndication.current, role = Role.Tab, onClick = onClick)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),

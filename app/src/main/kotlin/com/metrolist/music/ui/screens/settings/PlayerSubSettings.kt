@@ -56,7 +56,6 @@ import com.metrolist.music.constants.DownloadAudioQualityKey
 import com.metrolist.music.constants.EnableGoogleCastKey
 import com.metrolist.music.constants.FloatOutputKey
 import com.metrolist.music.constants.HistoryDuration
-import com.metrolist.music.constants.ImmersivePlayerKey
 import com.metrolist.music.constants.KeepScreenOn
 import com.metrolist.music.constants.LoudnessLevel
 import com.metrolist.music.constants.LoudnessLevelKey
@@ -393,7 +392,6 @@ fun PlaybackSettings(navController: NavController) {
 @Composable
 fun PlayerPageSettings(navController: NavController) {
     val (showLyricPreview, onShowLyricPreviewChange) = rememberPreference(ShowLyricPreviewOnPlayerKey, defaultValue = true)
-    val (immersivePlayer, onImmersivePlayerChange) = rememberPreference(ImmersivePlayerKey, defaultValue = false)
     val (sponsorBlockEnabled, onSponsorBlockEnabledChange) = rememberPreference(SponsorBlockEnabledKey, defaultValue = false)
     val (enableGoogleCast, onEnableGoogleCastChange) = rememberPreference(EnableGoogleCastKey, defaultValue = true)
     val (floatOutput, onFloatOutputChange) = rememberPreference(FloatOutputKey, defaultValue = false)
@@ -434,13 +432,6 @@ fun PlayerPageSettings(navController: NavController) {
                     description = stringResource(R.string.baaja_player_show_lyric_preview_desc),
                     checked = showLyricPreview,
                     onChange = onShowLyricPreviewChange,
-                ))
-                add(switchItem(
-                    icon = R.drawable.fullscreen,
-                    title = stringResource(R.string.baaja_player_immersive_player),
-                    description = stringResource(R.string.baaja_player_immersive_player_desc),
-                    checked = immersivePlayer,
-                    onChange = onImmersivePlayerChange,
                 ))
                 add(switchItem(
                     icon = R.drawable.skip_next,

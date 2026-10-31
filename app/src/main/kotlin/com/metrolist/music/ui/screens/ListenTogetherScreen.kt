@@ -1215,7 +1215,7 @@ private fun SettingsLinkCard(onClick: () -> Unit) {
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.settings),
+                    text = stringResource(R.string.baaja_together_settings),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

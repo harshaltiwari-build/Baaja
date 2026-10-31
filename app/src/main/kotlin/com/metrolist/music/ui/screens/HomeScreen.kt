@@ -905,6 +905,7 @@ fun HomeScreen(
             similarRecommendations,
             homePage?.sections,
             explorePage?.moodAndGenres,
+            isLoggedIn,
         ) {
             val list = mutableListOf<HomeSection>()
             val chipActive = selectedChip != null
@@ -943,7 +944,8 @@ fun HomeScreen(
             list.sortedByDescending { section ->
                 when (section) {
                     is HomeSection.SimilarRecommendation -> 30 - section.index
-                    is HomeSection.HomePageSection -> 20 - section.index
+                    // Signed in, YouTube's own shelves (Quick picks, Listen again, Mixed for you) lead, as in YouTube Music.
+                    is HomeSection.HomePageSection -> if (isLoggedIn && !chipActive) 95 else 20 - section.index
                     else -> defaultOrder[section] ?: 0
                 }
             }
@@ -1222,6 +1224,17 @@ fun HomeScreen(
                     .orEmpty())
                 .distinctBy { it.id }
                 .map { entry -> if (entry.thumbnailUrl.isNullOrBlank()) entry.copy(thumbnailUrl = tasteThumbs[entry.id]) else entry }
+        }
+
+    // Speed dial borrows Quick picks songs when you have few of your own; the rows below skip the
+    // ones already on its first page so the same songs don't appear twice in a row.
+    val speedDialFirstPageIds =
+        remember(speedDialItems, pinnedSpeedDialItems, popularArtistEntries) {
+            val pinnedIds = pinnedSpeedDialItems.mapTo(HashSet()) { it.id }
+            speedDialItems
+                .filterNot { popularArtistEntries.isNotEmpty() && it is ArtistItem && it.id !in pinnedIds }
+                .take(9)
+                .mapTo(HashSet()) { it.id }
         }
 
     LaunchedEffect(quickPicks) {
@@ -1677,7 +1690,13 @@ fun HomeScreen(
                 }
 
                 var tasteShown = false
+                // Signed in, Baaja's own rows follow YouTube's shelves instead of sitting above them.
+                val youTubeFirst = isLoggedIn && selectedChip == null && !homePage?.sections.isNullOrEmpty()
                 homeSections.forEach { section ->
+                    if (youTubeFirst && !tasteShown && section != HomeSection.SpeedDial && section !is HomeSection.HomePageSection) {
+                        tasteShown = true
+                        tasteUi?.invoke(this)
+                    }
                     when (section) {
                         HomeSection.SpeedDial -> {
                             // The artists row above already shows your artists, so Speed dial keeps only
@@ -2006,12 +2025,14 @@ fun HomeScreen(
                             }
 
                             // Like YouTube Music: Speed dial first, then the shelves made for you.
-                            tasteShown = true
-                            tasteUi?.invoke(this)
+                            if (!youTubeFirst) {
+                                tasteShown = true
+                                tasteUi?.invoke(this)
+                            }
                         }
 
                         HomeSection.QuickPicks -> {
-                            quickPicks?.takeIf { it.isNotEmpty() }?.let { quickPicks ->
+                            quickPicks?.withoutSpeedDial(speedDialFirstPageIds) { it.id }?.takeIf { it.isNotEmpty() }?.let { quickPicks ->
                                 item(key = "quick_picks_title") {
  BaajaEntranceBox(7, entranceKey) {
                                     val quickPicksTitle = stringResource(R.string.quick_picks)
@@ -2437,7 +2458,10 @@ fun HomeScreen(
                             if (selectedChip?.title?.contains("Podcast", ignoreCase = true) == true) {
                                 return@forEach
                             }
-                            val sectionData = homePage?.sections?.getOrNull(section.index)
+                            val sectionData =
+                                homePage?.sections?.getOrNull(section.index)?.let { s ->
+                                    s.copy(items = s.items.withoutSpeedDial(speedDialFirstPageIds) { if (it is SongItem) it.id else null })
+                                }
                             sectionData?.let {
                                 // Check if section contains songs for Play All functionality
                                 val sectionSongs = sectionData.items.filterIsInstance<SongItem>()
@@ -2652,6 +2676,7 @@ fun HomeScreen(
                         }
                     }
                 }
+                if (youTubeFirst && !tasteShown) tasteUi?.invoke(this)
 
                 // Only show shimmer during initial loading, not for pagination
                 if (isLoading && homePage?.sections.isNullOrEmpty()) {
@@ -2710,3 +2735,9 @@ fun HomeScreen(
 
 private val HomeSongRowHeight = 84.dp
 private val HomeYtRowHeight = 76.dp
+
+/** Drops items already on Speed dial's first page, unless that would leave the row too thin to be useful. */
+private fun <T> List<T>.withoutSpeedDial(speedDialIds: Set<String>, id: (T) -> String?): List<T> {
+    val fresh = filterNot { item -> id(item)?.let { it in speedDialIds } == true }
+    return if (fresh.size >= 8 || fresh.size == size) fresh else this
+}

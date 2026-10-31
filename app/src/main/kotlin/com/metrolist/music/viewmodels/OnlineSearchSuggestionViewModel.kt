@@ -17,6 +17,7 @@ import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertube.models.YTItem
 import com.metrolist.innertube.models.filterExplicit
 import com.metrolist.innertube.models.filterVideoSongs
+import com.metrolist.innertube.pages.ChartsPage
 import com.metrolist.innertube.utils.YouTubeUrlParser
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.constants.HideVideoSongsKey
@@ -29,6 +30,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -46,14 +48,28 @@ class OnlineSearchSuggestionViewModel
         private val _viewState = MutableStateFlow(SearchSuggestionViewState())
         val viewState = _viewState.asStateFlow()
 
+        /** What people are playing right now, so an empty search box has something to tap. */
+        private val trending = MutableStateFlow<List<String>>(emptyList())
+
         init {
+            viewModelScope.launch {
+                val charts = YouTube.getChartsPage().getOrNull()?.sections.orEmpty()
+                trending.value =
+                    (charts.filter { it.chartType == ChartsPage.ChartType.TRENDING } + charts.filter { it.chartType == ChartsPage.ChartType.TOP })
+                        .flatMap { it.items }
+                        .filterIsInstance<SongItem>()
+                        .map { it.title }
+                        .distinct()
+                        .take(8)
+            }
             viewModelScope.launch {
                 query
                     .flatMapLatest { query ->
                         if (query.isEmpty()) {
-                            database.searchHistory().map { history ->
+                            combine(database.searchHistory(), trending) { history, trending ->
                                 SearchSuggestionViewState(
                                     history = history,
+                                    trending = trending.filter { title -> history.none { it.query.equals(title, ignoreCase = true) } },
                                 )
                             }
                         } else {
@@ -165,6 +181,7 @@ class OnlineSearchSuggestionViewModel
 data class SearchSuggestionViewState(
     val history: List<SearchHistory> = emptyList(),
     val suggestions: List<String> = emptyList(),
+    val trending: List<String> = emptyList(),
     val items: List<YTItem> = emptyList(),
     val parsedUrlItem: YTItem? = null,
     val isUrlQuery: Boolean = false,

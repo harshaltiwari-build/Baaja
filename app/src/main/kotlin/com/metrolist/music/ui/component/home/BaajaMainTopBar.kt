@@ -51,8 +51,8 @@ import com.metrolist.music.ui.theme.BaajaLogo
 import com.metrolist.music.ui.theme.baajaInk
 
 /**
- * Top app bar for the main tabs. On Home it shows the Baaja logo and wordmark centred between a
- * round profile avatar; other tabs show their title on the left.
+ * Top app bar for the main tabs. On Home it shows the Baaja logo and wordmark; other tabs show their
+ * title. Either way the title starts on [BaajaHomeGutter], the same line as the page content below.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +93,7 @@ fun BaajaMainTopBar(
     }
     if (isHome) {
         TopAppBar(
-            title = { BaajaWordmark() },
+            title = { BaajaWordmark(Modifier.padding(start = TitleInset)) },
             actions = {
                 Row(
                     modifier = Modifier.padding(end = 16.dp),
@@ -117,6 +117,7 @@ fun BaajaMainTopBar(
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.5).sp,
                     maxLines = 1,
+                    modifier = Modifier.padding(start = TitleInset),
                 )
             },
             actions = {
@@ -214,3 +215,6 @@ fun BaajaProfileAvatar(
         }
     }
 }
+
+/** TopAppBar already places its title 16dp in; this brings it to the 20dp page gutter. */
+private val TitleInset = BaajaHomeGutter - 16.dp

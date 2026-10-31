@@ -193,7 +193,6 @@ import kotlin.math.roundToInt
 import com.metrolist.music.ui.component.Icon as MIcon
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.Dp
-import com.metrolist.music.constants.ImmersivePlayerKey
 import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.ui.menu.LyricsMenu
 import com.metrolist.music.ui.theme.baajaInk
@@ -236,12 +235,6 @@ fun BottomSheetPlayer(
         defaultValue = PlayerBackgroundStyle.DEFAULT,
     )
 
-    // Immersive full-art layout (Immersive mockup). Opens by default when the user picked it as their
-    // player style; tapping the artwork enters it for the current session.
-    val immersivePreferred by rememberPreference(ImmersivePlayerKey, defaultValue = false)
-    var isImmersive by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(immersivePreferred) { isImmersive = immersivePreferred }
-    LaunchedEffect(state.isCollapsed) { if (state.isCollapsed) isImmersive = immersivePreferred }
     LaunchedEffect(showInlineLyrics) { if (!showInlineLyrics) isFullScreen = false }
     val isPortrait = LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
@@ -265,15 +258,12 @@ fun BottomSheetPlayer(
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
     val keepScreenOn = isPlaying && isKeepScreenOn
 
-    val immersiveShown = isImmersive && isPortrait && !showInlineLyrics
-    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen, immersiveShown) {
+    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
         val window = (context as? android.app.Activity)?.window
         if (window != null && state.isExpanded) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
-            if (immersiveShown) {
-                insetsController.isAppearanceLightStatusBars = false
-            } else when (playerBackground) {
+            when (playerBackground) {
                 PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
                     insetsController.isAppearanceLightStatusBars = false
                 }
@@ -311,13 +301,9 @@ fun BottomSheetPlayer(
         state.collapseSoft()
     }
 
-    // Lyrics and immersive are full-screen layers on top of Now Playing: back leaves them first.
-    BackHandler(enabled = state.isExpanded && isPortrait && (showInlineLyrics || isImmersive)) {
-        when {
-            showInlineLyrics -> showInlineLyrics = false
-            immersivePreferred -> state.collapseSoft()
-            else -> isImmersive = false
-        }
+    // Lyrics is a full-screen layer on top of Now Playing: back leaves it first.
+    BackHandler(enabled = state.isExpanded && isPortrait && showInlineLyrics) {
+        showInlineLyrics = false
     }
 
     val onBackgroundColor =
@@ -732,7 +718,7 @@ fun BottomSheetPlayer(
         }
     }
 
-    // ---- Baaja controls: shared by Now Playing, the lyrics screen and the immersive player ----
+    // ---- Baaja controls: shared by Now Playing and the lyrics screen ----
     val onImageBackground = playerBackground != PlayerBackgroundStyle.DEFAULT
     val accentColor = MaterialTheme.colorScheme.primary
     val onAccentColor = MaterialTheme.colorScheme.onPrimary
@@ -1163,12 +1149,14 @@ fun BottomSheetPlayer(
                                 modifier = Modifier.size(44.dp),
                             )
                         } else {
+                            // Icon-only, like the lyrics screen, so long titles get the width instead of the labels.
                             BaajaPlayerPill(
-                                text = stringResource(R.string.share),
+                                text = null,
                                 icon = R.drawable.share,
+                                contentDescription = stringResource(R.string.share),
                                 onClick = { shareSong(mediaMetadata.id) },
                                 colors = baajaColors,
-                                height = 40.dp,
+                                modifier = Modifier.size(44.dp),
                             )
                         }
                     }
@@ -1185,15 +1173,15 @@ fun BottomSheetPlayer(
                             )
                         } else {
                             BaajaPlayerPill(
-                                text = stringResource(if (isFavorite) R.string.liked else R.string.like),
+                                text = null,
                                 icon = if (isFavorite) R.drawable.favorite else R.drawable.favorite_border,
+                                contentDescription = stringResource(if (isFavorite) R.string.liked else R.string.like),
                                 onClick = playerConnection::toggleLike,
                                 colors = baajaColors,
                                 active = isFavorite,
                                 activeContainer = likeColor,
                                 activeContent = MaterialTheme.colorScheme.onSecondary,
-                                height = 40.dp,
-                                modifier = Modifier.heartBurst(heartBurst, likeColor),
+                                modifier = Modifier.size(44.dp).heartBurst(heartBurst, likeColor),
                             )
                         }
                     }
@@ -1226,6 +1214,8 @@ fun BottomSheetPlayer(
             ) {
                 val timeColor = if (onImageBackground) TextBackgroundColor.copy(alpha = 0.85f) else baajaColors.mutedContent
                 BaajaTimeText(makeTimeString(sliderPosition ?: effectivePosition), timeColor)
+
+                BaajaStreamQualityText(mediaId = mediaMetadata?.id, player = playerConnection.player, color = timeColor)
 
                 BaajaTimeText(if (duration != C.TIME_UNSET) makeTimeString(duration) else "", timeColor)
             }
@@ -1379,7 +1369,6 @@ fun BottomSheetPlayer(
                 val portraitMode =
                     when {
                         showInlineLyrics -> PortraitPlayerMode.LYRICS
-                        isImmersive -> PortraitPlayerMode.IMMERSIVE
                         else -> PortraitPlayerMode.NOW_PLAYING
                     }
                 val bottomPadding by animateDpAsState(
@@ -1416,39 +1405,6 @@ fun BottomSheetPlayer(
                             )
                         }
 
-                        mode == PortraitPlayerMode.IMMERSIVE && metadata != null -> {
-                            ImmersivePlayer(
-                                mediaMetadata = metadata,
-                                isPlaying = effectiveIsPlaying,
-                                colors = baajaColors,
-                                swipeEnabled = swipeThumbnailPref && !isListenTogetherGuest,
-                                canSkipPrevious = canSkipPrevious && !isListenTogetherGuest,
-                                canSkipNext = canSkipNext && !isListenTogetherGuest,
-                                onPrevious = playerConnection::seekToPrevious,
-                                onNext = playerConnection::seekToNext,
-                                onExit = { isImmersive = false },
-                                onBehindTheSong = openBehindTheSong,
-                                onOpenLyrics = { showInlineLyrics = true },
-                                onArtistClick =
-                                    metadata.artists.firstOrNull()?.id?.let { artistId ->
-                                        {
-                                            navController.navigate("artist/$artistId")
-                                            state.collapseSoft()
-                                        }
-                                    },
-                                seekRow = seekRowContent,
-                                playButton = {
-                                    BaajaPlayButton(
-                                        icon = playIconRes,
-                                        contentDescription = playLabel,
-                                        onClick = togglePlayback,
-                                        colors = baajaColors.onCard(),
-                                        size = 70.dp,
-                                    )
-                                },
-                            )
-                        }
-
                         else -> {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -1480,7 +1436,6 @@ fun BottomSheetPlayer(
                                         isListenTogetherGuest = isListenTogetherGuest,
                                         onClose = { state.collapseSoft() },
                                         onBehindTheSong = openBehindTheSong,
-                                        onArtworkClick = { isImmersive = true },
                                     )
                                 }
 
@@ -1507,7 +1462,7 @@ fun BottomSheetPlayer(
         }
 
         AnimatedVisibility(
-            visible = !isFullScreen && !(isPortrait && (showInlineLyrics || isImmersive)),
+            visible = !isFullScreen && !(isPortrait && showInlineLyrics),
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.Top) + slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         ) {
@@ -1535,7 +1490,7 @@ fun BottomSheetPlayer(
     }
 }
 
-private enum class PortraitPlayerMode { NOW_PLAYING, LYRICS, IMMERSIVE }
+private enum class PortraitPlayerMode { NOW_PLAYING, LYRICS }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

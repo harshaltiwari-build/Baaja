@@ -17,6 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,10 +36,13 @@ import com.metrolist.music.ui.utils.resize
 
 private val SpeedDialTileShape = RoundedCornerShape(20.dp)
 private val SpeedDialLabelShape = RoundedCornerShape(10.dp)
+private val SpeedDialFadeShape = RoundedCornerShape(18.dp)
+private val SpeedDialFade = Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.78f))
 
 /**
  * Speed dial tile: artwork in an ink-outlined rounded square (round for artists) with a hard offset
- * shadow and a small outlined label strip at the bottom. The active item turns its label accent.
+ * shadow. Square tiles carry their title on a dark fade over the artwork's bottom, so the cover stays
+ * visible and two lines fit; round artist tiles keep a small outlined label strip.
  */
 @Composable
 fun SpeedDialGridItem(
@@ -64,23 +69,48 @@ fun SpeedDialGridItem(
             modifier = Modifier.fillMaxSize(),
         )
 
-        Text(
-            text = item.title,
-            color = labelContent,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = if (isArtist) 14.dp else 8.dp, vertical = 8.dp)
-                    .fillMaxWidth()
-                    .clip(SpeedDialLabelShape)
-                    .background(labelColor)
-                    .border(2.dp, ink, SpeedDialLabelShape)
-                    .padding(horizontal = 6.dp, vertical = 3.dp),
-        )
+        if (isArtist) {
+            Text(
+                text = item.title,
+                color = labelContent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                        .fillMaxWidth()
+                        .clip(SpeedDialLabelShape)
+                        .background(labelColor)
+                        .border(2.dp, ink, SpeedDialLabelShape)
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
+            )
+        } else {
+            // Inset by the outline width so the fade never darkens the ink border.
+            Box(
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .padding(2.dp)
+                        .clip(SpeedDialFadeShape)
+                        .background(SpeedDialFade),
+            )
+            Text(
+                text = item.title,
+                color = Color.White,
+                fontSize = 13.sp,
+                lineHeight = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 10.dp, end = 10.dp, bottom = 9.dp),
+            )
+        }
 
         if (isPinned) {
             Box(

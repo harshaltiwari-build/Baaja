@@ -243,7 +243,11 @@ private fun EqScreenContent(
                 .asPaddingValues().calculateBottomPadding())
         ) {
             item {
-                QuickToneSection(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                QuickToneSection(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    eqActive = activeProfileId != null,
+                    onDisableEq = { onProfileSelected(null) },
+                )
             }
 
             // Frequency response graph

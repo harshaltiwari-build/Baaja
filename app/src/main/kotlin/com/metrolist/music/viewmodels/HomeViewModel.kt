@@ -39,6 +39,7 @@ import com.metrolist.music.db.entities.SpeedDialItem
 import com.metrolist.music.extensions.filterVideoSongs
 import com.metrolist.music.extensions.toEnum
 import com.metrolist.music.models.SimilarRecommendation
+import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.utils.NetworkConnectivityObserver
 import com.metrolist.music.utils.SyncUtils
 import com.metrolist.music.utils.dataStore
@@ -79,8 +80,9 @@ internal fun buildSpeedDialItems(
     keepListening: List<YTItem>,
     quickPicks: List<YTItem>,
     home: List<YTItem>,
+    youTubeSpeedDial: List<YTItem> = emptyList(),
 ): List<YTItem> =
-    (pinned + keepListening + quickPicks + home)
+    (pinned + youTubeSpeedDial + keepListening + quickPicks + home)
         .distinctBy { it.id }
         .take(27)
 
@@ -109,6 +111,8 @@ class HomeViewModel @Inject constructor(
     val similarRecommendations = MutableStateFlow<List<SimilarRecommendation>?>(null)
     val accountPlaylists = MutableStateFlow<List<PlaylistItem>?>(null)
     val homePage = MutableStateFlow<HomePage?>(null)
+    /** The signed-in account's own Speed dial from YouTube Music, shown in Baaja's Speed dial rather than twice. */
+    private val youTubeSpeedDial = MutableStateFlow<List<YTItem>>(emptyList())
     val explorePage = MutableStateFlow<ExplorePage?>(null)
     val communityPlaylists = MutableStateFlow<List<CommunityPlaylistItem>?>(null)
     /** Most played YouTube artists from local history, shown as Home's "Popular artists" avatars. */
@@ -133,9 +137,11 @@ class HomeViewModel @Inject constructor(
             keepListening,
             quickPicks,
             homePage,
-        ) { pinned, keepListening, quick, home ->
+            youTubeSpeedDial,
+        ) { pinned, keepListening, quick, home, youTubeDial ->
             buildSpeedDialItems(
                 pinned = pinned.map { it.toYTItem() },
+                youTubeSpeedDial = youTubeDial,
                 keepListening =
                     keepListening.orEmpty().mapNotNull { item ->
                         when (item) {
@@ -314,9 +320,11 @@ class HomeViewModel @Inject constructor(
                     val endpoint = YouTube.next(WatchEndpoint(videoId = recentSong.id)).getOrNull()?.relatedEndpoint
                     if (endpoint != null) {
                         YouTube.related(endpoint).onSuccess { page ->
-                            // Convert YouTube songs to local Song format if they exist in database
+                            // Like YouTube Music, mix in songs you haven't heard yet, not only ones already saved
                             page.songs.take(10).forEach { ytSong ->
-                                database.song(ytSong.id).first()?.let { localSong ->
+                                val saved = database.song(ytSong.id).first()
+                                if (saved == null) database.insert(ytSong.toMediaMetadata())
+                                (saved ?: database.song(ytSong.id).first())?.let { localSong ->
                                     if (!hideVideoSongs || !localSong.song.isVideo) {
                                         ytSimilarSongs.add(localSong)
                                     }
@@ -454,16 +462,20 @@ class HomeViewModel @Inject constructor(
 
             launch(Dispatchers.IO) {
                 YouTube.home().onSuccess { page ->
-                    homePage.value = page.copy(
-                        sections = page.sections.mapNotNull { section ->
-                            val filtered = section.items
-                                .filterOutNulls()
-                                .filterExplicit(hideExplicit)
-                                .filterVideoSongs(hideVideoSongs)
-                                .filterYoutubeShorts(hideYoutubeShorts)
-                            if (filtered.isEmpty()) null else section.copy(items = filtered)
-                        }
-                    )
+                    val sections = page.sections.mapNotNull { section ->
+                        val filtered = section.items
+                            .filterOutNulls()
+                            .filterExplicit(hideExplicit)
+                            .filterVideoSongs(hideVideoSongs)
+                            .filterYoutubeShorts(hideYoutubeShorts)
+                        if (filtered.isEmpty()) null else section.copy(items = filtered)
+                    }
+                    // YouTube Music labels its personal Speed dial with the account name.
+                    val accountLabel = context.dataStore.get(AccountNameKey, "")
+                    val (personal, rest) =
+                        sections.partition { YouTube.cookie != null && accountLabel.isNotBlank() && it.label.equals(accountLabel, ignoreCase = true) }
+                    youTubeSpeedDial.value = personal.flatMap { it.items }
+                    homePage.value = page.copy(sections = rest)
                 }.onFailure { reportException(it) }
             }
 

@@ -116,6 +116,7 @@ fun SongMenu(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val notInterestedItem = if (originalSong.song.isLocal) null else rememberNotInterestedItem(originalSong.id, onDismiss)
     val playerConnection = LocalPlayerConnection.current ?: return
     val songState = database.song(originalSong.id).collectAsStateWithLifecycle(initialValue = originalSong)
     val song = songState.value ?: originalSong
@@ -1130,6 +1131,7 @@ fun SongMenu(
                                 },
                             ),
                         )
+                        notInterestedItem?.let(::add)
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.details)) },

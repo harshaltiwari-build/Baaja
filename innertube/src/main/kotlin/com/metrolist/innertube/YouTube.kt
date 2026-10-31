@@ -2212,6 +2212,9 @@ object YouTube {
         }
     }
 
+    /** YouTube Music's thumbs down: its recommendations stop suggesting this song. */
+    suspend fun dislikeVideo(videoId: String) = runCatching { innerTube.dislikeVideo(WEB_REMIX, videoId) }
+
     suspend fun likePlaylist(
         playlistId: String,
         like: Boolean,

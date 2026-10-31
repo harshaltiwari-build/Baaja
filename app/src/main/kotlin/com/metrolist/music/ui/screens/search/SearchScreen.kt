@@ -222,14 +222,15 @@ fun SearchScreen(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 16.dp, bottom = 4.dp),
+                        // Same 64dp bar, 28sp title and gutter as the other tabs' top bar.
+                        .padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 10.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.baaja_home_explore),
-                    fontSize = 34.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.6).sp,
+                    letterSpacing = (-0.5).sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )

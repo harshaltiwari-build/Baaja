@@ -10,5 +10,3 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 /** Shows the current synced lyric line under the artwork on Now Playing (default on). */
 val ShowLyricPreviewOnPlayerKey = booleanPreferencesKey("baajaShowLyricPreviewOnPlayer")
 
-/** Opens the full player in the immersive full-art layout instead of the standard one (default off). */
-val ImmersivePlayerKey = booleanPreferencesKey("baajaImmersivePlayer")

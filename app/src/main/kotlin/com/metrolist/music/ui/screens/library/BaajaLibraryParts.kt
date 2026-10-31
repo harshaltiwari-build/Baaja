@@ -15,6 +15,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import com.metrolist.music.ui.component.home.BaajaHomeGutter
 import com.metrolist.music.ui.theme.baajaEntrance
 import com.metrolist.music.ui.theme.rememberBaajaEntranceKey
 import androidx.compose.foundation.layout.Box
@@ -97,7 +98,7 @@ internal fun BaajaLibraryFilterRow(
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
+                .padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 6.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -129,7 +130,7 @@ internal fun <E> BaajaSectionFilterRow(
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
+                .padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 6.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -162,7 +163,7 @@ internal fun BaajaLibraryToolbar(
     sort: @Composable RowScope.() -> Unit,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 8.dp),
+        modifier = modifier.fillMaxWidth().padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 2.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -267,7 +268,7 @@ internal fun BaajaLibraryCollections(
     val entranceKey = rememberBaajaEntranceKey()
 
     Column(
-        modifier = modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+        modifier = modifier.fillMaxWidth().padding(start = BaajaHomeGutter, end = BaajaHomeGutter, top = 4.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         if (showLiked || showDownloaded) {
@@ -278,7 +279,13 @@ internal fun BaajaLibraryCollections(
                         .collectAsStateWithLifecycle(initialValue = 0)
                     BigTile(
                         title = stringResource(R.string.liked_songs),
-                        subtitle = pluralStringResource(R.plurals.n_song, likedCount, likedCount),
+                        // An empty tile says how to fill it rather than "0 songs".
+                        subtitle =
+                            if (likedCount == 0) {
+                                stringResource(R.string.baaja_library_liked_empty)
+                            } else {
+                                pluralStringResource(R.plurals.n_song, likedCount, likedCount)
+                            },
                         icon = R.drawable.favorite,
                         container = BaajaTileColors.liked(),
                         content = MaterialTheme.colorScheme.onSurface,
@@ -297,7 +304,12 @@ internal fun BaajaLibraryCollections(
                     }.collectAsStateWithLifecycle(initialValue = 0)
                     BigTile(
                         title = stringResource(R.string.filter_downloaded),
-                        subtitle = pluralStringResource(R.plurals.n_song, downloadedCount, downloadedCount),
+                        subtitle =
+                            if (downloadedCount == 0) {
+                                stringResource(R.string.baaja_library_downloaded_empty)
+                            } else {
+                                pluralStringResource(R.plurals.n_song, downloadedCount, downloadedCount)
+                            },
                         icon = R.drawable.download,
                         container = BaajaTileColors.downloads(),
                         content = MaterialTheme.colorScheme.onSecondaryContainer,

@@ -212,7 +212,6 @@ fun Thumbnail(
     isListenTogetherGuest: Boolean = false,
     onClose: (() -> Unit)? = null,
     onBehindTheSong: (() -> Unit)? = null,
-    onArtworkClick: (() -> Unit)? = null,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -414,7 +413,6 @@ fun Thumbnail(
                                 currentMediaId = mediaMetadata?.id,
                                 currentMediaThumbnail = mediaMetadata?.thumbnailUrl,
                                 outlineColor = if (playerBackground == PlayerBackgroundStyle.DEFAULT) baajaInk else Color.Black,
-                                onArtworkClick = onArtworkClick,
                             )
                         }
                     }
@@ -553,11 +551,8 @@ private fun ThumbnailItem(
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
     outlineColor: Color = Color.Black,
-    onArtworkClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val currentOnArtworkClick by rememberUpdatedState(onArtworkClick)
-    val openImmersiveLabel = stringResource(R.string.baaja_player_open_immersive)
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
@@ -580,7 +575,6 @@ private fun ThumbnailItem(
             }
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onTap = { currentOnArtworkClick?.invoke() },
                     onDoubleTap = { offset ->
                         if (isListenTogetherGuest) return@detectTapGestures
 
@@ -617,13 +611,6 @@ private fun ThumbnailItem(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
                 .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
-                .then(
-                    if (onArtworkClick != null && item.mediaId == currentMediaId) {
-                        Modifier.semantics { onClick(label = openImmersiveLabel) { currentOnArtworkClick?.invoke(); true } }
-                    } else {
-                        Modifier
-                    }
-                )
                 .clip(artShape)
         ) {
             val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
