@@ -20,35 +20,26 @@ class NewReleasesContentTest {
     @Test
     fun `youtube's order is kept`() {
         val page = NewReleasesPage(listOf(featured), listOf(album("z"), album("a"), album("m")), listOf(video("v1")))
-        val content = newReleasesContent(page, hideExplicit = false, hideVideos = false)!!
+        val content = newReleasesContent(page, hideExplicit = false)!!
         assertEquals(listOf("z", "a", "m"), content.albums.map { it.id })
         assertEquals(listOf("RELEASED"), content.featured.map { it.title })
-        assertEquals(listOf("v1"), content.videos.map { it.id })
     }
 
     @Test
-    fun `explicit albums and videos follow the hide explicit setting`() {
-        val page = NewReleasesPage(emptyList(), listOf(album("clean"), album("rude", explicit = true)), listOf(video("ok"), video("rude", explicit = true)))
-        val content = newReleasesContent(page, hideExplicit = true, hideVideos = false)!!
-        assertEquals(listOf("clean"), content.albums.map { it.id })
-        assertEquals(listOf("ok"), content.videos.map { it.id })
-    }
-
-    @Test
-    fun `the music videos row follows the hide video songs setting`() {
-        val page = NewReleasesPage(emptyList(), listOf(album("a")), listOf(video("v1")))
-        assertEquals(emptyList<SongItem>(), newReleasesContent(page, hideExplicit = false, hideVideos = true)!!.videos)
+    fun `explicit albums follow the hide explicit setting`() {
+        val page = NewReleasesPage(emptyList(), listOf(album("clean"), album("rude", explicit = true)), emptyList())
+        assertEquals(listOf("clean"), newReleasesContent(page, hideExplicit = true)!!.albums.map { it.id })
     }
 
     @Test
     fun `without albums the old sources are used instead`() {
-        assertNull(newReleasesContent(NewReleasesPage(listOf(featured), emptyList(), listOf(video("v"))), hideExplicit = false, hideVideos = false))
-        assertNull(newReleasesContent(null, hideExplicit = false, hideVideos = false))
+        assertNull(newReleasesContent(NewReleasesPage(listOf(featured), emptyList(), listOf(video("v"))), hideExplicit = false))
+        assertNull(newReleasesContent(null, hideExplicit = false))
     }
 
     @Test
     fun `an album listed twice is shown once`() {
         val page = NewReleasesPage(emptyList(), listOf(album("a"), album("a"), album("b")), emptyList())
-        assertEquals(listOf("a", "b"), newReleasesContent(page, hideExplicit = false, hideVideos = false)!!.albums.map { it.id })
+        assertEquals(listOf("a", "b"), newReleasesContent(page, hideExplicit = false)!!.albums.map { it.id })
     }
 }

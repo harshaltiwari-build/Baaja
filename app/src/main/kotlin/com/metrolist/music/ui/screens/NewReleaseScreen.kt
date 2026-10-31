@@ -72,7 +72,6 @@ fun NewReleaseScreen(
 
     val newReleaseAlbums by viewModel.newReleaseAlbums.collectAsStateWithLifecycle()
     val featured by viewModel.featured.collectAsStateWithLifecycle()
-    val videos by viewModel.videos.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val hasError by viewModel.hasError.collectAsStateWithLifecycle()
 
@@ -90,7 +89,7 @@ fun NewReleaseScreen(
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
         contentPadding = LocalPlayerAwareWindowInsets.current.add(WindowInsets(left = 4.dp, right = 4.dp)).asPaddingValues(),
     ) {
-        // Same order as YouTube Music's New releases: featured playlists, albums & singles, music videos.
+        // Same order as YouTube Music's New releases (music only): featured playlists, then albums & singles.
         if (featured.isNotEmpty()) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_featured") {
                 BaajaChartPlaylistRow(
@@ -129,35 +128,6 @@ fun NewReleaseScreen(
                             },
                         ),
             )
-        }
-
-        if (videos.isNotEmpty()) {
-            item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_videos_title") {
-                BaajaHomeSectionTitle(title = stringResource(R.string.baaja_new_releases_videos))
-            }
-            item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_videos") {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = BaajaHomeGutter, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(videos, key = { "newrelease_video_${it.id}" }) { video ->
-                        BaajaYouTubeCard(
-                            item = video,
-                            isActive = video.id == mediaMetadata?.id,
-                            isPlaying = isPlaying,
-                            onClick = {
-                                playerConnection.playQueue(
-                                    YouTubeQueue(endpoint = WatchEndpoint(videoId = video.id), preloadItem = video.toMediaMetadata()),
-                                )
-                            },
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                menuState.show { YouTubeSongMenu(song = video, onDismiss = menuState::dismiss) }
-                            },
-                        )
-                    }
-                }
-            }
         }
 
         if (newReleaseAlbums.isEmpty()) {

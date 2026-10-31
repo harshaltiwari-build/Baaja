@@ -8,7 +8,7 @@ import androidx.compose.ui.test.performClick
 import com.metrolist.innertube.models.ArtistItem
 import com.metrolist.innertube.models.PlaylistItem
 import com.metrolist.music.ui.component.home.BaajaChartArtistList
-import com.metrolist.music.ui.component.home.BaajaChartPlaylistRow
+import com.metrolist.music.ui.component.home.BaajaChartTileRow
 import com.metrolist.music.ui.theme.BaajaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -31,15 +31,17 @@ class ChartPartsScreenTest {
         ArtistItem(id = id, title = name, thumbnail = null, shuffleEndpoint = null, radioEndpoint = null, chartPosition = rank, subscriberText = "2.31M subscribers")
 
     @Test
-    fun `chart playlists are shown and open when tapped`() {
+    fun `chart tiles use song chart names and open when tapped`() {
         val opened = mutableListOf<String>()
         compose.setContent {
             BaajaTheme(darkTheme = false) {
-                BaajaChartPlaylistRow(listOf(playlist("p1", "Trending 20 India"), playlist("p2", "Top 100 Music Videos India")), onOpen = { opened += it.id })
+                BaajaChartTileRow(listOf(playlist("p1", "Trending 20 India"), playlist("p2", "Top 100 Music Videos India")), onOpen = { opened += it.id })
             }
         }
-        compose.onNodeWithText("Trending 20 India").assertIsDisplayed().performClick()
-        assertEquals(listOf("p1"), opened)
+        compose.onNodeWithText("Trending 20 India").assertIsDisplayed()
+        compose.onNodeWithText("Top 100 Songs India").assertIsDisplayed().performClick()
+        assertEquals(0, compose.onAllNodesWithText("Videos", substring = true).fetchSemanticsNodes().size)
+        assertEquals(listOf("p2"), opened)
     }
 
     @Test

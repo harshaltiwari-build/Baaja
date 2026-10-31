@@ -771,6 +771,11 @@
     <string name="baaja_player_stream_rate">%1$s · %2$s kHz</string>
     <string name="baaja_search_trending">Trending searches</string>
     <string name="baaja_new_releases_albums">Albums &amp; singles</string>
+    <string name="baaja_chart_finding_songs">Finding the songs in this chart…</string>
+    <plurals name="baaja_chart_songs_count">
+        <item quantity="one">%d song · from YouTube Charts</item>
+        <item quantity="other">%d songs · from YouTube Charts</item>
+    </plurals>
     <string name="baaja_new_releases_videos">Music videos</string>
     <string name="baaja_together_settings">Listen together settings</string>
     <string name="baaja_library_liked_empty">Tap ♡ on any song</string>

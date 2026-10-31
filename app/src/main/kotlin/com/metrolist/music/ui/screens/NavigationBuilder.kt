@@ -124,6 +124,20 @@ fun NavGraphBuilder.navigationBuilder(
         NewReleaseScreen(navController)
     }
 
+    composable(
+        route = "chart_songs/{playlistId}?title={title}",
+        arguments =
+            listOf(
+                navArgument("playlistId") { type = NavType.StringType },
+                navArgument("title") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+    ) { backStackEntry ->
+        ChartSongsScreen(navController, title = backStackEntry.arguments?.getString("title").orEmpty())
+    }
+
     composable("charts_screen") {
         ChartsScreen(navController)
     }

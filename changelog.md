@@ -15,8 +15,9 @@ Better sound, a Home like YouTube Music's, and a calmer look.
 - New "Not interested" in song menus: YouTube Music suggests less like it
 - Home refreshes when you come back after a while, and after signing in or out
 - Search shows trending searches before you type
-- Charts work again: chart playlists (Trending 20, Top 100…), language charts and a ranked Top artists list, like YouTube Music (before, India got "Charts aren't available in your region")
-- New releases matches YouTube Music: the featured playlist, "Albums & singles" in YouTube's order, and music videos when video songs aren't hidden
+- Charts work again, music only: Top 100 Songs India, Trending 20, daily and weekly song charts by language, and a ranked Top artists list (before, India got "Charts aren't available in your region")
+- Opening a chart shows its songs as audio songs in chart order, with Play all and Shuffle; no music videos
+- New releases matches YouTube Music: the featured playlist and "Albums & singles" in YouTube's order
 
 ## Design
 - Speed dial titles sit on the artwork and fit on two lines
