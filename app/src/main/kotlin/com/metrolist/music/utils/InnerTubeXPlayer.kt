@@ -280,14 +280,24 @@ object InnerTubeXPlayer {
                 }
         }
 
-    /** Uses [wifiQuality] on unmetered networks and [mobileQuality] on metered ones; AUTO saves data when metered. */
+    fun prefersLowQuality(
+        wifiQuality: AudioQuality,
+        mobileQuality: AudioQuality,
+        connectivityManager: ConnectivityManager,
+    ): Boolean = resolveAudioQuality(wifiQuality, mobileQuality, connectivityManager) == InnerTubeXAudioQuality.LOW
+
+    /**
+     * Uses [wifiQuality] on unmetered networks and [mobileQuality] on metered ones. A mobile AUTO follows an
+     * explicit [wifiQuality], so picking High is honoured on mobile data; AUTO everywhere saves data when metered.
+     */
     private fun resolveAudioQuality(
         wifiQuality: AudioQuality,
         mobileQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
     ): InnerTubeXAudioQuality {
         val metered = connectivityManager.isActiveNetworkMetered
-        return when (if (metered) mobileQuality else wifiQuality) {
+        val quality = if (metered && mobileQuality != AudioQuality.AUTO) mobileQuality else wifiQuality
+        return when (quality) {
             AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH
             AudioQuality.LOW -> InnerTubeXAudioQuality.LOW
             AudioQuality.AUTO -> if (metered) InnerTubeXAudioQuality.LOW else InnerTubeXAudioQuality.AUTO

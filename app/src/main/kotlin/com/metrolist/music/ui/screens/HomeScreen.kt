@@ -77,6 +77,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metrolist.music.LocalNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -587,6 +588,11 @@ fun HomeScreen(
     val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshIfStale()
+        onPauseOrDispose {}
+    }
+    val refreshCount by viewModel.refreshCount.collectAsStateWithLifecycle()
 
     val isLoggedIn =
         remember(innerTubeCookie) {
@@ -954,7 +960,7 @@ fun HomeScreen(
     var accountSongs by remember { mutableStateOf<List<SongItem>>(emptyList()) }
     val likedLocal by remember(database) { database.likedSongsByCreateDateAsc() }.collectAsStateWithLifecycle(emptyList())
     val bookmarkedArtists by remember(database) { database.artistsBookmarkedByCreateDateAsc() }.collectAsStateWithLifecycle(emptyList())
-    LaunchedEffect(isLoggedIn) {
+    LaunchedEffect(isLoggedIn, refreshCount) {
         accountSongs =
             if (isLoggedIn) {
                 YouTube.musicHistory().getOrNull()?.sections.orEmpty().flatMap { it.songs }.distinctBy { it.id }.take(40)
@@ -1143,7 +1149,8 @@ fun HomeScreen(
                     onClick = { index -> playSongs(artist.name, songs, index) },
                 )
             }
-        val releaseAlbums = historyArtists.flatMap { tasteAlbums[it.id].orEmpty().take(1) }.take(6)
+        // Artists who share an album return the same one; a repeated id crashes the row.
+        val releaseAlbums = historyArtists.flatMap { tasteAlbums[it.id].orEmpty().take(1) }.distinctBy { it.id }.take(6)
         val releasesShelf =
             releaseAlbums.takeIf { it.isNotEmpty() }?.let { albums ->
                 TasteShelf(

@@ -3438,7 +3438,17 @@ class MusicService :
                     return@Factory dataSpec
                 }
 
-                if (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, requiredLength)) {
+                // A song first played on a data-saving stream stays cached at that bitrate; refetch it once
+                // the user wants better sound, otherwise High keeps replaying the low-quality copy.
+                if (dataSpec.position == 0L &&
+                    storedFormat != null &&
+                    storedFormat.bitrate < LOW_QUALITY_BITRATE &&
+                    !InnerTubeXPlayer.prefersLowQuality(audioQuality, mobileAudioQuality, connectivityManager)
+                ) {
+                    Timber.tag(TAG).i("UPGRADING low-quality cache for $mediaId (${storedFormat.bitrate} bps)")
+                    playerCache.removeResource(mediaId)
+                    songUrlCache.invalidate(mediaId)
+                } else if (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, requiredLength)) {
                     recoverSongDeduped(mediaId)
                     return@Factory dataSpec
                 }
@@ -4553,6 +4563,7 @@ class MusicService :
         const val NOTIFICATION_ID = 888
         const val ERROR_CODE_NO_STREAM = 1000001
         const val CHUNK_LENGTH = 512 * 1024L
+        private const val LOW_QUALITY_BITRATE = 100_000
         const val PERSISTENT_QUEUE_FILE = "persistent_queue.data"
         const val PERSISTENT_AUTOMIX_FILE = "persistent_automix.data"
         const val PERSISTENT_PLAYER_STATE_FILE = "persistent_player_state.data"

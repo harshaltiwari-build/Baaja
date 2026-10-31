@@ -93,6 +93,9 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     val isLoading = MutableStateFlow(false)
+    /** Bumped on every refresh so Home's own account-based rows reload alongside the feed. */
+    val refreshCount = MutableStateFlow(0)
+    @Volatile private var lastLoadedAt = 0L
     val isRandomizing = MutableStateFlow(false)
 
     private val quickPicksEnum = context.dataStore.data.map {
@@ -417,6 +420,7 @@ class HomeViewModel @Inject constructor(
 
     private suspend fun load() {
         isLoading.value = true
+        lastLoadedAt = System.currentTimeMillis()
         val hideExplicit = context.dataStore.get(HideExplicitKey, true)
         val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
         val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
@@ -668,6 +672,7 @@ class HomeViewModel @Inject constructor(
     fun refresh() {
         if (isRefreshing.value) return
         isRefreshing.value = true
+        refreshCount.value++
         viewModelScope.launch(Dispatchers.IO) {
             // If a chip is selected, reload the chip's content instead of the default home
             val currentChip = selectedChip.value
@@ -714,11 +719,15 @@ class HomeViewModel @Inject constructor(
         }
 
         // Listen for cookie changes and reload account data
+        var lastCookie: String? = null
         viewModelScope.launch(Dispatchers.IO) {
             context.dataStore.data
                 .map { it[InnerTubeCookieKey] to it[AccountNameKey] }
                 .distinctUntilChanged()
                 .collect { (cookie, savedAccountName) ->
+                    // Signing in or out changes the whole feed, not just the account chip.
+                    val accountChanged = lastLoadedAt > 0 && lastCookie != null && cookie.orEmpty() != lastCookie
+                    lastCookie = cookie.orEmpty()
                     if (!cookie.isNullOrEmpty()) {
                         YouTube.cookie = cookie
                         accountName.value = savedAccountName.orEmpty().ifBlank { "Guest" }
@@ -728,6 +737,7 @@ class HomeViewModel @Inject constructor(
                         accountImageUrl.value = null
                         accountPlaylists.value = null
                     }
+                    if (accountChanged) refresh()
                 }
         }
 
@@ -745,6 +755,15 @@ class HomeViewModel @Inject constructor(
     }
 
     private var isHomeDataLoaded = false
+
+    /** Reloads Home when the app comes back after a while, like YouTube Music does. */
+    fun refreshIfStale() {
+        if (lastLoadedAt > 0 && System.currentTimeMillis() - lastLoadedAt > HOME_STALE_MS) refresh()
+    }
+
+    private companion object {
+        const val HOME_STALE_MS = 30 * 60 * 1000L
+    }
 
     fun loadHomeData() {
         if (isHomeDataLoaded) return

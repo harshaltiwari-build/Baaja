@@ -130,7 +130,7 @@
     <string name="sponsorblock">Skip non-music segments</string>
     <string name="sponsorblock_skipped">Skipped a non-music segment</string>
     <string name="audio_quality_mobile">Quality on mobile data</string>
-    <string name="audio_quality_auto_save_data">Auto (save data)</string>
+    <string name="audio_quality_auto_save_data">Auto (same as Audio quality)</string>
     <string name="audio_quality_download">Download quality</string>
     <string name="sound_width">Stereo width</string>
     <string name="sound_balance">Left/right balance</string>
