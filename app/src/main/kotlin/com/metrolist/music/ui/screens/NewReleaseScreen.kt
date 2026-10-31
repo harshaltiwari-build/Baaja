@@ -5,18 +5,6 @@
 
 package com.metrolist.music.ui.screens
 
-import com.metrolist.music.ui.menu.YouTubeSongMenu
-import com.metrolist.music.ui.component.home.BaajaYouTubeCard
-import com.metrolist.music.ui.component.home.BaajaHomeSectionTitle
-import com.metrolist.music.ui.component.home.BaajaHomeGutter
-import com.metrolist.music.ui.component.home.BaajaChartPlaylistRow
-import com.metrolist.music.playback.queues.YouTubeQueue
-import com.metrolist.music.models.toMediaMetadata
-import com.metrolist.innertube.models.WatchEndpoint
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -71,7 +59,6 @@ fun NewReleaseScreen(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
     val newReleaseAlbums by viewModel.newReleaseAlbums.collectAsStateWithLifecycle()
-    val featured by viewModel.featured.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val hasError by viewModel.hasError.collectAsStateWithLifecycle()
 
@@ -89,18 +76,6 @@ fun NewReleaseScreen(
         columns = GridCells.Adaptive(minSize = GridThumbnailHeight + if (gridItemSize == GridItemSize.BIG) 24.dp else (-24).dp),
         contentPadding = LocalPlayerAwareWindowInsets.current.add(WindowInsets(left = 4.dp, right = 4.dp)).asPaddingValues(),
     ) {
-        // Same order as YouTube Music's New releases (music only): featured playlists, then albums & singles.
-        if (featured.isNotEmpty()) {
-            item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_featured") {
-                BaajaChartPlaylistRow(
-                    playlists = featured,
-                    onOpen = { navController.navigate("online_playlist/${it.id}") },
-                )
-            }
-            item(span = { GridItemSpan(maxLineSpan) }, key = "newrelease_albums_title") {
-                BaajaHomeSectionTitle(title = stringResource(R.string.baaja_new_releases_albums))
-            }
-        }
         items(
             items = newReleaseAlbums.distinctBy { it.id },
             key = { "newrelease_${it.id}" },
@@ -143,7 +118,7 @@ fun NewReleaseScreen(
     }
 
     BaajaBrowseTopBar(
-        title = stringResource(R.string.baaja_home_new_releases),
+        title = stringResource(R.string.new_release_albums),
         onBack = navController::navigateUp,
         onBackLongClick = navController::backToMain,
     )

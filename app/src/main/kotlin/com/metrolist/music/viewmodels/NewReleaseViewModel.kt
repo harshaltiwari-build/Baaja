@@ -10,9 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.AlbumItem
-import com.metrolist.innertube.models.PlaylistItem
 import com.metrolist.innertube.models.filterExplicit
-import com.metrolist.innertube.pages.NewReleasesPage
 import com.metrolist.music.constants.HideExplicitKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.utils.dataStore
@@ -37,10 +35,6 @@ constructor(
     private val _newReleaseAlbums = MutableStateFlow<List<AlbumItem>>(emptyList())
     val newReleaseAlbums = _newReleaseAlbums.asStateFlow()
 
-    /** The featured playlists of YouTube Music's New releases page, when it loaded. */
-    private val _featured = MutableStateFlow<List<PlaylistItem>>(emptyList())
-    val featured = _featured.asStateFlow()
-
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
@@ -58,14 +52,6 @@ constructor(
         loadJob = viewModelScope.launch {
             _isLoading.value = true
             _hasError.value = false
-            val hideExplicit = context.dataStore.get(HideExplicitKey, true)
-            // YouTube Music's own New releases page first, in YouTube's order, like the YouTube Music app.
-            newReleasesContent(YouTube.newReleasesPage().getOrNull(), hideExplicit)?.let { content ->
-                _featured.value = content.featured
-                _newReleaseAlbums.value = content.albums
-                _isLoading.value = false
-                return@launch
-            }
             // The dedicated page sometimes comes back empty (especially when signed in), so fall back to the
             // Explore feed and then to an album search; New releases should never be blank.
             var failure: Throwable? = null
@@ -126,26 +112,4 @@ constructor(
             _isLoading.value = false
         }
     }
-}
-
-internal data class NewReleasesContent(
-    val featured: List<PlaylistItem>,
-    val albums: List<AlbumItem>,
-)
-
-/**
- * What New releases shows from YouTube Music's page, keeping YouTube's order, or null when the page has no
- * albums so the older sources are used instead. Baaja is music only, so the page's music videos are left out.
- */
-internal fun newReleasesContent(
-    page: NewReleasesPage?,
-    hideExplicit: Boolean,
-): NewReleasesContent? {
-    page ?: return null
-    val albums = page.albums.distinctBy { it.id }.filterExplicit(hideExplicit)
-    if (albums.isEmpty()) return null
-    return NewReleasesContent(
-        featured = page.featured.distinctBy { it.id },
-        albums = albums,
-    )
 }

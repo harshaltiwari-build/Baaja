@@ -13,12 +13,6 @@ data class ChartsPage(
     )
 
     enum class ChartType {
-        TRENDING, TOP, GENRE, NEW_RELEASES,
-
-        /** A row of chart playlists, e.g. "Trending 20 India", "Top 100 Music Videos India". */
-        PLAYLISTS,
-
-        /** A ranked list of artists, e.g. "Top artists". */
-        ARTISTS,
+        TRENDING, TOP, GENRE, NEW_RELEASES
     }
 }

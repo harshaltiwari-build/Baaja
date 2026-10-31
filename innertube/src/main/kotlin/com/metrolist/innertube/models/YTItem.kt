@@ -89,9 +89,6 @@ data class ArtistItem(
     val shuffleEndpoint: WatchEndpoint?,
     val radioEndpoint: WatchEndpoint?,
     val isProfile: Boolean = false,
-    /** Rank and subscriber line when the artist comes from a chart such as Top artists. */
-    val chartPosition: Int? = null,
-    val subscriberText: String? = null,
 ) : YTItem() {
     override val explicit: Boolean
         get() = false

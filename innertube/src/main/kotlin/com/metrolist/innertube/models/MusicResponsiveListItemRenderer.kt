@@ -29,19 +29,7 @@ data class MusicResponsiveListItemRenderer(
     val playlistItemData: PlaylistItemData?,
     val overlay: Overlay?,
     val navigationEndpoint: NavigationEndpoint?,
-    /** The rank shown left of chart rows, e.g. "1" in Top artists. */
-    val customIndexColumn: CustomIndexColumn? = null,
 ) {
-    @Serializable
-    data class CustomIndexColumn(
-        val musicCustomIndexColumnRenderer: Renderer?,
-    ) {
-        @Serializable
-        data class Renderer(
-            val text: Runs?,
-        )
-    }
-
     val isSong: Boolean
         get() = navigationEndpoint == null
             || navigationEndpoint.watchEndpoint != null

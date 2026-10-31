@@ -5,8 +5,6 @@
 
 package com.metrolist.music.ui.screens.search
 
-import com.metrolist.innertube.models.SongItem
-import com.metrolist.innertube.models.ArtistItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -108,14 +106,12 @@ fun ExploreLanding(
             attempt++
         }
     }
-    // Music only: the top artists' photos (or songs' covers), never YouTube's chart art that says "VIDEOS".
     val chartCovers =
         remember(chartsPage) {
             chartsPage
                 ?.sections
                 .orEmpty()
                 .flatMap { it.items }
-                .filter { it is ArtistItem || (it is SongItem && !it.isVideoSong) }
                 .mapNotNull { it.thumbnail }
                 .distinct()
                 .take(EXPLORE_COVER_COUNT)
