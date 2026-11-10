@@ -66,8 +66,14 @@ internal object BaajaSplashState {
     var shown = false
 }
 
-/** How long the splash stays before fading out; the app underneath is already starting. */
-internal const val SPLASH_MILLIS = 4000L
+/**
+ * The first-ever launch intro runs at this speed: the original 4 s timeline plays in about 2.7 s, which keeps
+ * its character without making people wait.
+ */
+internal const val SPLASH_SPEED = 1.5f
+
+/** How long the intro stays before it is removed; its last frame (about 3.95 s of timeline) lands just before. */
+internal const val SPLASH_MILLIS = 2700L
 
 /** Normal launches only; widget, shortcut, deep-link and share launches go straight into the app. */
 internal fun Activity?.isPlainLauncherStart(): Boolean {
@@ -133,7 +139,7 @@ private class RevealShape(
  */
 @Composable
 fun BaajaSplash(modifier: Modifier = Modifier) {
-    val clock = rememberBaajaClock()
+    val clock = rememberBaajaClock(SPLASH_SPEED)
     val density = LocalDensity.current.density
     val topInset = WindowInsets.statusBars.getTop(LocalDensity.current).toFloat()
 

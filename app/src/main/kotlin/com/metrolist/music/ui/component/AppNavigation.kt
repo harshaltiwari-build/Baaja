@@ -185,13 +185,10 @@ fun AppNavigationBar(
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
-    val backdrop = if (pureBlack) Color.Black else colorScheme.surface
-    // A solid backdrop behind the pill, so list content no longer shows around it. The mini player
-    // draws its own backdrop down to this one (see MiniPlayer).
+    // The pill floats over the list: there is no strip behind it.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .drawBehind { drawRect(backdrop) }
             .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
         Row(

@@ -72,6 +72,8 @@ import com.metrolist.innertube.utils.parseCookieString
 import com.metrolist.music.LocalDatabase
 import com.metrolist.music.R
 import com.metrolist.music.constants.BaajaHasSeenWelcomeKey
+import com.metrolist.music.constants.BaajaIntroSeenKey
+import androidx.compose.runtime.withFrameNanos
 import com.metrolist.music.constants.BaajaJustSignedInKey
 import com.metrolist.music.constants.BaajaMusicLanguagesKey
 import com.metrolist.music.constants.BaajaPickedArtistsKey
@@ -97,6 +99,9 @@ private const val STAGE_LANGUAGES = 3
 private const val STAGE_ARTISTS = 4
 private const val STAGE_WELCOME_BACK = 5
 private const val UPDATE_GRACE_MILLIS = 60_000L
+
+/** Which launch animation covers the app: none, the quick everyday one, or the full first-ever intro. */
+private enum class OpenMode { NONE, QUICK, FULL }
 
 /**
  * First-run flow laid over [content]: splash (once per cold start), then Welcome, then the Login intro.
@@ -131,14 +136,41 @@ fun BaajaWelcomeGate(
             },
         )
     }
-    var splashVisible by remember {
-        mutableStateOf(!BaajaSplashState.shown && (context as? Activity).isPlainLauncherStart())
+    // First ever launch: the full intro. Every later cold launch: the quick one. Widget, shortcut, deep-link and
+    // share launches, and activity recreations, skip both. People who already got past the welcome screen count as
+    // having seen the intro, so an app update never replays it.
+    var openMode by remember {
+        mutableStateOf(
+            when {
+                BaajaSplashState.shown || !(context as? Activity).isPlainLauncherStart() -> OpenMode.NONE
+                context.dataStore.get(BaajaIntroSeenKey, false) || context.dataStore.get(BaajaHasSeenWelcomeKey, false) -> OpenMode.QUICK
+                else -> OpenMode.FULL
+            },
+        )
     }
+    val splashVisible = openMode != OpenMode.NONE
+    // The app is composed one frame after the still splash is drawn, and the animation starts once the app is up,
+    // so the heavy first composition happens while the splash is still, not in the middle of the animation.
+    val lazyContent = splashVisible
+    var contentComposed by remember { mutableStateOf(!lazyContent) }
+    var animationStarted by remember { mutableStateOf(!lazyContent) }
     LaunchedEffect(Unit) {
         BaajaSplashState.shown = true
-        if (splashVisible) {
-            delay(SPLASH_MILLIS)
-            splashVisible = false
+        if (lazyContent) {
+            withFrameNanos { }
+            contentComposed = true
+            withFrameNanos { }
+            withFrameNanos { }
+            animationStarted = true
+        }
+        when (openMode) {
+            OpenMode.FULL -> {
+                delay(SPLASH_MILLIS)
+                openMode = OpenMode.NONE
+                context.safeDataStoreEdit { it[BaajaIntroSeenKey] = true }
+            }
+            // The quick open removes itself when it is done.
+            OpenMode.QUICK, OpenMode.NONE -> Unit
         }
     }
 
@@ -170,7 +202,7 @@ fun BaajaWelcomeGate(
     Box(Modifier.fillMaxSize()) {
         // Hide the app underneath from screen readers while an overlay covers it.
         Box(Modifier.fillMaxSize().then(if (covered) Modifier.clearAndSetSemantics { } else Modifier)) {
-            content()
+            if (contentComposed) content()
         }
         // The first-run screens start (and play their entrance motion) once the splash is leaving.
         AnimatedVisibility(
@@ -243,13 +275,27 @@ fun BaajaWelcomeGate(
             }
         }
         AnimatedVisibility(
-            visible = splashVisible,
+            visible = openMode == OpenMode.FULL,
             enter = fadeIn(tween(0)),
             exit = androidx.compose.animation.ExitTransition.None,
         ) {
-            BaajaSplash(
-                Modifier.pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },
-            )
+            val swallow = Modifier.pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
+            if (animationStarted) BaajaSplash(swallow) else BaajaSplashHold(swallow)
+        }
+        AnimatedVisibility(
+            visible = openMode == OpenMode.QUICK,
+            enter = fadeIn(tween(0)),
+            exit = androidx.compose.animation.ExitTransition.None,
+        ) {
+            val swallow = Modifier.pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
+            if (animationStarted) {
+                BaajaQuickOpen(
+                    onFinished = { openMode = OpenMode.NONE },
+                    modifier = swallow,
+                )
+            } else {
+                BaajaSplashHold(swallow)
+            }
         }
     }
 }

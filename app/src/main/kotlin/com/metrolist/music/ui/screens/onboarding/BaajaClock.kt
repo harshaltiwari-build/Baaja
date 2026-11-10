@@ -55,16 +55,19 @@ class BaajaClock(
     ): Float = 0.5f * (1f - cos(loop(period, delay) * 2f * PI.toFloat()))
 }
 
-/** A [BaajaClock] that ticks for an hour; plenty for a screen the user sits on, and free when motion is off. */
+/**
+ * A [BaajaClock] that ticks for an hour; plenty for a screen the user sits on, and free when motion is off.
+ * [speed] above 1 runs the whole timeline faster (2 plays everything twice as fast).
+ */
 @Composable
-fun rememberBaajaClock(): BaajaClock {
+fun rememberBaajaClock(speed: Float = 1f): BaajaClock {
     val enabled = rememberBaajaMotionEnabled()
     if (!enabled) return BaajaClock(rememberUpdatedState(0f), false)
     val transition = rememberInfiniteTransition(label = "baajaClock")
     val seconds =
         transition.animateFloat(
             initialValue = 0f,
-            targetValue = 3600f,
+            targetValue = 3600f * speed,
             animationSpec = infiniteRepeatable(tween(3_600_000, easing = LinearEasing), RepeatMode.Restart),
             label = "seconds",
         )

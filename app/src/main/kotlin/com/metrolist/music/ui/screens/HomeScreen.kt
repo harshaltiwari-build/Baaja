@@ -1645,47 +1645,7 @@ fun HomeScreen(
                     }
 
 
-                    if (popularArtistEntries.isNotEmpty()) {
-                        item(key = "popular_artists_title") {
- BaajaEntranceBox(3, entranceKey) {
-                            BaajaHomeSectionTitle(title = stringResource(if (tasteStage == TasteStage.HISTORY && tasteActive) R.string.baaja_home_your_top_artists else if (tasteActive) R.string.baaja_home_your_artists else R.string.baaja_home_popular_artists))
-                        }
-}
-                        item(key = "popular_artists_list") {
- BaajaEntranceBox(4, entranceKey) {
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = BaajaHomeGutter - 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                items(popularArtistEntries, key = { "home_popular_artist_${it.id}" }) { entry ->
-                                    BaajaArtistAvatar(
-                                        name = ArtistNameAliases.resolve(artistNameAliases, entry.id, entry.name),
-                                        thumbnailUrl = entry.thumbnailUrl,
-                                        onClick = { navController.navigate("artist/${entry.id}") },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            menuState.show {
-                                                when {
-                                                    entry.local != null ->
-                                                        ArtistMenu(
-                                                            originalArtist = entry.local,
-                                                            coroutineScope = scope,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                    entry.remote != null ->
-                                                        YouTubeArtistMenu(
-                                                            artist = entry.remote,
-                                                            onDismiss = menuState::dismiss,
-                                                        )
-                                                }
-                                            }
-                                        },
-                                    )
-                                }
-                            }
-                        }
-}
-                    }
+
                 }
 
                 var tasteShown = false
@@ -2154,7 +2114,7 @@ fun HomeScreen(
                                         contentPadding = PaddingValues(horizontal = BaajaHomeGutter, vertical = 4.dp),
                                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                                     ) {
-                                        items(playlists, key = { "community_${it.playlist.id}" }) { item ->
+                                        items(playlists.distinctBy { it.playlist.id }, key = { "community_${it.playlist.id}" }) { item ->
                                             BaajaCommunityCard(
                                                 title = item.playlist.title,
                                                 author =

@@ -189,7 +189,6 @@ private fun NewMiniPlayer(
             if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
         }
     val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
-    val backdropColor = if (pureBlackEnabled && useDarkTheme) Color.Black else MaterialTheme.colorScheme.surface
 
     // Player states - only collect what's needed at this level
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -312,15 +311,6 @@ private fun NewMiniPlayer(
                 .height(MiniPlayerHeight)
                 // Backdrop from a short fade above down to the nav bar's, so list content doesn't peek
                 // out around and below the mini player.
-                .drawBehind {
-                    val fade = MiniPlayerBackdropFade.toPx()
-                    drawRect(
-                        brush = Brush.verticalGradient(listOf(backdropColor.copy(alpha = 0f), backdropColor), startY = -fade, endY = 0f),
-                        topLeft = Offset(0f, -fade),
-                        size = Size(size.width, fade),
-                    )
-                    drawRect(backdropColor, size = Size(size.width, size.height + MiniPlayerBottomSpacing.toPx()))
-                }
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .padding(horizontal = 12.dp)
                 .let { baseModifier ->

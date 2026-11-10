@@ -1,3 +1,20 @@
+---v1.3.5
+# Baaja 1.3.5
+A quicker start and a cleaner Home.
+
+## Opening
+- Baaja no longer holds its intro for 4 seconds every time. The first ever launch plays the intro in about 2.7 seconds, and every launch after that uses a quick opening of about a third of a second
+- The launch screen is drawn first and the animation starts once the app behind it is ready
+
+## Look
+- The mini player and the bottom bar now float over the list, with no white strip behind them
+
+## Home
+- Removed the row of artists from the top of Home
+
+## Fixes
+- Fixed a possible crash on Home when the same community playlist showed up twice
+
 ---v1.3.4
 # Baaja 1.3.4
 A crash fix.

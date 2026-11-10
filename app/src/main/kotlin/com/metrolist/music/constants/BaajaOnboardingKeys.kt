@@ -12,6 +12,12 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 /** Set once the first-run welcome screen has been dismissed (as guest or by choosing to sign in). */
 val BaajaHasSeenWelcomeKey = booleanPreferencesKey("baajaHasSeenWelcome")
 
+/**
+ * Set once the full first-run intro animation has played. After that, launches use the short one.
+ * People who already got past the welcome screen count as having seen it.
+ */
+val BaajaIntroSeenKey = booleanPreferencesKey("baajaIntroSeen")
+
 /** Local profile, stored on this device only. Blank name/bio means "not set". */
 val BaajaProfileNameKey = stringPreferencesKey("baajaProfileName")
 val BaajaProfileBioKey = stringPreferencesKey("baajaProfileBio")
