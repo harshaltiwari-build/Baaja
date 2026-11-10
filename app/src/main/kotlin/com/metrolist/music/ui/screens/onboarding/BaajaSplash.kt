@@ -117,7 +117,7 @@ private fun segment(
 ): Float = smooth((now - from) / (to - from))
 
 /** A circle that shrinks onto [center]; everything outside it is cut away, revealing the app underneath. */
-private class RevealShape(
+internal class RevealShape(
     private val center: Offset,
     private val radius: Float,
 ) : androidx.compose.ui.graphics.Shape {

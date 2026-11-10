@@ -1,3 +1,11 @@
+---v1.3.6
+# Baaja 1.3.6
+A proper quick opening animation.
+
+## Opening
+- Every launch after the first now opens with a short animation of about half a second: the logo pops up and a circle of purple closes onto it, revealing the app. It is the same motion the very first intro ends with, just much faster
+- The very first launch still plays the full intro
+
 ---v1.3.5
 # Baaja 1.3.5
 A quicker start and a cleaner Home.
