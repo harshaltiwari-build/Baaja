@@ -70,7 +70,20 @@ jobs:
           LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
           LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
 
+      - name: Check signing secrets
+        id: signing
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo "has_signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_signing=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Signing skipped::No KEYSTORE secret is set, so this run builds but does not sign or publish APKs."
+          fi
+
       - name: Sign APK
+        if: steps.signing.outputs.has_signing == 'true'
         uses: ilharp/sign-android-release@v2.0.0
         with:
           releaseDir: app/build/outputs/apk/${{ matrix.variant }}/release/
@@ -81,6 +94,7 @@ jobs:
           buildToolsVersion: 36.0.0
 
       - name: Move signed APK
+        if: steps.signing.outputs.has_signing == 'true'
         run: |
           OUTPUT_DIR="app/build/outputs/apk/${{ matrix.variant }}/release"
           mkdir -p "$OUTPUT_DIR/out"
@@ -92,6 +106,7 @@ jobs:
           find "$OUTPUT_DIR" -name "*-signed.apk" -o -name "*-unsigned-signed.apk" | xargs -I{} mv {} "$OUTPUT_DIR/out/$TARGET_NAME"
 
       - name: Upload Signed APK
+        if: steps.signing.outputs.has_signing == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.variant == 'gms' && 'app-with-Google-Cast' || 'app-release' }}
@@ -133,8 +148,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Restore Persistent Keystore
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
         run: |
-          echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ./app/persistent-debug.keystore
+          if [ -n "$DEBUG_KEYSTORE" ]; then
+            echo "$DEBUG_KEYSTORE" | base64 -d > ./app/persistent-debug.keystore
+          else
+            echo "No DEBUG_KEYSTORE secret; building with the default debug key."
+          fi
 
       # Lint is intentionally not run in CI: it never gated a merge and added
       # several minutes to every build. Run :app:lintGmsRelease locally.
@@ -163,13 +184,27 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Check signing secrets
+        id: signing
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo "has_signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_signing=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Signing skipped::No KEYSTORE secret is set, so this run builds but does not sign or publish APKs."
+          fi
+
       - name: Download Signed APK
+        if: steps.signing.outputs.has_signing == 'true'
         uses: actions/download-artifact@v8
         with:
           name: app-with-Google-Cast
           path: nightly
 
       - name: Publish Nightly Release
+        if: steps.signing.outputs.has_signing == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
