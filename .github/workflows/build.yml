@@ -154,7 +154,11 @@ jobs:
           if [ -n "$DEBUG_KEYSTORE" ]; then
             echo "$DEBUG_KEYSTORE" | base64 -d > ./app/persistent-debug.keystore
           else
-            echo "No DEBUG_KEYSTORE secret; building with the default debug key."
+            echo "No DEBUG_KEYSTORE secret; creating a throwaway debug key for this build."
+            mkdir -p "$HOME/.android"
+            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
 
       # Lint is intentionally not run in CI: it never gated a merge and added
