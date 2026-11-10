@@ -101,8 +101,30 @@ play_local() { tap "$LOCAL_SONG" && sleep 3 && tap "$LOCAL_SONG" last && wait_fo
 
 # ---- journeys ----
 
+if ! "$ADB" shell pm list packages "$PKG" | grep -q "^package:$PKG$"; then
+  echo "Package $PKG is not installed on the phone. Pass the package to test, e.g. e2e/baaja_e2e.sh com.baaja.music" >&2
+  exit 2
+fi
+
+# A fresh install asks for notifications and shows first-run screens; clear both so the journeys start at Home.
+"$ADB" shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
+skip_onboarding() {
+  local i
+  for ((i = 0; i < 6; i++)); do
+    dump
+    if [[ -n "$(centre_of '^Baaja bajao!')" ]]; then tap '^Baaja bajao!'
+    elif [[ -n "$(centre_of '^Continue as guest$')" ]]; then tap '^Continue as guest$'
+    elif [[ -n "$(centre_of '^Skip for now$')" ]]; then tap '^Skip for now$'
+    else return 0
+    fi
+    sleep 2
+  done
+}
+
 "$ADB" shell am force-stop "$PKG"
 "$ADB" shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+sleep 3
+skip_onboarding
 
 check "Home opens with Speed dial" wait_for '^Speed dial$' 20
 check "Home has Quick picks" scroll_to '^Quick picks$'

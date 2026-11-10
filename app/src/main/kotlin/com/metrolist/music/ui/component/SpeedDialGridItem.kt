@@ -37,7 +37,13 @@ import com.metrolist.music.ui.utils.resize
 private val SpeedDialTileShape = RoundedCornerShape(20.dp)
 private val SpeedDialLabelShape = RoundedCornerShape(10.dp)
 private val SpeedDialFadeShape = RoundedCornerShape(18.dp)
-private val SpeedDialFade = Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.78f))
+// Starts early and ends dark so white titles stay readable on pale covers.
+private val SpeedDialFade =
+    Brush.verticalGradient(
+        0.30f to Color.Transparent,
+        0.70f to Color.Black.copy(alpha = 0.60f),
+        1f to Color.Black.copy(alpha = 0.90f),
+    )
 
 /**
  * Speed dial tile: artwork in an ink-outlined rounded square (round for artists) with a hard offset
@@ -105,6 +111,15 @@ fun SpeedDialGridItem(
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
+                style =
+                    androidx.compose.material3.LocalTextStyle.current.copy(
+                        shadow =
+                            androidx.compose.ui.graphics.Shadow(
+                                color = Color.Black.copy(alpha = 0.6f),
+                                offset = androidx.compose.ui.geometry.Offset(0f, 1f),
+                                blurRadius = 3f,
+                            ),
+                    ),
                 modifier =
                     Modifier
                         .align(Alignment.BottomStart)

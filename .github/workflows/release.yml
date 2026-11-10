@@ -20,6 +20,7 @@ jobs:
       version_changed: ${{ steps.check_version.outputs.version_changed }}
       new_version: ${{ steps.check_version.outputs.new_version }}
       version_code: ${{ steps.check_version.outputs.version_code }}
+      has_signing: ${{ steps.signing.outputs.has_signing }}
     steps:
       # Only HEAD and HEAD^ are read below, and no submodule or Gradle work
       # happens in this job.
@@ -75,6 +76,18 @@ jobs:
             echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check signing secrets
+        id: signing
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE" ]; then
+            echo "has_signing=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_signing=false" >> $GITHUB_OUTPUT
+            echo "::notice title=Release skipped::No KEYSTORE secret is set, so no release is built or published here. Build and sign it locally (see README), or add the signing secrets."
+          fi
+
       - name: Debug output
         run: |
           echo "Debug Information:"
@@ -85,7 +98,7 @@ jobs:
 
   build:
     needs: check-version
-    if: needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch'
+    if: (needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch') && needs.check-version.outputs.has_signing == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -174,7 +187,7 @@ jobs:
 
   create-release:
     needs: [check-version, build]
-    if: needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch'
+    if: (needs.check-version.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch') && needs.check-version.outputs.has_signing == 'true'
     permissions:
       contents: write
     runs-on: ubuntu-latest

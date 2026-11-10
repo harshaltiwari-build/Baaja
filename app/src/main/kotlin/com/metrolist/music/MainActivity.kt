@@ -231,6 +231,8 @@ private data class AvailableUpdate(
 class MainActivity : FragmentActivity() {
     companion object {
         private const val PLAYER_CONNECT_TIMEOUT_MS = 10_000L
+        private const val MAX_PLAYER_REBIND_ATTEMPTS = 3
+        private const val PLAYER_REBIND_DELAY_MS = 500L
         private const val ACTION_SEARCH = "com.baaja.music.action.SEARCH"
         private const val ACTION_LIBRARY = "com.baaja.music.action.LIBRARY"
         const val ACTION_RECOGNITION = "com.baaja.music.action.RECOGNITION"
@@ -270,7 +272,16 @@ class MainActivity : FragmentActivity() {
                 service: IBinder?,
             ) {
                 if (service is MusicBinder) {
+                    if (!service.service.isPlayerReady.value) {
+                        // MusicService.onCreate returned before creating its player (for example the
+                        // foreground start was denied). That instance stays unusable while bound, so
+                        // drop it and bind again to get a fresh one, a few times at most.
+                        retryBindForMissingPlayer()
+                        return
+                    }
+                    playerRebindAttempts = 0
                     playerConnection = PlayerConnection(this@MainActivity, service, database, lifecycleScope)
+                    askForNotificationsOnFirstPlayback(playerConnection!!)
                     playerConnectionSnapshot = playerConnection
                     listenTogetherManager.setPlayerConnection(playerConnection)
                 }
@@ -284,6 +295,54 @@ class MainActivity : FragmentActivity() {
                 // DO NOT update playerConnectionSnapshot - this is the key to preventing recomposition
             }
         }
+
+    private var playerRebindAttempts = 0
+    private var askedForNotifications = false
+
+    /**
+     * Android 13+ needs a runtime permission for the playback notification. Asking when the first song
+     * plays, with the music starting right then, explains itself better than a prompt over Home at launch.
+     */
+    private fun askForNotificationsOnFirstPlayback(connection: PlayerConnection) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || askedForNotifications) return
+        lifecycleScope.launch {
+            connection.isPlaying.first { it }
+            if (askedForNotifications) return@launch
+            askedForNotifications = true
+            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1000)
+            }
+        }
+    }
+
+    private fun bindMusicService() {
+        if (isServiceBound) return
+        bindService(
+            Intent(this, MusicService::class.java),
+            serviceConnection,
+            BIND_AUTO_CREATE,
+        )
+        isServiceBound = true
+    }
+
+    private fun retryBindForMissingPlayer() {
+        if (playerRebindAttempts >= MAX_PLAYER_REBIND_ATTEMPTS) {
+            Timber.tag("MainActivity").e("Music service still has no player after $playerRebindAttempts rebinds")
+            return
+        }
+        playerRebindAttempts++
+        val attempt = playerRebindAttempts
+        Timber.tag("MainActivity").w("Music service has no player; rebinding (attempt $attempt)")
+        safeUnbindService("player not ready")
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(PLAYER_REBIND_DELAY_MS * attempt)
+            if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+                bindMusicService()
+            }
+        }
+    }
 
     private fun safeUnbindService(source: String) {
         if (!isServiceBound) return
@@ -302,12 +361,6 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Request notification permission on Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1000)
-            }
-        }
 
         // Start the playback service explicitly once so it can outlive binding.
         // Re-issuing startForegroundService() while an existing service instance is already
@@ -335,14 +388,7 @@ class MainActivity : FragmentActivity() {
         }
 
         // Bind to service - if already bound, this is a no-op but ensures we stay connected
-        if (!isServiceBound) {
-            bindService(
-                Intent(this, MusicService::class.java),
-                serviceConnection,
-                BIND_AUTO_CREATE,
-            )
-            isServiceBound = true
-        }
+        bindMusicService()
     }
 
     override fun onStop() {

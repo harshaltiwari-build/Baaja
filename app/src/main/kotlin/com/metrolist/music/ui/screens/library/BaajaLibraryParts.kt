@@ -235,10 +235,10 @@ internal fun BaajaLibraryCollections(
     val smallTiles =
         buildList {
             if (showCached) {
-                add(SmallTile(R.drawable.cached, stringResource(R.string.cached_playlist), null, BaajaLibraryRoutes.CACHED, BaajaTileColors.mint()))
+                add(SmallTile(R.drawable.cached, stringResource(R.string.cached_playlist), stringResource(R.string.baaja_library_cached_hint), BaajaLibraryRoutes.CACHED, BaajaTileColors.mint()))
             }
             if (showTop) {
-                add(SmallTile(R.drawable.trending_up, topLabel, null, BaajaLibraryRoutes.top(topSize), BaajaTileColors.peach()))
+                add(SmallTile(R.drawable.trending_up, topLabel, stringResource(R.string.baaja_library_top_hint), BaajaLibraryRoutes.top(topSize), BaajaTileColors.peach()))
             }
             if (showUploaded) {
                 add(SmallTile(R.drawable.backup, stringResource(R.string.uploaded_playlist), null, BaajaLibraryRoutes.UPLOADED, BaajaTileColors.sky()))

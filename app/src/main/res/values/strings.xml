@@ -289,4 +289,7 @@
     <string name="about">About</string>
 
     <string name="new_version_available">New version available</string>
+    <string name="player_not_ready">Player isn\'t ready yet, try again in a moment</string>
+    <string name="baaja_library_cached_hint">Played songs, saved</string>
+    <string name="baaja_library_top_hint">Your most played</string>
 </resources>

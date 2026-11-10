@@ -62,6 +62,16 @@ class PlayerConnection(
         private const val TAG = "PlayerConnection"
     }
 
+    private val appContext = context.applicationContext
+
+    private fun notifyPlayerNotReady() {
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            android.widget.Toast
+                .makeText(appContext, com.metrolist.music.R.string.player_not_ready, android.widget.Toast.LENGTH_SHORT)
+                .show()
+        }
+    }
+
     val service = binder.service
     private val playerReadinessFlow = service.isPlayerReady
 
@@ -252,7 +262,7 @@ class PlayerConnection(
             service.playQueue(queue)
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in playQueue")
-            throw e
+            reportException(e) // a failed queue action must not take the whole app down
         }
     }
 
@@ -281,7 +291,7 @@ class PlayerConnection(
             service.startRadioSeamlessly()
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in startRadioSeamlessly")
-            throw e
+            reportException(e) // a failed queue action must not take the whole app down
         }
     }
 
@@ -293,11 +303,16 @@ class PlayerConnection(
             Timber.tag("PlayerConnection").d("playNext blocked - Listen Together guest")
             return
         }
+        if (!playerReadinessFlow.value) {
+            Timber.tag(TAG).w("playNext ignored: player not ready")
+            notifyPlayerNotReady()
+            return
+        }
         try {
             service.playNext(items)
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in playNext")
-            throw e
+            reportException(e) // a failed queue action must not take the whole app down
         }
     }
 
@@ -309,11 +324,16 @@ class PlayerConnection(
             Timber.tag("PlayerConnection").d("addToQueue blocked - Listen Together guest")
             return
         }
+        if (!playerReadinessFlow.value) {
+            Timber.tag(TAG).w("addToQueue ignored: player not ready")
+            notifyPlayerNotReady()
+            return
+        }
         try {
             service.addToQueue(items)
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in addToQueue")
-            throw e
+            reportException(e) // a failed queue action must not take the whole app down
         }
     }
 

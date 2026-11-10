@@ -1,3 +1,18 @@
+---v1.3.4
+# Baaja 1.3.4
+A crash fix.
+
+## Fixes
+- Fixed a crash when tapping "Play next" or "Add to queue" while the player was still starting (seen on Android 15)
+- If the player service starts without a player, the app now reconnects to it by itself instead of staying stuck
+- A failed queue action no longer closes the app
+- "Play next" and "Add to queue" tell you when the player isn't ready yet, instead of doing nothing
+
+## Small improvements
+- Baaja asks to show notifications when your first song plays, not as soon as you open the app
+- Speed dial titles are easier to read on light covers
+- "Cached" and "My Top 50" in Library now have a short description like the other tiles
+
 ---v1.3.3
 # Baaja 1.3.3
 Better sound, a Home like YouTube Music's, and a calmer look.

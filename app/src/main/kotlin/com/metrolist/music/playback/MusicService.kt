@@ -1929,6 +1929,12 @@ class MusicService :
     }
 
     fun playNext(items: List<MediaItem>) {
+        // The service can be bound while its player was never created (onCreate returns early
+        // when the foreground start is denied); touching `player` then crashes the app.
+        if (!::player.isInitialized) {
+            Timber.tag(TAG).w("playNext ignored: player not initialized")
+            return
+        }
         // If queue is empty or player is idle, play immediately instead
         if (player.mediaItemCount == 0 || player.playbackState == STATE_IDLE) {
             player.setMediaItems(items)
@@ -2022,6 +2028,10 @@ class MusicService :
     }
 
     fun addToQueue(items: List<MediaItem>) {
+        if (!::player.isInitialized) {
+            Timber.tag(TAG).w("addToQueue ignored: player not initialized")
+            return
+        }
         if (dataStore.get(PreventDuplicateTracksInQueueKey, false)) {
             val itemIds = items.map { it.mediaId }.toSet()
             val indicesToRemove = mutableListOf<Int>()
