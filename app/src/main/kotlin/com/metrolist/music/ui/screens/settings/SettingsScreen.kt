@@ -110,6 +110,13 @@ fun SettingsScreen(
                     title = { Text(stringResource(R.string.content)) },
                     trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/content") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.sync),
+                    title = { Text(stringResource(R.string.baaja_integrations)) },
+                    description = { Text(stringResource(R.string.baaja_integrations_desc)) },
+                    trailingContent = { SettingsChevron() },
+                    onClick = { navController.navigate("settings/integrations") }
                 )
             )
         )

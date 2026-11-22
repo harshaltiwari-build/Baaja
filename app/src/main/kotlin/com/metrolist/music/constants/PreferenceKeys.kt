@@ -340,6 +340,25 @@ enum class PlayerBackgroundStyle {
 
 val HistoryDuration = floatPreferencesKey("historyDuration")
 
+val LastFmUsernameKey = stringPreferencesKey("lastFmUsername")
+val LastFmSessionKey = stringPreferencesKey("lastFmSession")
+val LastFmScrobbleEnabledKey = booleanPreferencesKey("lastFmScrobbleEnabled")
+val ListenBrainzUsernameKey = stringPreferencesKey("listenBrainzUsername")
+val ListenBrainzTokenKey = stringPreferencesKey("listenBrainzToken")
+val ListenBrainzEnabledKey = booleanPreferencesKey("listenBrainzEnabled")
+val ScrobbleNowPlayingKey = booleanPreferencesKey("scrobbleNowPlaying")
+val ScrobblePendingKey = stringPreferencesKey("scrobblePending")
+
+enum class PlayerStyle {
+    CLASSIC,
+    FULL_COVER,
+    VINYL,
+    CASSETTE,
+    HALO,
+}
+
+val PlayerStyleKey = stringPreferencesKey("baajaPlayerStyle")
+
 val PlayerBackgroundStyleKey = stringPreferencesKey("playerBackgroundStyle")
 val ShowLyricsKey = booleanPreferencesKey("showLyrics")
 val LyricsTextPositionKey = stringPreferencesKey("lyricsTextPosition")

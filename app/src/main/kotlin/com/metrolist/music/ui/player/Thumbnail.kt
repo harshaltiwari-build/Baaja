@@ -85,6 +85,8 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
+import com.metrolist.music.constants.PlayerStyle
+import com.metrolist.music.constants.PlayerStyleKey
 import com.metrolist.music.constants.SeekExtraSeconds
 import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.constants.ThumbnailCornerRadius
@@ -232,6 +234,8 @@ fun Thumbnail(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
     )
+    val playerStyle by rememberEnumPreference(PlayerStyleKey, PlayerStyle.CLASSIC)
+    val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
     
     // Pre-calculate text color based on background style
     val textBackgroundColor = getTextColor(playerBackground)
@@ -413,6 +417,8 @@ fun Thumbnail(
                                 currentMediaId = mediaMetadata?.id,
                                 currentMediaThumbnail = mediaMetadata?.thumbnailUrl,
                                 outlineColor = if (playerBackground == PlayerBackgroundStyle.DEFAULT) baajaInk else Color.Black,
+                                playerStyle = playerStyle,
+                                isPlaying = isPlaying,
                             )
                         }
                     }
@@ -551,6 +557,8 @@ private fun ThumbnailItem(
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
     outlineColor: Color = Color.Black,
+    playerStyle: PlayerStyle = PlayerStyle.CLASSIC,
+    isPlaying: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
@@ -606,31 +614,54 @@ private fun ThumbnailItem(
             },
         contentAlignment = Alignment.Center
     ) {
-        val artShape = RoundedCornerShape(dimensions.cornerRadius)
-        Box(
-            modifier = Modifier
-                .size(dimensions.thumbnailSize)
-                .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
-                .clip(artShape)
-        ) {
-            val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
+        if (playerStyle != PlayerStyle.CLASSIC) {
+            val artworkUri = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
                 currentMediaThumbnail
             } else {
                 item.mediaMetadata.artworkUri?.toString()
             }
-
-            ThumbnailImage(
-                artworkUri = artworkUriToUse,
-                cropArtwork = false
-            )
-            
-            // Cast button at top-right corner of thumbnail
-            CastButton(
+            Box(contentAlignment = Alignment.Center) {
+                StyledArtwork(
+                    style = playerStyle,
+                    artworkUri = artworkUri,
+                    size = dimensions.thumbnailSize,
+                    outlineColor = outlineColor,
+                    isActive = isPlaying && item.mediaId == currentMediaId,
+                )
+                CastButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                    tintColor = textBackgroundColor
+                )
+            }
+        } else {
+            val artShape = RoundedCornerShape(dimensions.cornerRadius)
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp),
-                tintColor = textBackgroundColor
-            )
+                    .size(dimensions.thumbnailSize)
+                    .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
+                    .clip(artShape)
+            ) {
+                val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
+                    currentMediaThumbnail
+                } else {
+                    item.mediaMetadata.artworkUri?.toString()
+                }
+
+                ThumbnailImage(
+                    artworkUri = artworkUriToUse,
+                    cropArtwork = false
+                )
+            
+                // Cast button at top-right corner of thumbnail
+                CastButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                    tintColor = textBackgroundColor
+                )
+            }
         }
     }
 }

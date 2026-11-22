@@ -410,6 +410,7 @@ class MusicService :
     private var isAudioEffectSessionOpened = false
     private var openedAudioEffectSessionId: Int = C.AUDIO_SESSION_ID_UNSET
     private val historyReporters = HashMap<Player, YouTubeHistoryReporter>()
+    private val scrobbler by lazy { com.metrolist.music.scrobble.Scrobbler(this, applicationScope) }
     private val playerNormalizationProcessors = HashMap<Player, VolumeNormalizationAudioProcessor>()
     private val playerEqualizerProcessors = HashMap<Player, CustomEqualizerAudioProcessor>()
     private val playerSoundShaperProcessors = HashMap<Player, SoundShaperAudioProcessor>()
@@ -2415,6 +2416,7 @@ class MusicService :
         reason: Int,
     ) {
         sponsorBlockSkipper.onTrackChanged(player, mediaItem?.mediaId)
+        scrobbler.onTrackStarted(player.currentMetadata, player.isPlaying)
         // Only natural completion transitions mark the previous track as fully cached,
         // never a manual skip or seek. Read lastTransitionedMediaId before replacing it.
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
@@ -2676,6 +2678,7 @@ class MusicService :
         }
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
+            scrobbler.onPlayingChanged(player.isPlaying)
             if (player.isPlaying) {
             } else {
             }
