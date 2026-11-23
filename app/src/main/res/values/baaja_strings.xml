@@ -776,4 +776,14 @@
     <string name="baaja_not_interested">Not interested</string>
     <string name="baaja_not_interested_desc">Suggest less like this on Home and in mixes</string>
     <string name="baaja_not_interested_done">Got it, you\'ll see less like this</string>
+    <string name="baaja_daily_mixes">Your daily mixes</string>
+    <string name="baaja_daily_mixes_label">FROM YOUR LISTENING</string>
+    <string name="baaja_daily_mix_on_repeat">On Repeat</string>
+    <string name="baaja_daily_mix_rediscover">Rediscover</string>
+    <string name="baaja_daily_mix_artist">%1$s and more</string>
+    <string name="baaja_daily_mix_morning">Morning mix</string>
+    <string name="baaja_daily_mix_afternoon">Afternoon mix</string>
+    <string name="baaja_daily_mix_evening">Evening mix</string>
+    <string name="baaja_daily_mix_night">Late night mix</string>
+    <string name="baaja_daily_mix_songs">%1$d songs</string>
 </resources>

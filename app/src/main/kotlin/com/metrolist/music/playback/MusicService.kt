@@ -410,6 +410,7 @@ class MusicService :
     private var isAudioEffectSessionOpened = false
     private var openedAudioEffectSessionId: Int = C.AUDIO_SESSION_ID_UNSET
     private val historyReporters = HashMap<Player, YouTubeHistoryReporter>()
+    private val listenSignals by lazy { com.metrolist.music.recommend.ListenSignals(this, applicationScope) }
     private val playerNormalizationProcessors = HashMap<Player, VolumeNormalizationAudioProcessor>()
     private val playerEqualizerProcessors = HashMap<Player, CustomEqualizerAudioProcessor>()
     private val playerSoundShaperProcessors = HashMap<Player, SoundShaperAudioProcessor>()
@@ -1741,6 +1742,36 @@ class MusicService :
         originalQueueSize = initialQueueSize
     }
 
+    private fun queuedMediaItems(upTo: Int = player.mediaItemCount): List<MediaItem> =
+        (0 until upTo.coerceAtMost(player.mediaItemCount)).map { player.getMediaItemAt(it) }
+
+    /** A radio seeded from a recent song by a different artist than the current one. */
+    private suspend fun blendSeedRadio(): List<MediaItem> {
+        val currentArtist = player.currentMetadata?.artists?.firstOrNull()?.name
+        val recent = listenSignals.recentIds().drop(1).take(12)
+        val seed =
+            recent.firstOrNull { id ->
+                val artist =
+                    queuedMediaItems()
+                        .firstOrNull { it.mediaId == id }
+                        ?.metadata
+                        ?.artists
+                        ?.firstOrNull()
+                        ?.name
+                artist != null && artist != currentArtist
+            } ?: recent.firstOrNull() ?: return emptyList()
+        return withContext(Dispatchers.IO) {
+            YouTube
+                .next(WatchEndpoint(videoId = seed, playlistId = "RDAMVM$seed"))
+                .getOrNull()
+                ?.items
+                ?.map { it.toMediaItem() }
+                ?.filterExplicit(cachedHideExplicit)
+                ?.filterVideoSongs(cachedHideVideoSongs)
+                .orEmpty()
+        }
+    }
+
     fun startRadioSeamlessly() {
         if (!playerInitialized.value) {
             Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
@@ -1776,9 +1807,11 @@ class MusicService :
                 }
 
                 val radioItems =
-                    initialStatus.items.filter { item ->
-                        item.mediaId != currentMediaId
-                    }
+                    com.metrolist.music.recommend.AutoplayRefiner.refine(
+                        initialStatus.items.filter { item -> item.mediaId != currentMediaId },
+                        queuedMediaItems(upTo = currentIndex + 1),
+                        listenSignals,
+                    )
 
                 if (radioItems.isNotEmpty()) {
                     val itemCount = player.mediaItemCount
@@ -2415,6 +2448,11 @@ class MusicService :
         reason: Int,
     ) {
         sponsorBlockSkipper.onTrackChanged(player, mediaItem?.mediaId)
+        listenSignals.onTrackStarted(
+            player.currentMetadata,
+            player.isPlaying,
+            userSkipped = reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK,
+        )
         // Only natural completion transitions mark the previous track as fully cached,
         // never a manual skip or seek. Read lastTransitionedMediaId before replacing it.
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
@@ -2487,13 +2525,20 @@ class MusicService :
             player.repeatMode != REPEAT_MODE_ALL
         ) {
             scope.launch(SilentHandler) {
-                val mediaItems =
+                val page =
                     withContext(Dispatchers.IO) {
                         currentQueue
                             .nextPage()
                             .filterExplicit(cachedHideExplicit)
                             .filterVideoSongs(cachedHideVideoSongs)
                     }
+                var mediaItems = com.metrolist.music.recommend.AutoplayRefiner.refine(page, queuedMediaItems(), listenSignals)
+                if (mediaItems.size < BLEND_MIN_FRESH && currentQueue is YouTubeQueue) {
+                    // This radio is running out of new songs: blend in a radio from another recent song.
+                    val extra = blendSeedRadio()
+                    mediaItems = mediaItems +
+                        com.metrolist.music.recommend.AutoplayRefiner.refine(extra, queuedMediaItems() + mediaItems, listenSignals)
+                }
                 if (player.playbackState != STATE_IDLE && mediaItems.isNotEmpty()) {
                     player.addMediaItems(mediaItems)
                     if (player.shuffleModeEnabled) {
@@ -2676,6 +2721,7 @@ class MusicService :
         }
 
         if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
+            listenSignals.onPlayingChanged(player.isPlaying)
             if (player.isPlaying) {
             } else {
             }
@@ -4574,6 +4620,7 @@ class MusicService :
         const val YOUTUBE_PLAYLIST = "youtube_playlist"
         const val SEARCH = "search"
         const val SHUFFLE_ACTION = "__shuffle__"
+        private const val BLEND_MIN_FRESH = 5
 
         const val CHANNEL_ID = "music_channel_01"
         const val NOTIFICATION_ID = 888
