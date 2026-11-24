@@ -142,6 +142,13 @@ fun SettingsScreen(
                     title = { Text(stringResource(R.string.privacy)) },
                     trailingContent = { SettingsChevron() },
                     onClick = { navController.navigate("settings/privacy") }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.close),
+                    title = { Text(stringResource(R.string.baaja_blocklist)) },
+                    description = { Text(stringResource(R.string.baaja_blocklist_desc)) },
+                    trailingContent = { SettingsChevron() },
+                    onClick = { navController.navigate("settings/blocklist") }
                 )
             )
         )

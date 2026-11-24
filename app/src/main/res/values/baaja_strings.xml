@@ -776,4 +776,20 @@
     <string name="baaja_not_interested">Not interested</string>
     <string name="baaja_not_interested_desc">Suggest less like this on Home and in mixes</string>
     <string name="baaja_not_interested_done">Got it, you\'ll see less like this</string>
+    <string name="baaja_block_artist">Never play this artist</string>
+    <string name="baaja_block_artist_done">%1$s won\'t show up in radio or autoplay</string>
+    <string name="baaja_block_song">Never play this song</string>
+    <string name="baaja_block_song_desc">Leave it out of radio and autoplay</string>
+    <string name="baaja_block_song_done">Got it, that song is blocked</string>
+    <string name="baaja_blocklist">Blocked music</string>
+    <string name="baaja_blocklist_desc">Artists and songs you never want to hear</string>
+    <string name="baaja_blocklist_intro">Blocked artists and songs are left out of radio, autoplay and queues. Songs you pick yourself still play.</string>
+    <string name="baaja_blocklist_empty">Nothing is blocked. Use \"Never play this artist\" in a song\'s menu.</string>
+    <string name="baaja_blocklist_artists">Blocked artists</string>
+    <string name="baaja_blocklist_songs">Blocked songs</string>
+    <string name="baaja_blocklist_unblock">Unblock</string>
+    <string name="baaja_voice_search">Search by voice</string>
+    <string name="baaja_voice_search_unavailable">Voice search isn\'t available on this phone</string>
+    <string name="baaja_seek_duration_title">Double-tap skips %1$d seconds</string>
+    <string name="baaja_seek_duration_desc">How far a double-tap on the artwork seeks</string>
 </resources>

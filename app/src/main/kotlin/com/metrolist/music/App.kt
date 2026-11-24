@@ -82,6 +82,10 @@ class App :
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
 
+        applicationScope.launch(Dispatchers.IO) {
+            com.metrolist.music.blocklist.Blocklist.sync(this@App)
+        }
+
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {
             // Apply settings before building extraction transport.

@@ -8,6 +8,8 @@ package com.metrolist.music.playback.queues
 import androidx.media3.common.MediaItem
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.WatchEndpoint
+import com.metrolist.music.blocklist.Blocklist
+import com.metrolist.music.extensions.metadata
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.MediaMetadata
 import kotlinx.coroutines.Dispatchers.IO
@@ -57,12 +59,13 @@ class YouTubeQueue(
                         }
                     }
 
+                    val seedId = endpoint.videoId
                     endpoint = nextResult.endpoint
                     continuation = nextResult.continuation
                     retryCount = 0
                     return@withContext Queue.Status(
                         title = nextResult.title,
-                        items = items.map { it.toMediaItem() },
+                        items = items.map { it.toMediaItem() }.filterNot { it.mediaId != seedId && Blocklist.blocks(it.metadata) },
                         mediaItemIndex = nextResult.currentIndex ?: 0,
                     )
                 } catch (e: Exception) {
@@ -93,7 +96,7 @@ class YouTubeQueue(
                     endpoint = nextResult.endpoint
                     continuation = nextResult.continuation
                     retryCount = 0
-                    return@withContext nextResult.items.map { it.toMediaItem() }
+                    return@withContext nextResult.items.map { it.toMediaItem() }.filterNot { Blocklist.blocks(it.metadata) }
                 } catch (e: Exception) {
                     lastException = e
                     retryCount++

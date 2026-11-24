@@ -339,6 +339,7 @@ enum class PlayerBackgroundStyle {
 }
 
 val HistoryDuration = floatPreferencesKey("historyDuration")
+val SeekDurationKey = androidx.datastore.preferences.core.intPreferencesKey("seekDurationSeconds")
 
 val PlayerBackgroundStyleKey = stringPreferencesKey("playerBackgroundStyle")
 val ShowLyricsKey = booleanPreferencesKey("showLyrics")

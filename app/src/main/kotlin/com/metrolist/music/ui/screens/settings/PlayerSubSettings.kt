@@ -65,6 +65,7 @@ import com.metrolist.music.constants.PersistentQueueKey
 import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
 import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
+import com.metrolist.music.constants.SeekDurationKey
 import com.metrolist.music.constants.SeekExtraSeconds
 import com.metrolist.music.constants.ShowLyricPreviewOnPlayerKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
@@ -225,6 +226,7 @@ fun PlaybackSettings(navController: NavController) {
     val (audioNormalization, onAudioNormalizationChange) = rememberPreference(AudioNormalizationKey, defaultValue = true)
     val (loudnessLevel, onLoudnessLevelChange) = rememberEnumPreference(LoudnessLevelKey, defaultValue = LoudnessLevel.BALANCED)
     val (seekExtraSeconds, onSeekExtraSeconds) = rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val (seekDuration, onSeekDurationChange) = rememberPreference(SeekDurationKey, defaultValue = 5)
     val (historyDuration, onHistoryDurationChange) = rememberPreference(HistoryDuration, defaultValue = 30f)
 
     var showAudioQualityDialog by remember { mutableStateOf(false) }
@@ -369,6 +371,21 @@ fun PlaybackSettings(navController: NavController) {
                     description = stringResource(R.string.baaja_clean_seek_desc),
                     checked = seekExtraSeconds,
                     onChange = onSeekExtraSeconds,
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.arrow_forward),
+                    title = { Text(stringResource(R.string.baaja_seek_duration_title, seekDuration)) },
+                    description = {
+                        Column {
+                            Text(stringResource(R.string.baaja_seek_duration_desc))
+                            Slider(
+                                value = seekDuration.toFloat(),
+                                onValueChange = { onSeekDurationChange(it.roundToInt()) },
+                                valueRange = 5f..30f,
+                                steps = 4,
+                            )
+                        }
+                    },
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.history),

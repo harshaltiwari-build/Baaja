@@ -85,6 +85,7 @@ import com.metrolist.music.R
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
+import com.metrolist.music.constants.SeekDurationKey
 import com.metrolist.music.constants.SeekExtraSeconds
 import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.constants.ThumbnailCornerRadius
@@ -554,6 +555,7 @@ private fun ThumbnailItem(
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val seekSeconds by rememberPreference(SeekDurationKey, defaultValue = 5)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
 
@@ -589,7 +591,7 @@ private fun ThumbnailItem(
                         }
                         lastTapTime = now
 
-                        val skipAmount = 5000 * skipMultiplier
+                        val skipAmount = seekSeconds * 1000 * skipMultiplier
 
                         val isLeftSide = (layoutDirection == LayoutDirection.Ltr && offset.x < size.width / 2) ||
                                 (layoutDirection == LayoutDirection.Rtl && offset.x > size.width / 2)

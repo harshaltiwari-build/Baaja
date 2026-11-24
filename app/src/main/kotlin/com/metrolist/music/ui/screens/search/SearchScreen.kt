@@ -208,6 +208,36 @@ fun SearchScreen(
 
     val onSearch: (String) -> Unit = { searchQuery -> handleSearch(searchQuery) }
 
+    val voiceContext = androidx.compose.ui.platform.LocalContext.current
+    val voiceLauncher =
+        androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            val spoken =
+                result.data
+                    ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+                    ?.firstOrNull()
+            if (!spoken.isNullOrBlank()) {
+                query = TextFieldValue(spoken)
+                onSearch(spoken)
+            }
+        }
+    val startVoiceSearch = {
+        val intent =
+            android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(
+                    android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+                )
+        try {
+            voiceLauncher.launch(intent)
+        } catch (_: android.content.ActivityNotFoundException) {
+            android.widget.Toast
+                .makeText(voiceContext, R.string.baaja_voice_search_unavailable, android.widget.Toast.LENGTH_SHORT)
+                .show()
+        }
+    }
+
     val bottomPadding = LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom).asPaddingValues()
 
     Column(
@@ -288,6 +318,12 @@ fun SearchScreen(
                 onFocusChanged = { isFieldFocused = it },
                 modifier = Modifier.weight(1f),
                 trailing = {
+                    BaajaPlainIconButton(
+                        icon = R.drawable.mic,
+                        contentDescription = stringResource(R.string.baaja_voice_search),
+                        onClick = startVoiceSearch,
+                        iconSize = 20.dp,
+                    )
                     BaajaPlainIconButton(
                         icon =
                             when (searchSource) {

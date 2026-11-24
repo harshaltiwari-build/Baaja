@@ -48,6 +48,7 @@ import com.metrolist.music.ui.screens.search.SearchScreen
 import com.metrolist.music.ui.screens.settings.AboutScreen
 import com.metrolist.music.ui.screens.settings.AndroidAutoSettings
 import com.metrolist.music.ui.screens.settings.AppearanceSettings
+import com.metrolist.music.ui.screens.settings.BlocklistSettings
 import com.metrolist.music.ui.screens.settings.BackupAndRestore
 import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
@@ -386,6 +387,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/privacy") {
         PrivacySettings(navController)
+    }
+
+    composable("settings/blocklist") {
+        BlocklistSettings(navController)
     }
 
     composable("settings/backup_restore") {
