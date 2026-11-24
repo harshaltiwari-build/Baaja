@@ -90,7 +90,9 @@ import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
 import com.metrolist.music.constants.LyricsClickKey
 import com.metrolist.music.constants.LyricsRomanizeList
+import com.metrolist.music.constants.LyricsLineSpacingScaleKey
 import com.metrolist.music.constants.LyricsTextPositionKey
+import com.metrolist.music.constants.LyricsTextScaleKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.RespectAgentPositioningKey
@@ -147,6 +149,8 @@ fun ExperimentalLyrics(
 
     val lyricsTextPosition by rememberEnumPreference(LyricsTextPositionKey, LyricsPosition.CENTER)
     val changeLyrics by rememberPreference(LyricsClickKey, true)
+    val lyricsTextScale by rememberPreference(LyricsTextScaleKey, 1f)
+    val lyricsLineSpacingScale by rememberPreference(LyricsLineSpacingScaleKey, 1f)
     val romanizeLyricsList = rememberPreference(LyricsRomanizeList, "")
     val romanizeAsMain = false
     val romanizeCyrillicByLine = false
@@ -679,7 +683,7 @@ fun ExperimentalLyrics(
                                         bgVisible = bgVisible, isSelected = selectedIndices.contains(index),
                                         isSelectionModeActive = isSelectionModeActive, currentPositionState = currentPositionState,
                                         lyricsOffset = (currentSong?.song?.lyricsOffset ?: 0).toLong(),
-                                        playerConnection = playerConnection, lyricsTextSize = if (baajaLyricsStyle != null) 30f else 36f, lyricsLineSpacing = if (baajaLyricsStyle != null) 1.2f else 1.3f,
+                                        playerConnection = playerConnection, lyricsTextSize = (if (baajaLyricsStyle != null) 30f else 36f) * lyricsTextScale, lyricsLineSpacing = (if (baajaLyricsStyle != null) 1.2f else 1.3f) * lyricsLineSpacingScale,
                                         expressiveAccent = expressiveAccent, lyricsTextPosition = lyricsTextPosition,
                                         respectAgentPositioning = respectAgentPositioning, isAutoScrollEnabled = isAutoScrollEnabled,
                                         displayedCurrentLineIndex = deferredCurrentLineIndex, romanizeAsMain = romanizeAsMain,

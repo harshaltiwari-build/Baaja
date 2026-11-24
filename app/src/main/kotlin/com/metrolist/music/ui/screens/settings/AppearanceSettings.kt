@@ -61,6 +61,8 @@ import com.metrolist.music.constants.LibraryFilter
 import com.metrolist.music.constants.LyricsClickKey
 import com.metrolist.music.constants.LyricsScrollKey
 import com.metrolist.music.constants.LyricsTextPositionKey
+import com.metrolist.music.constants.LyricsLineSpacingScaleKey
+import com.metrolist.music.constants.LyricsTextScaleKey
 import com.metrolist.music.constants.MiniPlayerBackgroundStyle
 import com.metrolist.music.constants.MiniPlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
@@ -229,6 +231,8 @@ fun AppearanceSettings(
     var showLyricsPositionDialog by rememberSaveable {
         mutableStateOf(false)
     }
+    val (lyricsTextScale, onLyricsTextScaleChange) = rememberPreference(LyricsTextScaleKey, defaultValue = 1f)
+    val (lyricsLineSpacingScale, onLyricsLineSpacingScaleChange) = rememberPreference(LyricsLineSpacingScaleKey, defaultValue = 1f)
 
     if (showLyricsPositionDialog) {
         EnumDialog(
@@ -493,6 +497,32 @@ fun AppearanceSettings(
                                     )
                                 },
                                 onClick = { showLyricsPositionDialog = true },
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.lyrics),
+                                title = { Text(stringResource(R.string.baaja_lyrics_text_size, (lyricsTextScale * 100).roundToInt())) },
+                                description = {
+                                    Slider(
+                                        value = lyricsTextScale,
+                                        onValueChange = { onLyricsTextScaleChange((it * 20).roundToInt() / 20f) },
+                                        valueRange = 0.7f..1.4f,
+                                    )
+                                },
+                            ),
+                        )
+                        add(
+                            Material3SettingsItem(
+                                icon = painterResource(R.drawable.lyrics),
+                                title = { Text(stringResource(R.string.baaja_lyrics_line_spacing, (lyricsLineSpacingScale * 100).roundToInt())) },
+                                description = {
+                                    Slider(
+                                        value = lyricsLineSpacingScale,
+                                        onValueChange = { onLyricsLineSpacingScaleChange((it * 20).roundToInt() / 20f) },
+                                        valueRange = 0.8f..1.6f,
+                                    )
+                                },
                             ),
                         )
                         add(

@@ -792,4 +792,6 @@
     <string name="baaja_voice_search_unavailable">Voice search isn\'t available on this phone</string>
     <string name="baaja_seek_duration_title">Double-tap skips %1$d seconds</string>
     <string name="baaja_seek_duration_desc">How far a double-tap on the artwork seeks</string>
+    <string name="baaja_lyrics_text_size">Lyrics text size: %1$d%%</string>
+    <string name="baaja_lyrics_line_spacing">Lyrics line spacing: %1$d%%</string>
 </resources>

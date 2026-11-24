@@ -343,6 +343,8 @@ val SeekDurationKey = androidx.datastore.preferences.core.intPreferencesKey("see
 
 val PlayerBackgroundStyleKey = stringPreferencesKey("playerBackgroundStyle")
 val ShowLyricsKey = booleanPreferencesKey("showLyrics")
+val LyricsTextScaleKey = floatPreferencesKey("lyricsTextScale")
+val LyricsLineSpacingScaleKey = floatPreferencesKey("lyricsLineSpacingScale")
 val LyricsTextPositionKey = stringPreferencesKey("lyricsTextPosition")
 val LyricsClickKey = booleanPreferencesKey("lyricsClick")
 val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
