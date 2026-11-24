@@ -67,6 +67,8 @@ import com.metrolist.music.constants.MiniPlayerBackgroundStyle
 import com.metrolist.music.constants.MiniPlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
+import com.metrolist.music.constants.PlayerStyle
+import com.metrolist.music.constants.PlayerStyleKey
 import com.metrolist.music.constants.RespectAgentPositioningKey
 import com.metrolist.music.constants.ShowCachedPlaylistKey
 import com.metrolist.music.constants.ShowDownloadedPlaylistKey
@@ -226,6 +228,32 @@ fun AppearanceSettings(
 
     var showPlayerBackgroundDialog by rememberSaveable {
         mutableStateOf(false)
+    }
+
+    val (playerStyle, onPlayerStyleChange) = rememberEnumPreference(PlayerStyleKey, PlayerStyle.CLASSIC)
+    var showPlayerStyleDialog by rememberSaveable { mutableStateOf(false) }
+    val playerStyleText: @Composable (PlayerStyle) -> String = {
+        when (it) {
+            PlayerStyle.CLASSIC -> stringResource(R.string.baaja_player_style_classic)
+            PlayerStyle.FULL_COVER -> stringResource(R.string.baaja_player_style_full_cover)
+            PlayerStyle.VINYL -> stringResource(R.string.baaja_player_style_vinyl)
+            PlayerStyle.CASSETTE -> stringResource(R.string.baaja_player_style_cassette)
+            PlayerStyle.HALO -> stringResource(R.string.baaja_player_style_halo)
+        }
+    }
+
+    if (showPlayerStyleDialog) {
+        EnumDialog(
+            onDismiss = { showPlayerStyleDialog = false },
+            onSelect = {
+                onPlayerStyleChange(it)
+                showPlayerStyleDialog = false
+            },
+            title = stringResource(R.string.baaja_player_style),
+            current = playerStyle,
+            values = PlayerStyle.entries,
+            valueText = playerStyleText,
+        )
     }
 
     var showLyricsPositionDialog by rememberSaveable {
@@ -655,6 +683,12 @@ fun AppearanceSettings(
                 title = stringResource(R.string.player),
                 items =
                     listOf(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.music_note),
+                            title = { Text(stringResource(R.string.baaja_player_style)) },
+                            description = { Text(playerStyleText(playerStyle)) },
+                            onClick = { showPlayerStyleDialog = true },
+                        ),
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.gradient),
                             title = { Text(stringResource(R.string.player_background_style)) },

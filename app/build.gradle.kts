@@ -59,6 +59,14 @@ android {
         }
 
         buildConfigField("String", "ARCHITECTURE", "\"universal\"")
+
+        fun secret(name: String): String =
+            (project.findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+                ?: System.getenv(name)?.takeIf { it.isNotBlank() }
+                ?: localProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+                ?: ""
+        buildConfigField("String", "LASTFM_API_KEY", "\"${secret("LASTFM_API_KEY")}\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"${secret("LASTFM_SECRET")}\"")
     }
 
     flavorDimensions += listOf("variant")
