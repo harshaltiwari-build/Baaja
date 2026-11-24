@@ -677,6 +677,23 @@ interface DatabaseDao {
     )
     fun forgottenFavorites(now: Long = System.currentTimeMillis()): Flow<List<Song>>
 
+    /** Songs most played between [startHour] and [endHour] (inclusive, local wall-clock hours) since [from]. */
+    @Transaction
+    @Query(
+        """
+        SELECT song.* FROM song
+        JOIN (SELECT songId, SUM(playTime) AS total
+              FROM event
+              WHERE timestamp > :from
+                AND CAST(strftime('%H', timestamp / 1000, 'unixepoch') AS INTEGER) BETWEEN :startHour AND :endHour
+              GROUP BY songId
+              ORDER BY total DESC
+              LIMIT :limit) AS e
+        ON song.id = e.songId
+        """
+    )
+    suspend fun mostPlayedSongsInHours(from: Long, startHour: Int, endHour: Int, limit: Int): List<Song>
+
     @Transaction
     @Query("SELECT * FROM song WHERE id = :songId")
     fun song(songId: String?): Flow<Song?>

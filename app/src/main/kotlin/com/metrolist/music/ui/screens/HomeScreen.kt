@@ -1093,6 +1093,14 @@ fun HomeScreen(
             mixed.distinctBy { it.id }.take(100)
         }
     val tasteActive = pickedArtists.isNotEmpty() || historySongs.isNotEmpty() || accountArtists.isNotEmpty()
+    var dailyMixes by remember { mutableStateOf<List<com.metrolist.music.recommend.DailyMixes.Mix>>(emptyList()) }
+    LaunchedEffect(historySongs.isNotEmpty()) {
+        if (historySongs.isEmpty()) return@LaunchedEffect
+        dailyMixes =
+            withContext(Dispatchers.IO) {
+                runCatching { com.metrolist.music.recommend.DailyMixes.build(database) }.getOrDefault(emptyList())
+            }
+    }
 
     val tasteUi: (LazyListScope.() -> Unit)? =
         if (tasteMix.isNotEmpty()) {
@@ -1186,6 +1194,42 @@ fun HomeScreen(
                 )
             }
         val tasteTints = listOf(BaajaTileColors.lilac(), BaajaTileColors.peach(), BaajaTileColors.liked(), BaajaTileColors.mint())
+        val dailyMixTitles =
+            dailyMixes.map { mix ->
+                when (mix.kind) {
+                    com.metrolist.music.recommend.DailyMixes.Kind.ON_REPEAT -> stringResource(R.string.baaja_daily_mix_on_repeat)
+                    com.metrolist.music.recommend.DailyMixes.Kind.REDISCOVER -> stringResource(R.string.baaja_daily_mix_rediscover)
+                    com.metrolist.music.recommend.DailyMixes.Kind.ARTIST ->
+                        stringResource(R.string.baaja_daily_mix_artist, mix.artistName.orEmpty())
+                    com.metrolist.music.recommend.DailyMixes.Kind.TIME_OF_DAY ->
+                        stringResource(
+                            when (mix.dayPart) {
+                                com.metrolist.music.recommend.DailyMixes.DayPart.MORNING -> R.string.baaja_daily_mix_morning
+                                com.metrolist.music.recommend.DailyMixes.DayPart.AFTERNOON -> R.string.baaja_daily_mix_afternoon
+                                com.metrolist.music.recommend.DailyMixes.DayPart.EVENING -> R.string.baaja_daily_mix_evening
+                                else -> R.string.baaja_daily_mix_night
+                            },
+                        )
+                }
+            }
+        val songsText = stringResource(R.string.baaja_daily_mix_songs)
+        val dailyMixShelf =
+            dailyMixes.takeIf { it.size >= 2 }?.let { mixes ->
+                TasteShelf(
+                    title = stringResource(R.string.baaja_daily_mixes),
+                    label = stringResource(R.string.baaja_daily_mixes_label),
+                    cards =
+                        mixes.mapIndexed { i, mix ->
+                            TasteCard("dm_${mix.key}", dailyMixTitles[i], songsText.format(mix.songs.size), mix.thumbnail)
+                        },
+                    onClick = { index ->
+                        val mix = mixes[index]
+                        playerConnection?.playQueue(
+                            ListQueue(title = dailyMixTitles[index], items = mix.songs.map { it.toMediaItem() }),
+                        )
+                    },
+                )
+            }
         val tasteBlock: LazyListScope.() -> Unit = {
         tasteHome(
             stage = tasteStage,
@@ -1199,6 +1243,7 @@ fun HomeScreen(
             becausePicks = becausePicks,
             discoverShelf = discoverShelf,
             tints = tasteTints,
+            extraShelves = listOfNotNull(dailyMixShelf),
         )
         }
         tasteBlock
