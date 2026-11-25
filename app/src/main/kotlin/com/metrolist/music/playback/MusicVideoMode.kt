@@ -39,6 +39,12 @@ import kotlinx.coroutines.launch
 import java.util.Optional
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.Json
+import java.net.URL
+import java.net.HttpURLConnection
 
 /**
  * Shows the playing song's music video in place of its artwork. The song keeps playing as usual; the
@@ -61,6 +67,7 @@ object MusicVideoMode {
 
     private const val TAG = "MusicVideoMode"
     private const val MAX_HEIGHT = 720
+    private const val MAX_VERIFIED = 4
 
     private val _state = MutableStateFlow<State>(State.Off)
     val state: StateFlow<State> = _state.asStateFlow()
@@ -371,25 +378,71 @@ object MusicVideoMode {
                     .filter { video ->
                         video.id != sourceId &&
                             !video.isEpisode &&
-                            (video.musicVideoType == MUSIC_VIDEO_TYPE_OMV || video.isFromOfficialLabel()) &&
-                            wanted in video.title.normalizedTitle() &&
+                                                        wanted in video.title.normalizedTitle() &&
                             // Versions the song itself isn't: only allowed when the song's own title says so.
                             notOfficialMarkers.none { marker -> marker.containsWordIn(video.title) && !marker.containsWordIn(title) }
                     }
             // YouTube's own "official" tag first, then the artist's channel, then a label's channel.
-            val match =
-                candidates.firstOrNull { it.musicVideoType == MUSIC_VIDEO_TYPE_OMV && artistName != null && it.artists.any { a -> a.name.lowercase().contains(artistName) } }
-                    ?: candidates.firstOrNull { it.musicVideoType == MUSIC_VIDEO_TYPE_OMV }
-                    ?: candidates.firstOrNull()
-            if (match != null) return MusicVideoCounterpart(sourceId, match.id, emptyList(), forward = true)
+            val ordered =
+                (
+                    candidates.filter { it.musicVideoType == MUSIC_VIDEO_TYPE_OMV && artistName != null && it.artists.any { a -> a.name.lowercase().contains(artistName) } } +
+                        candidates.filter { it.musicVideoType == MUSIC_VIDEO_TYPE_OMV } +
+                        candidates
+                ).distinctBy { it.id }
+            // YouTube Music shows matched re-uploads under the song's own name and even tags them as official,
+            // so check who really uploaded each one and what it's really called.
+            for (candidate in ordered.take(MAX_VERIFIED)) {
+                val upload = realUpload(candidate.id)
+                if (upload == null) {
+                    onFailure()
+                    continue
+                }
+                if (upload.isOfficialFor(wanted, title, artistName)) {
+                    return MusicVideoCounterpart(sourceId, candidate.id, emptyList(), forward = true)
+                }
+            }
         }
         return null
     }
 
-    /** Uploaded by a record label's own channel: their uploads are the real videos even when YouTube doesn't tag them. */
-    private fun SongItem.isFromOfficialLabel(): Boolean {
-        val channel = artists.firstOrNull()?.name?.lowercase()?.trim() ?: return false
-        return channel in officialLabelChannels || channel.endsWith("vevo")
+    private class Upload(
+        val title: String,
+        val channel: String,
+    )
+
+    /** The video's real title and channel, from YouTube's public oEmbed endpoint (no sign-in needed). */
+    private suspend fun realUpload(videoId: String): Upload? =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val url = URL("https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v=$videoId")
+                val connection = url.openConnection() as HttpURLConnection
+                try {
+                    connection.connectTimeout = 8_000
+                    connection.readTimeout = 8_000
+                    check(connection.responseCode == 200) { "oEmbed ${connection.responseCode}" }
+                    val json = Json.parseToJsonElement(connection.inputStream.bufferedReader().use { it.readText() }).jsonObject
+                    Upload(
+                        title = json["title"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                        channel = json["author_name"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                    )
+                } finally {
+                    connection.disconnect()
+                }
+            }.getOrNull()
+        }
+
+    /** The song's own video: its real title names the song without "lyrics", "cover" and the like, on the artist's or a label's channel. */
+    private fun Upload.isOfficialFor(
+        wanted: String,
+        songTitle: String,
+        artistName: String?,
+    ): Boolean {
+        if (wanted !in title.normalizedTitle()) return false
+        if (notOfficialMarkers.any { marker -> marker.containsWordIn(title) && !marker.containsWordIn(songTitle) }) return false
+        val channelKey = channel.lowercase().trim()
+        if (channelKey in officialLabelChannels || channelKey.replace(" ", "").endsWith("vevo")) return true
+        val artistKey = artistName?.replace(" ", "")?.takeIf { it.length >= 3 } ?: return false
+        return artistKey in channelKey.replace(" ", "")
     }
 
     private val officialLabelChannels =
