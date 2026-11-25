@@ -1,3 +1,54 @@
+---v1.4.0
+# Baaja 1.4.0
+Music videos, Device Connect, blocklists and a tidier Settings.
+
+## Music videos
+- Songs with an official music video get a note | camera switch in the player. Tap the camera and the video plays right in the player card, with the song's own sound
+- Only real, official videos are used: no lyric videos, covers or fan uploads. Songs without one don't show the switch
+- The picture stays in step with the song, and Baaja finds where the song starts in the video, so long intros no longer leave it behind
+- Going home while a video plays shrinks it into a Picture-in-Picture window
+- Settings > Music video: switch videos off, pick the quality (up to 1080p) or open songs in Video automatically
+
+## Device Connect
+- Control Baaja on another phone or tablet on the same Wi-Fi: play, pause, skip and seek after entering its 6-digit code
+- "Play here" takes the song over at the same spot and stops it on the other phone
+- The code is never sent over the network, and wrong guesses are slowed down and locked out after a few tries
+
+## Blocklists and filters
+- Block an artist or hide anything from Home from its menu, with Undo
+- Hide podcasts, and block AI-generated artists using the community AiSList list
+- Previews, short clips and videos that aren't music are always left out
+- "Hide video songs" is now off by default
+
+## Recommendations
+- Radio keeps finding new songs instead of repeating ones you just heard, and chips in the queue let you steer it
+- Choose which sections appear on Home
+- Signed in, Home uses YouTube's own Quick picks
+
+## Settings
+- Reorganised into Listening, Your music and App, so every option has one obvious place
+- Search settings from the top of the page
+- New pages: Sound, Player, Music video, Queue and radio, Sleep and alarms, Recommendations, Filters and blocks, Lyrics, Library and playlists, Downloads and storage, Backup and restore, Devices, Privacy and About Baaja
+- Pick an app icon: Original, Ink, Light, Sunset or Ocean
+- Lyrics text size and line spacing, with a live preview
+
+## Playback
+- Choose how far double-tap seeks, and let repeated taps add up
+- Keep paused when changing songs
+- "Stop music on task clear" is now on by default
+
+## Downloads and search
+- New Downloads page: live progress, pause or resume everything, retry or cancel
+- Import playlists from Spotify, Deezer and Apple Music links
+- The mic in the search bar now opens song recognition, like the big mic, and the recognition screen is simpler with a Start and Stop button
+
+## Fixes
+- The player no longer leaves an empty gap under the artist name
+- Opening the player no longer lags while it checks for a video
+- Songs by blocked artists can't make the queue skip forever, and anything you pick yourself still plays
+- Home-screen shortcuts and the Android TV launcher work with every app icon
+- Videos stop streaming when the app is out of sight
+
 ---v1.3.6
 # Baaja 1.3.6
 A proper quick opening animation.

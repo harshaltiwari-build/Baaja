@@ -42,7 +42,7 @@ Baaja installs as its own app (`com.baaja.music`), so it can sit alongside other
 
 ### Updating
 
-Baaja checks for new releases by itself. When one is out, a dialog shows what changed and the **Update** button downloads it inside the app, checks that the file is signed with Baaja's key, and opens the Android installer. The same button lives in **Settings → Updater**.
+Baaja checks for new releases by itself. When one is out, a dialog shows what changed and the **Update** button downloads it inside the app, checks that the file is signed with Baaja's key, and opens the Android installer. The same button lives in **Settings → About Baaja → Updater**.
 
 ## Features
 
@@ -57,13 +57,16 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Optional SponsorBlock skipping of non-music segments
 
 **Home, search and discovery**
-- A Home made for you: pick your music languages and favourite artists on first run (change them any time in Settings > Content), and Home builds your mix, artist mixes and "Because you like…" rows, then keeps learning from what you listen to
+- A Home made for you: pick your music languages and favourite artists on first run (change them any time in Settings > Recommendations), and Home builds your mix, artist mixes and "Because you like…" rows, then keeps learning from what you listen to
 - Speed dial of your favourite mixes, with a "Surprise me" card
 - Personalised quick picks and mixes, plus Charts and New releases
 - Explore by mood, with cover art on every card
 - Search songs, albums, artists, videos and playlists
 - Identify music playing around you
 - "Behind the song" facts and your own listening history for a track
+- Official music videos: flip a song to its video right in the player, kept in step with the music, with Picture-in-Picture when you leave the app
+- Radio that keeps finding new songs instead of repeating, with chips in the queue to steer it
+- Choose which sections appear on Home
 
 **Lyrics**
 - Live synced lyrics that follow the song, with a share card
@@ -75,10 +78,14 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Local playlists and drag-to-reorder queues
 - Automatic daily or weekly backups to a folder you choose
 - Editable profile
-- "Hide explicit content", "Hide video songs" and "Hide YouTube Shorts" are on by default
+- "Hide explicit content" and "Hide YouTube Shorts" are on by default; previews, short clips and videos that aren't music are always left out
+- Blocklists: block artists, hide anything from Home (with Undo), hide podcasts and block AI-generated artists using the community AiSList list
+- Import playlists from Spotify, Deezer and Apple Music links
+- Downloads page with live progress, pause and resume for everything, retry and cancel
 
 **Social**
 - Listen Together: start a room, share the code and everyone hears the same song in sync
+- Device Connect: control Baaja on another phone or tablet on the same Wi-Fi with a 6-digit code, or take its song over with "Play here"
 
 **Design**
 - Baaja's own look: bold ink outlines, offset shadows and a purple accent
@@ -86,6 +93,8 @@ Baaja checks for new releases by itself. When one is out, a dialog shows what ch
 - Floating navigation bar, outlined mini player and smooth launch animation
 - A heart-burst animation when you like a song
 - Eight home-screen widgets in the Baaja look, light and dark: Now playing (seek position, heart, sleep), Resume, Sleep timer (15, 30, 60 minutes or end of song), Music alarm (switch it on or off), Up next (tap a song to jump to it), Search and Identify, Quick play (liked, downloads, your top songs) and Listen together (share your room code)
+- Pick an app icon: Original, Ink, Light, Sunset or Ocean
+- Settings organised into Listening, Your music and App, with search at the top
 - Stays upright in portrait on every screen
 
 ## Screenshots
