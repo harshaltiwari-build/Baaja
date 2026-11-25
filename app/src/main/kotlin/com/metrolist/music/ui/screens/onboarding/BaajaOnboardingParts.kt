@@ -226,6 +226,8 @@ internal fun BaajaSegmentedToggle(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown instead of the labels, which then only name the segments for screen readers. */
+    @DrawableRes icons: List<Int>? = null,
 ) {
     val ink = baajaInk
     Row(
@@ -246,13 +248,13 @@ internal fun BaajaSegmentedToggle(
                     .clickable(role = Role.Tab) { onSelect(index) },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    label,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    color = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
-                )
+                val color = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface
+                val icon = icons?.getOrNull(index)
+                if (icon != null) {
+                    Icon(painterResource(icon), contentDescription = label, tint = color, modifier = Modifier.size(22.dp))
+                } else {
+                    Text(label, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, color = color)
+                }
             }
         }
     }

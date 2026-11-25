@@ -52,6 +52,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import com.metrolist.music.ui.player.enterMusicVideoPictureInPicture
+import com.metrolist.music.ui.player.MusicVideoOverlay
+import com.metrolist.music.playback.MusicVideoMode
 import com.metrolist.music.ui.component.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
@@ -263,6 +266,9 @@ class MainActivity : FragmentActivity() {
     // This is the snapshot we pass to Compose - changes here trigger recomposition
     private var playerConnectionSnapshot by mutableStateOf<PlayerConnection?>(null)
 
+    /** True while the music video is shown in a Picture-in-Picture window. */
+    private var isInPictureInPicture by mutableStateOf(false)
+
     private var isServiceBound = false
 
     private val serviceConnection =
@@ -391,7 +397,23 @@ class MainActivity : FragmentActivity() {
         bindMusicService()
     }
 
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        isInPictureInPicture = isInPictureInPictureMode
+    }
+
+    /** Going home while a music video plays shrinks it into a Picture-in-Picture window. */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (MusicVideoMode.state.value == MusicVideoMode.State.Playing) enterMusicVideoPictureInPicture(this)
+    }
+
     override fun onStop() {
+        // Nothing shows the video once the app is out of sight (Picture-in-Picture keeps it started).
+        if (!isChangingConfigurations) MusicVideoMode.stop()
         // Keep the service binding, PlayerConnection and Listen Together wiring alive while
         // the Activity is backgrounded. The MusicService is a foreground service and keeps
         // running, so the host must keep reporting playback state to the LT server; detaching
@@ -405,7 +427,7 @@ class MainActivity : FragmentActivity() {
             listenTogetherManager.disconnect()
         }
         super.onDestroy()
-        val stopServiceOnClear = dataStore.get(StopMusicOnTaskClearKey, false) && isFinishing
+        val stopServiceOnClear = dataStore.get(StopMusicOnTaskClearKey, true) && isFinishing
 
         // Full cleanup - only on actual destroy
         playerConnection?.dispose()
@@ -973,7 +995,7 @@ class MainActivity : FragmentActivity() {
                             val onSearchLongClick: () -> Unit =
                                 remember(navController) {
                                     {
-                                        navController.navigate("recognition") {
+                                        navController.navigate("recognition?autoStart=true") {
                                             launchSingleTop = true
                                         }
                                     }
@@ -1100,7 +1122,7 @@ class MainActivity : FragmentActivity() {
                             val onRailSearchLongClick: () -> Unit =
                                 remember(navController) {
                                     {
-                                        navController.navigate("recognition") {
+                                        navController.navigate("recognition?autoStart=true") {
                                             launchSingleTop = true
                                         }
                                     }
@@ -1290,6 +1312,7 @@ class MainActivity : FragmentActivity() {
                     }
                     }
                 }
+                MusicVideoOverlay(isInPictureInPicture = isInPictureInPicture)
             }
         }
     }

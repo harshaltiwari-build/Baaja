@@ -5,11 +5,8 @@
 
 package com.metrolist.music.ui.screens.settings
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
-import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -26,16 +23,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.metrolist.music.BuildConfig
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.ui.component.home.BaajaSearchField
 import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
@@ -44,30 +40,13 @@ import com.metrolist.music.ui.screens.onboarding.BaajaSettingsFooter
 import com.metrolist.music.ui.screens.onboarding.BaajaSettingsProfileCard
 import com.metrolist.music.ui.screens.onboarding.SettingsChevron
 import com.metrolist.music.ui.utils.backToMain
-import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
 ) {
-    val context = LocalContext.current
-    val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val hasAndroidAuto = remember {
-        try {
-            context.packageManager.getPackageInfo(
-                "com.google.android.projection.gearhead", 0
-            )
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    var showChangelog by rememberSaveable { mutableStateOf(false) }
-    if (showChangelog) {
-        ChangelogScreen(onDismiss = { showChangelog = false })
-    }
+    var searchQuery by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue()) }
 
     Column(
         Modifier
@@ -84,170 +63,75 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+        BaajaSearchField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            onSearch = {},
+            placeholder = stringResource(R.string.baaja_settings_search_hint),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        if (searchQuery.text.isNotBlank()) {
+            SettingsSearchResults(searchQuery.text, navController)
+        } else {
         BaajaSettingsProfileCard(onClick = { navController.navigate("profile") })
         Spacer(modifier = Modifier.height(20.dp))
         BaajaQuickAppearanceCard(onMoreClick = { navController.navigate("settings/appearance") })
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Player & Content Section (moved up and combined with content)
         Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_player_content),
+            title = stringResource(R.string.baaja_settings_group_listening),
             items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.play),
-                    title = { Text(stringResource(R.string.player_and_audio)) },
-                    trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("settings/player") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.equalizer),
-                    title = { Text(stringResource(R.string.baaja_clean_sound_equalizer)) },
-                    trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("equalizer") }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.language),
-                    title = { Text(stringResource(R.string.content)) },
-                    trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("settings/content") }
-                )
+                settingsLink(R.drawable.graphic_eq, R.string.baaja_settings_sound, R.string.baaja_settings_sound_desc) { navController.navigate("settings/player/playback") },
+                settingsLink(R.drawable.play, R.string.baaja_clean_menu_player_title, R.string.baaja_settings_player_desc) { navController.navigate("settings/player/player") },
+                settingsLink(R.drawable.videocam, R.string.baaja_video_title, R.string.baaja_settings_videos_desc) { navController.navigate("settings/music_videos") },
+                settingsLink(R.drawable.queue_music, R.string.baaja_settings_queue, R.string.baaja_settings_queue_desc) { navController.navigate("settings/player/queue") },
+                settingsLink(R.drawable.bedtime, R.string.baaja_settings_sleep, R.string.baaja_settings_sleep_desc) { navController.navigate("settings/player/timers") },
             )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Android Auto Section — only shown if Android Auto is installed
-        if (hasAndroidAuto) {
-            Material3SettingsGroup(
-                title = stringResource(R.string.baaja_fix2_android_auto),
-                items = listOf(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.ic_android_auto),
-                        title = { Text(stringResource(R.string.android_auto)) },
-                        trailingContent = { SettingsChevron() },
-                        onClick = { navController.navigate("settings/android_auto") }
-                    )
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        
-        // Privacy & Security Section
         Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_privacy),
+            title = stringResource(R.string.baaja_settings_group_music),
             items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.security),
-                    title = { Text(stringResource(R.string.privacy)) },
-                    trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("settings/privacy") }
-                )
+                settingsLink(R.drawable.language, R.string.baaja_settings_recommendations, R.string.baaja_settings_recommendations_desc) { navController.navigate("settings/content") },
+                settingsLink(R.drawable.block, R.string.baaja_settings_filters, R.string.baaja_settings_filters_desc) { navController.navigate("settings/filters") },
+                settingsLink(R.drawable.lyrics, R.string.lyrics, R.string.baaja_settings_lyrics_desc) { navController.navigate("settings/appearance/lyrics") },
+                settingsLink(R.drawable.library_music, R.string.baaja_settings_library, R.string.baaja_settings_library_desc) { navController.navigate("settings/library") },
             )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Storage & Data Section
         Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_storage),
+            title = stringResource(R.string.baaja_settings_group_app),
+            items = listOf(
+                settingsLink(R.drawable.palette, R.string.appearance, R.string.baaja_settings_appearance_desc) { navController.navigate("settings/appearance") },
+                settingsLink(R.drawable.download, R.string.baaja_settings_downloads_storage, R.string.baaja_settings_downloads_storage_desc) { navController.navigate("settings/storage") },
+                settingsLink(R.drawable.restore, R.string.backup_restore, R.string.baaja_settings_backup_desc) { navController.navigate("settings/backup_restore") },
+                settingsLink(R.drawable.devices, R.string.baaja_settings_devices_title, R.string.baaja_settings_devices_desc) { navController.navigate("settings/devices") },
+                settingsLink(R.drawable.security, R.string.privacy, R.string.baaja_settings_privacy_desc) { navController.navigate("settings/privacy") },
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Material3SettingsGroup(
             items = listOf(
                 Material3SettingsItem(
-                    icon = painterResource(R.drawable.storage),
-                    title = { Text(stringResource(R.string.storage)) },
+                    icon = painterResource(R.drawable.info),
+                    title = { Text(stringResource(R.string.baaja_settings_about)) },
+                    description = { Text(stringResource(R.string.baaja_settings_about_desc, BuildConfig.VERSION_NAME)) },
                     trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("settings/storage") }
+                    onClick = { navController.navigate("settings/about_baaja") }
                 ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.restore),
-                    title = { Text(stringResource(R.string.backup_restore)) },
-                    trailingContent = { SettingsChevron() },
-                    onClick = { navController.navigate("settings/backup_restore") }
-                )
             )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // System & About Section
-        Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_system),
-            items = buildList {
-                if (isAndroid12OrLater) {
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.link),
-                            title = { Text(stringResource(R.string.default_links)) },
-                            onClick = {
-                                try {
-                                    val intent = Intent(
-                                        Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
-                                        "package:${context.packageName}".toUri()
-                                    )
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    when (e) {
-                                        is ActivityNotFoundException -> {
-                                            Toast.makeText(
-                                                context,
-                                                R.string.open_app_settings_error,
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-
-                                        is SecurityException -> {
-                                            Toast.makeText(
-                                                context,
-                                                R.string.open_app_settings_error,
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-
-                                        else -> {
-                                            Toast.makeText(
-                                                context,
-                                                R.string.open_app_settings_error,
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            }
-                        )
-                    )
-                }
-                if (BuildConfig.UPDATER_AVAILABLE) {
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.update),
-                            title = { Text(stringResource(R.string.updater)) },
-                            trailingContent = { SettingsChevron() },
-                            onClick = { navController.navigate("settings/updater") }
-                        )
-                    )
-                }
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.history),
-                        title = { Text(stringResource(R.string.changelog)) },
-                        trailingContent = { SettingsChevron() },
-                        onClick = { showChangelog = true }
-                    )
-                )
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.info),
-                        title = { Text(stringResource(R.string.about)) },
-                        trailingContent = { SettingsChevron() },
-                        onClick = { navController.navigate("settings/about") }
-                    )
-                )
-            }
         )
         Spacer(modifier = Modifier.height(24.dp))
         BaajaSettingsFooter()
         Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 
     TopAppBar(
@@ -272,3 +156,18 @@ fun SettingsScreen(
         }
     )
 }
+
+/** A row on the Settings home that opens one settings page; the hint says what's on it. */
+@Composable
+private fun settingsLink(
+    icon: Int,
+    title: Int,
+    description: Int,
+    onClick: () -> Unit,
+) = Material3SettingsItem(
+    icon = painterResource(icon),
+    title = { Text(stringResource(title)) },
+    description = { Text(stringResource(description)) },
+    trailingContent = { SettingsChevron() },
+    onClick = onClick,
+)

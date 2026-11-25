@@ -8,6 +8,7 @@ package com.metrolist.music.playback.queues
 import androidx.media3.common.MediaItem
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.WatchEndpoint
+import com.metrolist.innertube.pages.RadioChip
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.models.MediaMetadata
 import kotlinx.coroutines.Dispatchers.IO
@@ -18,6 +19,10 @@ class YouTubeQueue(
     override val preloadItem: MediaMetadata? = null,
 ) : Queue {
     private var continuation: String? = null
+
+    /** Chips YouTube offers to re-tune this radio, read from the first page. */
+    var chips: List<RadioChip> = emptyList()
+        private set
     private var retryCount = 0
     private val maxRetries = 3
 
@@ -59,6 +64,7 @@ class YouTubeQueue(
 
                     endpoint = nextResult.endpoint
                     continuation = nextResult.continuation
+                    chips = nextResult.chips
                     retryCount = 0
                     return@withContext Queue.Status(
                         title = nextResult.title,

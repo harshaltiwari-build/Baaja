@@ -16,6 +16,15 @@ data class NextResult(
     val relatedEndpoint: BrowseEndpoint? = null,
     val continuation: String?,
     val endpoint: WatchEndpoint, // current or continuation next endpoint
+    val chips: List<RadioChip> = emptyList(),
+)
+
+/** A chip that re-tunes the radio, e.g. Popular or Deep cuts. */
+data class RadioChip(
+    val id: String,
+    val title: String,
+    val endpoint: WatchEndpoint,
+    val isSelected: Boolean,
 )
 
 object NextPage {

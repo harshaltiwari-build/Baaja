@@ -92,6 +92,7 @@ import com.metrolist.music.ui.utils.backToMain
 import com.metrolist.music.utils.SearchRoutes
 import com.metrolist.shazamkit.models.RecognitionResult
 import com.metrolist.shazamkit.models.RecognitionStatus
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -105,6 +106,8 @@ fun RecognitionScreen(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val coroutineScope = rememberCoroutineScope()
+    // The running recognition, so Stop can cancel the recording instead of only resetting the label.
+    var recognitionJob by remember { mutableStateOf<Job?>(null) }
 
     // Only reset in Ready state: Listening/Processing belong to a running widget-service
     // recognition that must not be cancelled; Success/NoMatch/Error are results pending
@@ -142,19 +145,21 @@ fun RecognitionScreen(
         ) { isGranted ->
             hasPermission = isGranted
             if (isGranted) {
-                coroutineScope.launch {
-                    com.metrolist.music.recognition.MusicRecognitionService
-                        .recognize(context)
-                }
+                recognitionJob =
+                    coroutineScope.launch {
+                        com.metrolist.music.recognition.MusicRecognitionService
+                            .recognize(context)
+                    }
             }
         }
 
     fun startRecognition() {
         if (hasPermission) {
-            coroutineScope.launch {
-                com.metrolist.music.recognition.MusicRecognitionService
-                    .recognize(context)
-            }
+            recognitionJob =
+                coroutineScope.launch {
+                    com.metrolist.music.recognition.MusicRecognitionService
+                        .recognize(context)
+                }
         } else {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -170,6 +175,8 @@ fun RecognitionScreen(
     }
 
     fun resetToReady() {
+        recognitionJob?.cancel()
+        recognitionJob = null
         com.metrolist.music.recognition.MusicRecognitionService
             .reset()
     }
@@ -212,12 +219,9 @@ fun RecognitionScreen(
             Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
-                .verticalScroll(rememberScrollState())
                 .padding(WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal).asPaddingValues())
-                .padding(start = 20.dp, end = 20.dp, top = 8.dp)
-                .padding(bottom = insets.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding() + 24.dp),
+                .padding(start = 20.dp, end = 20.dp, top = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         RecognitionHeader(
             onBack = { navController.navigateUp() },
@@ -225,81 +229,105 @@ fun RecognitionScreen(
             onHistory = { navController.navigate("recognition_history") },
         )
 
-        // Heading + hint
-        val (heading, sub) =
-            when (status) {
-                is RecognitionStatus.Ready -> stringResource(R.string.baaja_ai_rec_ready) to stringResource(R.string.baaja_ai_rec_ready_sub)
-                is RecognitionStatus.Listening -> stringResource(R.string.listening) to stringResource(R.string.baaja_ai_rec_listening_sub)
-                is RecognitionStatus.Processing -> stringResource(R.string.baaja_ai_rec_processing) to stringResource(R.string.baaja_ai_rec_processing_sub)
-                is RecognitionStatus.Success -> stringResource(R.string.baaja_ai_rec_found) to stringResource(R.string.baaja_ai_rec_found_sub)
-                is RecognitionStatus.NoMatch -> stringResource(R.string.no_match_found) to status.message
-                is RecognitionStatus.Error -> stringResource(R.string.recognition_error) to status.message
-            }
-        Column(
-            Modifier.fillMaxWidth().padding(top = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                heading,
-                fontSize = 32.sp,
-                lineHeight = 37.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = (-0.5).sp,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                sub,
-                fontSize = 17.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-
-        ListenButton(
-            status = status,
-            onClick = {
-                when (status) {
-                    is RecognitionStatus.Listening -> resetToReady()
-                    is RecognitionStatus.Processing -> Unit
-                    else -> startRecognition()
+        // The content sits in the middle of the space under the header, and still scrolls on small screens.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(bottom = insets.only(WindowInsetsSides.Bottom).asPaddingValues().calculateBottomPadding() + 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
+            ) {
+                // Heading + hint
+                val (heading, sub) =
+                    when (status) {
+                        is RecognitionStatus.Ready -> stringResource(R.string.baaja_ai_rec_ready) to stringResource(R.string.baaja_ai_rec_ready_sub)
+                        is RecognitionStatus.Listening -> stringResource(R.string.listening) to stringResource(R.string.baaja_ai_rec_listening_sub)
+                        is RecognitionStatus.Processing -> stringResource(R.string.baaja_ai_rec_processing) to stringResource(R.string.baaja_ai_rec_processing_sub)
+                        is RecognitionStatus.Success -> stringResource(R.string.baaja_ai_rec_found) to stringResource(R.string.baaja_ai_rec_found_sub)
+                        is RecognitionStatus.NoMatch -> stringResource(R.string.no_match_found) to status.message
+                        is RecognitionStatus.Error -> stringResource(R.string.recognition_error) to status.message
+                    }
+                Column(
+                    Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        heading,
+                        fontSize = 32.sp,
+                        lineHeight = 37.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.5).sp,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        sub,
+                        fontSize = 17.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
-            },
-        )
 
-        AnimatedContent(
-            targetState = status,
-            contentKey = { it::class },
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "recognition_result",
-            modifier = Modifier.fillMaxWidth(),
-        ) { current ->
-            when (current) {
-                is RecognitionStatus.Success ->
-                    ResultCard(
-                        result = current.result,
-                        onPlayOnApp = { result ->
-                            // Search for the track on YouTube Music
-                            val searchQuery = "${result.title} ${result.artist}"
-                            navController.navigate(SearchRoutes.resultRoute(searchQuery))
-                        },
-                        onClose = ::resetToReady,
-                        onSaveToHistory = ::saveToHistory,
+                ListenButton(
+                    status = status,
+                    onClick = {
+                        when (status) {
+                            is RecognitionStatus.Listening -> resetToReady()
+                            is RecognitionStatus.Processing -> Unit
+                            else -> startRecognition()
+                        }
+                    },
+                )
+
+                if (status is RecognitionStatus.Ready || status is RecognitionStatus.Listening) {
+                    val listening = status is RecognitionStatus.Listening
+                    BaajaPillButton(
+                        text = stringResource(if (listening) R.string.baaja_ai_rec_stop else R.string.baaja_ai_rec_start),
+                        onClick = { if (listening) resetToReady() else startRecognition() },
+                        primary = !listening,
+                        icon = if (listening) R.drawable.close else R.drawable.mic,
+                        height = 52.dp,
                     )
+                }
 
-                is RecognitionStatus.NoMatch, is RecognitionStatus.Error ->
-                    RetryCard(onTryAgain = { startRecognition() })
+                AnimatedContent(
+                    targetState = status,
+                    contentKey = { it::class },
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "recognition_result",
+                    modifier = Modifier.fillMaxWidth(),
+                ) { current ->
+                    when (current) {
+                        is RecognitionStatus.Success ->
+                            ResultCard(
+                                result = current.result,
+                                onPlayOnApp = { result ->
+                                    // Search for the track on YouTube Music
+                                    val searchQuery = "${result.title} ${result.artist}"
+                                    navController.navigate(SearchRoutes.resultRoute(searchQuery))
+                                },
+                                onClose = ::resetToReady,
+                                onSaveToHistory = ::saveToHistory,
+                            )
 
-                else ->
-                    RecentSection(
-                        items = recentItems.take(3),
-                        onItemClick = { item ->
-                            navController.navigate(SearchRoutes.resultRoute("${item.title} ${item.artist}"))
-                        },
-                        onSeeAll = { navController.navigate("recognition_history") },
-                    )
+                        is RecognitionStatus.NoMatch, is RecognitionStatus.Error ->
+                            RetryCard(onTryAgain = { startRecognition() })
+
+                        else ->
+                            RecentSection(
+                                items = recentItems.take(3),
+                                onItemClick = { item ->
+                                    navController.navigate(SearchRoutes.resultRoute("${item.title} ${item.artist}"))
+                                },
+                                onSeeAll = { navController.navigate("recognition_history") },
+                            )
+                    }
+                }
             }
         }
     }

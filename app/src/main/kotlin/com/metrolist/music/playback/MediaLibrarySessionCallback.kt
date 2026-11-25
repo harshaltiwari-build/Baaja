@@ -301,7 +301,7 @@ constructor(
                                     val songs = YouTube.playlist(playlistId).getOrNull()?.songs
                                         ?.take(100)
                                         ?.filterExplicit(context.dataStore.get(HideExplicitKey, true))
-                                        ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, true))
+                                        ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, false))
                                         ?: emptyList()
 
                                     // Add shuffle item at the top
@@ -580,7 +580,7 @@ constructor(
                         ?.items
                         ?.filterIsInstance<SongItem>()
                         ?.filterExplicit(context.dataStore.get(HideExplicitKey, true))
-                        ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, true))
+                        ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, false))
                         ?.filter { onlineSong ->
                             !allLocalSongs.any { localSong ->
                                 localSong.id == onlineSong.id ||
@@ -796,7 +796,7 @@ constructor(
                             ?.items
                             ?.filterIsInstance<SongItem>()
                             ?.filterExplicit(context.dataStore.get(HideExplicitKey, true))
-                            ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, true))
+                            ?.filterVideoSongs(context.dataStore.get(HideVideoSongsKey, false))
                             ?.filter { onlineSong ->
                                 !allLocalSongs.any { localSong ->
                                     localSong.id == onlineSong.id ||
@@ -842,7 +842,7 @@ constructor(
                                 radioQueue
                                     .getInitialStatus()
                                     .filterExplicit(context.dataStore.get(HideExplicitKey, true))
-                                    .filterVideoSongs(context.dataStore.get(HideVideoSongsKey, true))
+                                    .filterVideoSongs(context.dataStore.get(HideVideoSongsKey, false))
                             }
                         }.getOrNull()
 

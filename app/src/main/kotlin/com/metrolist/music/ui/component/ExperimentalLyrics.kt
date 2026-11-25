@@ -106,6 +106,8 @@ import com.metrolist.music.ui.utils.fadingEdge
 import com.metrolist.music.utils.ComposeToImage
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
+import com.metrolist.music.constants.LyricsTextScaleKey
+import com.metrolist.music.constants.LyricsLineSpacingScaleKey
 import com.metrolist.music.viewmodels.LyricsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -152,6 +154,8 @@ fun ExperimentalLyrics(
     val romanizeCyrillicByLine = false
     val respectAgentPositioning by rememberPreference(RespectAgentPositioningKey, true)
     val showIntervalIndicator by rememberPreference(ShowIntervalIndicatorKey, true)
+    val lyricsTextScale by rememberPreference(LyricsTextScaleKey, 1f)
+    val lyricsLineSpacingScale by rememberPreference(LyricsLineSpacingScaleKey, 1f)
     
     val scope = rememberCoroutineScope()
 
@@ -679,7 +683,7 @@ fun ExperimentalLyrics(
                                         bgVisible = bgVisible, isSelected = selectedIndices.contains(index),
                                         isSelectionModeActive = isSelectionModeActive, currentPositionState = currentPositionState,
                                         lyricsOffset = (currentSong?.song?.lyricsOffset ?: 0).toLong(),
-                                        playerConnection = playerConnection, lyricsTextSize = if (baajaLyricsStyle != null) 30f else 36f, lyricsLineSpacing = if (baajaLyricsStyle != null) 1.2f else 1.3f,
+                                        playerConnection = playerConnection, lyricsTextSize = (if (baajaLyricsStyle != null) 30f else 36f) * lyricsTextScale, lyricsLineSpacing = (if (baajaLyricsStyle != null) 1.2f else 1.3f) * lyricsLineSpacingScale,
                                         expressiveAccent = expressiveAccent, lyricsTextPosition = lyricsTextPosition,
                                         respectAgentPositioning = respectAgentPositioning, isAutoScrollEnabled = isAutoScrollEnabled,
                                         displayedCurrentLineIndex = deferredCurrentLineIndex, romanizeAsMain = romanizeAsMain,

@@ -21,6 +21,7 @@ import com.metrolist.innertube.utils.completed
 import com.metrolist.music.constants.YoutubeImportHintSeenKey
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.PlaylistEntity
+import com.metrolist.music.importer.ExternalPlaylistImporter
 import com.metrolist.music.importer.YouTubePlaylistLinkParser
 import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.utils.dataStore
@@ -86,7 +87,12 @@ private class YtiException(val error: YtiError) : Exception()
 
 private class LoadedPlaylist(val title: String, val songs: List<SongItem>)
 
-private class ImportRequest(val id: String, val title: String, val first: PlaylistPage?)
+private class ImportRequest(
+    val id: String,
+    val title: String,
+    val first: PlaylistPage?,
+    val external: ExternalPlaylistImporter.Playlist? = null,
+)
 
 @HiltViewModel
 class YouTubeImportViewModel
@@ -115,6 +121,7 @@ constructor(
 
     private var work: Job? = null
     private var previewPage: PlaylistPage? = null
+    private var externalPlaylist: ExternalPlaylistImporter.Playlist? = null
     private var currentPreview: YtiPreview? = null
     private var retryAction: (() -> Unit)? = null
 
@@ -183,6 +190,7 @@ constructor(
 
     fun previewLink() {
         error = null
+        ExternalPlaylistImporter.parse(link)?.let { return previewExternal(it) }
         val id =
             when (val parsed = YouTubePlaylistLinkParser.parse(link)) {
                 is YouTubePlaylistLinkParser.Result.Playlist -> parsed.id
@@ -242,7 +250,43 @@ constructor(
         conflict = null
     }
 
-    private fun request(info: YtiPreview) = ImportRequest(info.id, info.title, previewPage)
+    private fun request(info: YtiPreview) = ImportRequest(info.id, info.title, previewPage, externalPlaylist)
+
+    private fun previewExternal(parsed: ExternalPlaylistImporter.Link) {
+        retryAction = { previewExternal(parsed) }
+        previewPage = null
+        externalPlaylist = null
+        currentPreview = null
+        work?.cancel()
+        work =
+            viewModelScope.launch {
+                phase = YtiPhase.Fetching
+                try {
+                    val playlist = withContext(Dispatchers.IO) { ExternalPlaylistImporter.fetch(parsed) }
+                    externalPlaylist = playlist
+                    val info =
+                        YtiPreview(
+                            id = parsed.url,
+                            title = playlist.title.ifBlank { playlist.service.label },
+                            author = listOfNotNull(playlist.service.label, playlist.author?.takeIf { it.isNotBlank() }).joinToString(" · "),
+                            thumbnail = playlist.thumbnail,
+                            songCount = playlist.tracks.size,
+                            countText = null,
+                        )
+                    currentPreview = info
+                    phase = YtiPhase.Preview(info)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: ExternalPlaylistImporter.NotFoundException) {
+                    phase = YtiPhase.Input
+                    fail(YtiError.PRIVATE)
+                } catch (e: Exception) {
+                    Timber.tag(TAG).w(e, "External playlist request failed")
+                    phase = YtiPhase.Input
+                    fail(YtiError.NETWORK)
+                }
+            }
+    }
 
     // endregion
 
@@ -264,6 +308,7 @@ constructor(
     fun startOver() {
         work?.cancel()
         previewPage = null
+        externalPlaylist = null
         currentPreview = null
         link = ""
         error = null
@@ -291,8 +336,19 @@ constructor(
                         try {
                             val loaded =
                                 withContext(Dispatchers.IO) {
-                                    loadAll(request.id, request.first) { count, total ->
-                                        phase = YtiPhase.Importing(index + 1, requests.size, label, count, total, false)
+                                    val external = request.external
+                                    if (external != null) {
+                                        val total = external.tracks.size
+                                        LoadedPlaylist(
+                                            external.title,
+                                            ExternalPlaylistImporter.match(external.tracks) { done ->
+                                                phase = YtiPhase.Importing(index + 1, requests.size, label, done, total, false)
+                                            },
+                                        )
+                                    } else {
+                                        loadAll(request.id, request.first) { count, total ->
+                                            phase = YtiPhase.Importing(index + 1, requests.size, label, count, total, false)
+                                        }
                                     }
                                 }
                             phase = YtiPhase.Importing(index + 1, requests.size, label, loaded.songs.size, loaded.songs.size, true)

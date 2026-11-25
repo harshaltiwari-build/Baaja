@@ -364,6 +364,8 @@ constructor(
                     request,
                     false,
                 )
+                // A new download is a request to download now, so a paused queue starts moving again.
+                if (downloadsPaused.value) resumeAll()
                 true
             }
             if (!queued) return@launch
@@ -400,6 +402,29 @@ constructor(
         songIds
             .filter { id -> current[id]?.let { it.state != Download.STATE_COMPLETED } == true }
             .forEach { id -> DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, id, false) }
+    }
+
+    /** Whether the whole download queue is paused (Media3 pauses the queue, not single downloads). */
+    val downloadsPaused by lazy { MutableStateFlow(downloadManager.downloadsPaused) }
+
+    /** Pauses every download in progress; they pick up where they left off on [resumeAll]. */
+    fun pauseAll() {
+        DownloadService.sendPauseDownloads(context, ExoDownloadService::class.java, false)
+        downloadsPaused.value = true
+    }
+
+    fun resumeAll() {
+        DownloadService.sendResumeDownloads(context, ExoDownloadService::class.java, false)
+        downloadsPaused.value = false
+    }
+
+    /** Removes one download, finished or not. */
+    fun remove(songId: String) = DownloadService.sendRemoveDownload(context, ExoDownloadService::class.java, songId, false)
+
+    /** Starts a failed download again from the beginning. */
+    fun retry(songId: String) {
+        remove(songId)
+        download(songId)
     }
 
     fun release() {

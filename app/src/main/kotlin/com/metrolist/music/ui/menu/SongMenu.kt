@@ -117,6 +117,9 @@ fun SongMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val notInterestedItem = if (originalSong.song.isLocal) null else rememberNotInterestedItem(originalSong.id, onDismiss)
+    val mainArtist = originalSong.artists.firstOrNull()
+    val blockArtistItem =
+        if (originalSong.song.isLocal) null else rememberBlockArtistItem(originalSong.id, mainArtist?.id, mainArtist?.name, onDismiss)
     val playerConnection = LocalPlayerConnection.current ?: return
     val songState = database.song(originalSong.id).collectAsStateWithLifecycle(initialValue = originalSong)
     val song = songState.value ?: originalSong
@@ -1132,6 +1135,7 @@ fun SongMenu(
                             ),
                         )
                         notInterestedItem?.let(::add)
+                        blockArtistItem?.let(::add)
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.details)) },

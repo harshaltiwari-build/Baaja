@@ -115,7 +115,7 @@ fun BaajaSettingsProfileCard(onClick: () -> Unit) {
  * preferences as the full Appearance screen, which stays one tap away.
  */
 @Composable
-fun BaajaQuickAppearanceCard(onMoreClick: () -> Unit) {
+fun BaajaQuickAppearanceCard(onMoreClick: (() -> Unit)? = null) {
     var darkMode by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
     var pureBlack by rememberPreference(PureBlackKey, defaultValue = false)
     val modes = listOf(DarkMode.AUTO, DarkMode.OFF, DarkMode.ON)
@@ -155,7 +155,7 @@ fun BaajaQuickAppearanceCard(onMoreClick: () -> Unit) {
                 checked = pureBlack,
                 onCheckedChange = { pureBlack = it },
             )
-            Row(
+            if (onMoreClick != null) Row(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp)

@@ -100,7 +100,7 @@ constructor(
                         (it[SongSortDescendingKey] ?: true),
                     ),
                     it[HideExplicitKey] ?: true,
-                    it[HideVideoSongsKey] ?: true
+                    it[HideVideoSongsKey] ?: false
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (filterSort, hideExplicit, hideVideoSongs) ->
@@ -322,7 +322,7 @@ constructor(
                     it[ArtistSongSortTypeKey].toEnum(ArtistSongSortType.CREATE_DATE) to (it[ArtistSongSortDescendingKey]
                         ?: true),
                     it[HideExplicitKey] ?: true,
-                    it[HideVideoSongsKey] ?: true
+                    it[HideVideoSongsKey] ?: false
                 )
             }.distinctUntilChanged()
             .flatMapLatest { (sortDesc, hideExplicit, hideVideoSongs) ->
@@ -380,7 +380,7 @@ constructor(
             database.albumsLiked(AlbumSortType.CREATE_DATE, true).map { it.filterExplicitAlbums(hideExplicit) }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     var songs = context.dataStore.data
-        .map { Triple(it[HideExplicitKey] ?: true, it[HideVideoSongsKey] ?: true, it[HideYoutubeShortsKey] ?: true) }
+        .map { Triple(it[HideExplicitKey] ?: true, it[HideVideoSongsKey] ?: false, it[HideYoutubeShortsKey] ?: true) }
         .distinctUntilChanged()
         .flatMapLatest { (hideExplicit, hideVideoSongs, _) ->
             combine(

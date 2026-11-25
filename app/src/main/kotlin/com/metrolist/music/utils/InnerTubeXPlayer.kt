@@ -102,6 +102,58 @@ object InnerTubeXPlayer {
             Result.failure(error)
         }
 
+    /** Where a music video's picture comes from: a YouTube SABR session, or a plain file when one is offered. */
+    class VideoSource(
+        val sabr: com.metrolist.innertubex.sabr.SabrBootstrap?,
+        val directUrl: String?,
+        val headers: Map<String, String>,
+        val contentLengthBytes: Long?,
+        val durationMs: Long?,
+    )
+
+    /** The music video's picture only; its sound comes from the song already playing. */
+    suspend fun videoSourceForPlayback(
+        videoId: String,
+        maxHeight: Int,
+        connectivityManager: ConnectivityManager,
+    ): Result<VideoSource> =
+        try {
+            val hints =
+                ContentHints()
+                    .copy(wantVideo = true, maxVideoHeight = maxHeight)
+                    .withStreamCapabilities(allowHls = false, allowSabr = true, allowBoundedRange = false)
+            val stream =
+                requireNotNull(
+                    bundle().extractor.extract(
+                        videoId = videoId,
+                        hints = hints,
+                        excludedClients = failedStreamClients(videoId),
+                        audioQuality = resolveAudioQuality(AudioQuality.AUTO, AudioQuality.AUTO, connectivityManager),
+                        clientPlaybackNonce = generateClientPlaybackNonce(),
+                    ),
+                ) { "InnerTubeX returned no playable stream" }
+            val sabr = stream.sabrVideoBootstrap
+            check(sabr != null || stream.videoUrl != null) { "This video has no video stream" }
+            Result.success(
+                VideoSource(
+                    sabr = sabr,
+                    directUrl = stream.videoUrl.takeIf { sabr == null },
+                    headers = stream.headers,
+                    contentLengthBytes = sabr?.selectedVideoContentLengthBytes ?: stream.videoContentLengthBytes,
+                    durationMs = sabr?.durationMs,
+                ),
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Result.failure(error)
+        }
+
+    /** The HTTP client and logger SABR video sessions run on. */
+    fun sabrHttpClient() = YouTube.extractionTransport().httpClient
+
+    val sabrLogger: com.metrolist.innertubex.InnerTubeLogger get() = logger
+
     internal fun markStreamClientFailed(
         videoId: String,
         clientName: String,

@@ -7,6 +7,10 @@ package com.metrolist.music.ui.player
 
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
+import com.metrolist.music.ui.theme.BaajaChip
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -447,6 +451,7 @@ fun Queue(
         },
     ) {
         val queueTitle by playerConnection.queueTitle.collectAsStateWithLifecycle()
+        val radioChips by playerConnection.service.radioChips.collectAsStateWithLifecycle()
         val queueWindows by playerConnection.queueWindows.collectAsStateWithLifecycle()
         val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
         val mutableQueueWindows = remember { mutableStateListOf<Timeline.Window>() }
@@ -559,6 +564,23 @@ fun Queue(
                                 .animateContentSize()
                                 .height(if (inSelectMode) 48.dp else 0.dp),
                     )
+                }
+
+                if (radioChips.isNotEmpty() && !inSelectMode) {
+                    item(key = "queue_radio_chips") {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(radioChips, key = { it.id }) { chip ->
+                                BaajaChip(
+                                    label = chip.title,
+                                    selected = chip.isSelected,
+                                    onClick = { if (!chip.isSelected) playerConnection.service.retuneRadio(chip) },
+                                )
+                            }
+                        }
+                    }
                 }
 
                 itemsIndexed(

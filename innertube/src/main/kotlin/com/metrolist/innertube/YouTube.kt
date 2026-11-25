@@ -43,6 +43,8 @@ import com.metrolist.innertube.models.response.GetTranscriptResponse
 import com.metrolist.innertube.models.response.NextResponse
 import com.metrolist.innertube.models.response.PlayerResponse
 import com.metrolist.innertube.models.response.SearchResponse
+import com.metrolist.innertube.pages.MusicVideoCounterpart
+import com.metrolist.innertube.pages.RadioChip
 import com.metrolist.innertube.pages.AlbumPage
 import com.metrolist.innertube.pages.ArtistItemsContinuationPage
 import com.metrolist.innertube.pages.ArtistItemsPage
@@ -2926,6 +2928,32 @@ object YouTube {
                     ?.runs
                     ?.firstOrNull()
                     ?.text
+            val chips =
+                response.contents.singleColumnMusicWatchNextResultsRenderer
+                    ?.tabbedRenderer
+                    ?.watchNextTabbedResultsRenderer
+                    ?.tabs
+                    ?.getOrNull(0)
+                    ?.tabRenderer
+                    ?.content
+                    ?.musicQueueRenderer
+                    ?.subHeaderChipCloud
+                    ?.chipCloudRenderer
+                    ?.chips
+                    .orEmpty()
+                    .mapNotNull { chip ->
+                        val renderer = chip.chipCloudChipRenderer ?: return@mapNotNull null
+                        val title = renderer.text?.runs?.firstOrNull()?.text ?: return@mapNotNull null
+                        val watch =
+                            renderer.navigationEndpoint?.queueUpdateCommand?.fetchContentsCommand?.watchEndpoint
+                                ?: return@mapNotNull null
+                        RadioChip(
+                            id = renderer.uniqueId ?: "${watch.playlistId}:${watch.params.orEmpty()}",
+                            title = title,
+                            endpoint = watch,
+                            isSelected = renderer.isSelected,
+                        )
+                    }
             val items =
                 playlistPanelRenderer.contents.mapNotNull { content ->
                     content.playlistPanelVideoRenderer
@@ -2970,6 +2998,7 @@ object YouTube {
                                     ?.browseEndpoint,
                             currentIndex = currentIndex,
                             endpoint = watchPlaylistEndpoint,
+                            chips = chips.ifEmpty { result.chips },
                         )
                     }
                 }
@@ -2999,7 +3028,15 @@ object YouTube {
                         ?.browseEndpoint,
                 continuation = playlistPanelRenderer.continuations?.getContinuation(),
                 endpoint = endpoint,
+                chips = chips,
             )
+        }
+
+    /** The music video paired with a song (or the song paired with a video), if YouTube Music has one. */
+    suspend fun musicVideoCounterpart(videoId: String): Result<MusicVideoCounterpart?> =
+        runCatching {
+            val response = Json.parseToJsonElement(innerTube.next(WEB_REMIX, videoId, null, null, null, null).bodyAsText())
+            MusicVideoCounterpart.parse(response, videoId)
         }
 
     suspend fun lyrics(endpoint: BrowseEndpoint): Result<String?> =

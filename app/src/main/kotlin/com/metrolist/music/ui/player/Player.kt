@@ -1134,9 +1134,10 @@ fun BottomSheetPlayer(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                // Side by side, so the row is only as tall as the title and artist above the seek bar.
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
                         if (showLyrics) {
@@ -1188,7 +1189,8 @@ fun BottomSheetPlayer(
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            // The seek bar's touch area already adds space above its track.
+            Spacer(Modifier.height(6.dp))
 
             BaajaSeekBar(
                 value = (sliderPosition ?: effectivePosition).toFloat(),

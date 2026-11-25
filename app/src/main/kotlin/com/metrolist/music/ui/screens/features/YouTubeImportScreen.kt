@@ -135,7 +135,7 @@ fun YouTubeImportScreen(
     ) {
         item(key = "header") {
             FeatureHeader(
-                title = stringResource(R.string.baaja_yti_title),
+                title = stringResource(R.string.baaja_import_title),
                 subtitle = stringResource(R.string.baaja_yti_subtitle),
                 onBack = { navController.navigateUp() },
             )
@@ -359,7 +359,7 @@ private fun HintCard(onDismiss: () -> Unit) {
             Icon(painterResource(R.drawable.info), null, modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                 Text(stringResource(R.string.baaja_yti_hint_title), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(stringResource(R.string.baaja_yti_hint_body), fontSize = 14.sp, lineHeight = 19.sp)
+                Text(stringResource(R.string.baaja_import_hint_body), fontSize = 14.sp, lineHeight = 19.sp)
             }
             Text(
                 stringResource(R.string.baaja_yti_hint_dismiss),
@@ -389,7 +389,7 @@ private fun LinkCard(viewModel: YouTubeImportViewModel) {
             FeatureTextField(
                 value = viewModel.link,
                 onValueChange = viewModel::onLinkChange,
-                placeholder = stringResource(R.string.baaja_yti_link_hint),
+                placeholder = stringResource(R.string.baaja_import_link_hint),
                 leadingIcon = R.drawable.link,
                 keyboardType = KeyboardType.Uri,
                 imeAction = ImeAction.Go,
@@ -435,7 +435,7 @@ private fun ErrorCard(
     val message =
         stringResource(
             when (error) {
-                YtiError.INVALID_LINK -> R.string.baaja_yti_invalid_link
+                YtiError.INVALID_LINK -> R.string.baaja_import_invalid_link
                 YtiError.NOT_PLAYLIST -> R.string.baaja_yti_not_playlist
                 YtiError.PRIVATE -> R.string.baaja_yti_private
                 YtiError.NETWORK -> R.string.baaja_yti_network

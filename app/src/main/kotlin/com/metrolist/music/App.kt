@@ -35,6 +35,8 @@ import com.metrolist.music.utils.dataStore
 import com.metrolist.music.utils.safeDataStoreEdit
 import com.metrolist.music.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
+import com.metrolist.music.utils.AiArtistBlocklist
+import com.metrolist.music.utils.BlockAiArtistsKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -81,6 +83,14 @@ class App :
         // Plant logging before extraction services initialize.
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
+
+        // Keep the AI-artist list loaded while that filter is on; it refreshes itself once a day.
+        applicationScope.launch(Dispatchers.IO) {
+            dataStore.data
+                .map { it[BlockAiArtistsKey] ?: false }
+                .distinctUntilChanged()
+                .collect { enabled -> if (enabled) AiArtistBlocklist.refresh(this@App) }
+        }
 
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {

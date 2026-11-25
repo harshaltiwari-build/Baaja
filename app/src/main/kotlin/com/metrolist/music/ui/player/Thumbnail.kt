@@ -5,6 +5,7 @@
 
 package com.metrolist.music.ui.player
 
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -53,6 +54,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import com.metrolist.music.constants.MusicVideoAutoStartKey
+import com.metrolist.music.constants.MusicVideosEnabledKey
+import com.metrolist.music.constants.HideVideoSongsKey
+import com.metrolist.music.ui.screens.onboarding.BaajaSegmentedToggle
+import com.metrolist.music.playback.MusicVideoMode
 import com.metrolist.music.ui.theme.baajaInk
 import com.metrolist.music.ui.theme.baajaOutline
 import androidx.compose.ui.Alignment
@@ -86,6 +92,7 @@ import com.metrolist.music.constants.PlayerBackgroundStyle
 import com.metrolist.music.constants.PlayerBackgroundStyleKey
 import com.metrolist.music.constants.PlayerHorizontalPadding
 import com.metrolist.music.constants.SeekExtraSeconds
+import com.metrolist.music.constants.SeekDurationSecondsKey
 import com.metrolist.music.constants.SwipeThumbnailKey
 import com.metrolist.music.constants.ThumbnailCornerRadius
 import com.metrolist.music.listentogether.RoomRole
@@ -497,6 +504,43 @@ private fun ThumbnailHeader(
                     modifier = Modifier.basicMarquee()
                 )
             }
+            // Song | Video: Video plays the song's music video full screen, Song comes back to it.
+            val videoContext = LocalContext.current
+            val videoConnection = LocalPlayerConnection.current
+            if (videoConnection != null && listenTogetherRoleState?.value.let { it == null || it == RoomRole.NONE }) {
+                val videoState by MusicVideoMode.state.collectAsStateWithLifecycle()
+                val hasVideo by MusicVideoMode.hasVideo.collectAsStateWithLifecycle()
+                val headerMetadata by videoConnection.mediaMetadata.collectAsStateWithLifecycle()
+                val headerId = headerMetadata?.id
+                // With "Hide video songs" on there are no videos at all; otherwise only songs with an
+                // official music video get the switch, and it stays while video mode is on.
+                val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = false)
+                val musicVideosEnabled by rememberPreference(MusicVideosEnabledKey, defaultValue = true)
+                val autoStartVideo by rememberPreference(MusicVideoAutoStartKey, defaultValue = false)
+                val videosAllowed = musicVideosEnabled && !hideVideoSongs
+                LaunchedEffect(videosAllowed) { if (!videosAllowed) MusicVideoMode.stop() }
+                LaunchedEffect(headerId, videosAllowed) {
+                    if (videosAllowed) videoConnection.player.currentMediaItem?.let(MusicVideoMode::check)
+                }
+                // "Start in Video": once a song turns out to have a video, open it in Video. Choosing Song
+                // stays put for that song; the next song with a video opens in Video again.
+                LaunchedEffect(headerId, autoStartVideo, hasVideo[headerId]) {
+                    if (videosAllowed && autoStartVideo && hasVideo[headerId] == true && videoState == MusicVideoMode.State.Off) {
+                        MusicVideoMode.start(videoContext, videoConnection.player)
+                    }
+                }
+                if (videosAllowed &&
+                    (hasVideo[headerId] == true || videoState == MusicVideoMode.State.Loading || videoState == MusicVideoMode.State.Playing)
+                ) BaajaSegmentedToggle(
+                    options = listOf(stringResource(R.string.baaja_video_song), stringResource(R.string.baaja_video_video)),
+                    icons = listOf(R.drawable.music_note, R.drawable.videocam),
+                    selectedIndex = if (videoState == MusicVideoMode.State.Off) 0 else 1,
+                    onSelect = { index ->
+                        if (index == 1) MusicVideoMode.start(videoContext, videoConnection.player) else MusicVideoMode.stop()
+                    },
+                    modifier = Modifier.padding(top = 6.dp).width(116.dp),
+                )
+            }
         }
         HeaderIconButton(
             icon = R.drawable.info,
@@ -554,8 +598,15 @@ private fun ThumbnailItem(
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val seekDurationSeconds by rememberPreference(SeekDurationSecondsKey, defaultValue = 5)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
+    val videoState by MusicVideoMode.state.collectAsStateWithLifecycle()
+    val videoAspect by MusicVideoMode.aspectRatio.collectAsStateWithLifecycle()
+    // In video mode the current song's card takes the video's shape and shows the video.
+    // A song without a video keeps its artwork, even while video mode is on for the queue.
+    val showVideo =
+        videoState != MusicVideoMode.State.Off && videoState != MusicVideoMode.State.NoVideo && item.mediaId == currentMediaId
 
     Box(
         modifier = modifier
@@ -568,7 +619,8 @@ private fun ThumbnailItem(
                         .fillMaxSize()
                 }
             )
-            .padding(horizontal = PlayerHorizontalPadding)
+            // A video gets most of the screen's width; this layer clips anything wider, so the margin shrinks instead.
+            .padding(horizontal = if (showVideo && !isLandscape) 10.dp else PlayerHorizontalPadding)
             .graphicsLayer {
                 // Render entire thumbnail item on separate hardware layer for smooth animations
                 compositingStrategy = CompositingStrategy.Offscreen
@@ -589,7 +641,7 @@ private fun ThumbnailItem(
                         }
                         lastTapTime = now
 
-                        val skipAmount = 5000 * skipMultiplier
+                        val skipAmount = seekDurationSeconds * 1000 * skipMultiplier
 
                         val isLeftSide = (layoutDirection == LayoutDirection.Ltr && offset.x < size.width / 2) ||
                                 (layoutDirection == LayoutDirection.Rtl && offset.x > size.width / 2)
@@ -609,10 +661,24 @@ private fun ThumbnailItem(
         val artShape = RoundedCornerShape(dimensions.cornerRadius)
         Box(
             modifier = Modifier
-                .size(dimensions.thumbnailSize)
+                .then(
+                    if (showVideo) {
+                        // The full width, less room for the card's offset shadow.
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(end = 6.dp)
+                            .aspectRatio(videoAspect.coerceIn(0.5f, 2.4f))
+                    } else {
+                        Modifier.size(dimensions.thumbnailSize)
+                    },
+                )
                 .baajaOutline(outlineColor, artShape, borderWidth = 3.dp, shadowOffset = 5.dp)
                 .clip(artShape)
         ) {
+            if (showVideo) {
+                MusicVideoCard(videoState, Modifier.fillMaxSize())
+                return@Box
+            }
             val artworkUriToUse = if (item.mediaId == currentMediaId && !currentMediaThumbnail.isNullOrBlank()) {
                 currentMediaThumbnail
             } else {

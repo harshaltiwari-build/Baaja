@@ -28,6 +28,12 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.metrolist.music.R
+import androidx.compose.ui.res.painterResource
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,21 +54,26 @@ import com.metrolist.music.ui.theme.baajaSurface
  * @param title The title of the settings group
  * @param items List of settings items to display
  * @param useLowContrast Kept for callers on tinted sheets; the card then uses the lowest surface container.
+ * @param foldable Starts folded to one row with the title, so long pages show their main options first;
+ *   a tap opens it. Needs a [title].
  */
 @Composable
 fun Material3SettingsGroup(
     title: String? = null,
     items: List<Material3SettingsItem>,
-    useLowContrast: Boolean = false
+    useLowContrast: Boolean = false,
+    foldable: Boolean = false,
 ) {
     val ink = baajaInk
     val paletteSeed = remember(title) { title?.hashCode() ?: 0 }
+    val folds = foldable && title != null
+    var expanded by rememberSaveable(title) { mutableStateOf(!folds) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(end = 4.dp, bottom = 4.dp)
     ) {
-        title?.let {
+        title?.takeUnless { folds }?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.titleMedium,
@@ -90,7 +101,37 @@ fun Material3SettingsGroup(
                 )
                 .animateContentSize()
         ) {
-            items.forEachIndexed { index, item ->
+            if (folds) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 60.dp)
+                        .clickable(onClickLabel = title) { expanded = !expanded }
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = title!!,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f).semantics { heading() },
+                    )
+                    Icon(
+                        painter = painterResource(if (expanded) R.drawable.expand_less else R.drawable.expand_more),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                if (expanded) {
+                    HorizontalDivider(
+                        thickness = 1.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+            if (expanded) items.forEachIndexed { index, item ->
                 Material3SettingsItemRow(
                     item = item,
                     badgeColor = baajaPastel(paletteSeed + index),

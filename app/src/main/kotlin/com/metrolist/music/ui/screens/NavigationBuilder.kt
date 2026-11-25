@@ -45,6 +45,7 @@ import com.metrolist.music.ui.screens.recognition.RecognitionHistoryScreen
 import com.metrolist.music.ui.screens.recognition.RecognitionScreen
 import com.metrolist.music.ui.screens.search.OnlineSearchResult
 import com.metrolist.music.ui.screens.search.SearchScreen
+import com.metrolist.music.ui.screens.settings.HomeSectionsSettings
 import com.metrolist.music.ui.screens.settings.AboutScreen
 import com.metrolist.music.ui.screens.settings.AndroidAutoSettings
 import com.metrolist.music.ui.screens.settings.AppearanceSettings
@@ -53,7 +54,11 @@ import com.metrolist.music.ui.screens.settings.ContentSettings
 import com.metrolist.music.ui.screens.settings.DarkMode
 import com.metrolist.music.ui.screens.settings.PlaybackSettings
 import com.metrolist.music.ui.screens.settings.PlayerPageSettings
-import com.metrolist.music.ui.screens.settings.PlayerSettings
+import com.metrolist.music.ui.screens.settings.AppearancePage
+import com.metrolist.music.ui.screens.settings.ContentSection
+import com.metrolist.music.ui.screens.settings.MusicVideoSettings
+import com.metrolist.music.ui.screens.settings.AboutBaajaSettings
+import com.metrolist.music.ui.screens.settings.DevicesSettings
 import com.metrolist.music.ui.screens.settings.QueueSettings
 import com.metrolist.music.ui.screens.settings.TimersSettings
 import com.metrolist.music.ui.screens.settings.PrivacySettings
@@ -348,7 +353,7 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/appearance/lyrics") {
-        AppearanceSettings(navController, snackbarHostState, lyricsPage = true)
+        AppearanceSettings(navController, snackbarHostState, AppearancePage.LYRICS)
     }
 
 
@@ -356,12 +361,44 @@ fun NavGraphBuilder.navigationBuilder(
         ContentSettings(navController)
     }
 
+    composable("settings/filters") {
+        ContentSettings(navController, ContentSection.FILTERS)
+    }
+
+    composable("settings/library") {
+        AppearanceSettings(navController, snackbarHostState, AppearancePage.LIBRARY)
+    }
+
+    composable("settings/music_videos") {
+        MusicVideoSettings(navController)
+    }
+
+    composable("device_connect") {
+        DeviceConnectScreen(navController)
+    }
+
+    composable("downloads") {
+        DownloadsManagerScreen(navController)
+    }
+
+    composable("settings/content/home_sections") {
+        HomeSectionsSettings(navController)
+    }
+
     composable("settings/content/romanization") {
         RomanizationSettings(navController)
     }
 
     composable("settings/player") {
-        PlayerSettings(navController)
+        PlaybackSettings(navController)
+    }
+
+    composable("settings/devices") {
+        DevicesSettings(navController)
+    }
+
+    composable("settings/about_baaja") {
+        AboutBaajaSettings(navController)
     }
 
     composable("settings/player/playback") {

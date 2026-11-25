@@ -24,7 +24,12 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.audiofx.AudioEffect
+import com.metrolist.music.deviceconnect.DeviceConnectCodeKey
+import com.metrolist.music.deviceconnect.DeviceConnectEnabledKey
+import com.metrolist.music.deviceconnect.DeviceConnectServer
 import com.metrolist.music.playback.audio.VolumeNormalizationAudioProcessor
+import com.metrolist.music.utils.contentBlocklist
+import com.metrolist.music.utils.ContentBlocklist
 import com.metrolist.music.utils.safeDataStoreEdit
 import android.net.ConnectivityManager
 import android.os.Binder
@@ -94,6 +99,7 @@ import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionToken
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.MoreExecutors
+import com.metrolist.innertube.pages.RadioChip
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
@@ -309,6 +315,13 @@ class MusicService :
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    @Volatile
+    private var blocklist = ContentBlocklist()
+
+    private var deviceConnectServer: DeviceConnectServer? = null
+
+    private val radioHistory = RadioRecommendationHistory()
+
     private val binder = MusicBinder()
 
     inner class MusicBinder : Binder() {
@@ -326,6 +339,9 @@ class MusicService :
     @Volatile private var mobileAudioQuality = com.metrolist.music.constants.AudioQuality.AUTO
 
     private var currentQueue: Queue = EmptyQueue
+
+    /** Re-tuning chips of the playing YouTube radio; empty for any other queue. */
+    val radioChips = MutableStateFlow<List<RadioChip>>(emptyList())
     var queueTitle: String? = null
 
     val currentMediaMetadata = MutableStateFlow<com.metrolist.music.models.MediaMetadata?>(null)
@@ -734,6 +750,23 @@ class MusicService :
 
         initializeCast()
 
+        contentBlocklist.collectLatest(scope) { blocklist = it }
+
+        // Device Connect: while switched on, phones on the same Wi-Fi with the code can control this one.
+        dataStore.data
+            .map { it[DeviceConnectEnabledKey] ?: false }
+            .distinctUntilChanged()
+            .collectLatest(scope) { enabled ->
+                deviceConnectServer?.stop()
+                deviceConnectServer = null
+                if (enabled) {
+                    deviceConnectServer =
+                        DeviceConnectServer(this, player) { dataStore.get(DeviceConnectCodeKey, "") }.also {
+                            runCatching { it.start() }.onFailure { e -> Timber.tag(TAG).w(e, "Device Connect failed to start") }
+                        }
+                }
+            }
+
         // Collecting this flow activates the internal map that updates lyricsProviders in LyricsHelper
         lyricsHelper.preferred.collectLatest(scope) {}
 
@@ -1003,7 +1036,7 @@ class MusicService :
             dataStore.data.map { it[HideExplicitKey] ?: true }.distinctUntilChanged().collect { cachedHideExplicit = it }
         }
         scope.launch {
-            dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged().collect { cachedHideVideoSongs = it }
+            dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged().collect { cachedHideVideoSongs = it }
         }
         scope.launch {
             dataStore.data.map { it[ShufflePlaylistFirstKey] ?: false }.distinctUntilChanged().collect { cachedShufflePlaylistFirst = it }
@@ -1672,6 +1705,7 @@ class MusicService :
         }
 
         currentQueue = queue
+        radioChips.value = emptyList()
         queueTitle = null
         val persistShuffleAcrossQueues = dataStore.get(RememberShuffleAndRepeatKey, true)
         if (!persistShuffleAcrossQueues && !restoringQueue) {
@@ -1689,7 +1723,7 @@ class MusicService :
                     queue
                         .getInitialStatus()
                         .filterExplicit(dataStore.get(HideExplicitKey, true))
-                        .filterVideoSongs(dataStore.get(HideVideoSongsKey, true))
+                        .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
                 }
             if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
             // A newer queue was asked for while this one loaded (a link opened during the start-up
@@ -1699,6 +1733,8 @@ class MusicService :
                 queueTitle = initialStatus.title
             }
             if (initialStatus.items.isEmpty()) return@launch
+            radioHistory.remember(initialStatus.items)
+            radioChips.value = (queue as? YouTubeQueue)?.chips.orEmpty()
             // Track original queue size for shuffle playlist first feature
             originalQueueSize = initialStatus.items.size
             if (queue.preloadItem != null) {
@@ -1737,8 +1773,40 @@ class MusicService :
 
     fun adoptQueue(queue: Queue, title: String? = null, initialQueueSize: Int = 0) {
         currentQueue = queue
+        radioChips.value = emptyList()
         queueTitle = title
         originalQueueSize = initialQueueSize
+    }
+
+    /** Re-tunes the playing radio with one of its chips, keeping the current song and replacing what follows. */
+    fun retuneRadio(chip: RadioChip) {
+        if (!playerInitialized.value) return
+        val currentMediaId = player.currentMediaItem?.mediaId ?: return
+        val radioQueue = YouTubeQueue(chip.endpoint.copy(videoId = chip.endpoint.videoId ?: currentMediaId))
+        radioChips.value = radioChips.value.map { it.copy(isSelected = it.id == chip.id) }
+        scope.launch(SilentHandler) {
+            val status =
+                withContext(Dispatchers.IO) {
+                    radioQueue
+                        .getInitialStatus()
+                        .filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                }
+            if (player.currentMediaItem?.mediaId != currentMediaId) return@launch
+            val items = status.items.filter { it.mediaId != currentMediaId }
+            if (items.isEmpty()) return@launch
+            val currentIndex = player.currentMediaItemIndex
+            if (player.mediaItemCount > currentIndex + 1) {
+                player.removeMediaItems(currentIndex + 1, player.mediaItemCount)
+            }
+            player.addMediaItems(currentIndex + 1, items)
+            if (player.shuffleModeEnabled) {
+                applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
+            }
+            radioHistory.remember(items)
+            currentQueue = radioQueue
+            if (radioQueue.chips.isNotEmpty()) radioChips.value = radioQueue.chips
+        }
     }
 
     fun startRadioSeamlessly() {
@@ -1768,12 +1836,13 @@ class MusicService :
                         radioQueue
                             .getInitialStatus()
                             .filterExplicit(dataStore.get(HideExplicitKey, true))
-                            .filterVideoSongs(dataStore.get(HideVideoSongsKey, true))
+                            .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
                     }
 
                 if (initialStatus.title != null) {
                     queueTitle = initialStatus.title
                 }
+                radioHistory.remember(initialStatus.items)
 
                 val radioItems =
                     initialStatus.items.filter { item ->
@@ -1795,6 +1864,7 @@ class MusicService :
                 }
 
                 currentQueue = radioQueue
+                radioChips.value = radioQueue.chips
             } catch (e: Exception) {
                 try {
                     val nextResult =
@@ -2415,6 +2485,20 @@ class MusicService :
         reason: Int,
     ) {
         sponsorBlockSkipper.onTrackChanged(player, mediaItem?.mediaId)
+        mediaItem?.let { MusicVideoMode.prefetch(this, it) }
+        pendingSeek?.let { pending -> if (pending.first != mediaItem?.mediaId) pendingSeek = null }
+        // Skip songs by blocked artists when the queue moves on by itself; anything the user picks
+        // (a tap, next or previous) still plays. The streak stops a queue of only blocked songs from
+        // skipping forever under repeat-all.
+        val blocked = mediaItem?.metadata?.let(blocklist::blocks) == true
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && blocked && player.hasNextMediaItem() &&
+            blockedSkipStreak < player.mediaItemCount
+        ) {
+            blockedSkipStreak++
+            scope.launch { player.seekToNextMediaItem() }
+            return
+        }
+        if (!blocked) blockedSkipStreak = 0
         // Only natural completion transitions mark the previous track as fully cached,
         // never a manual skip or seek. Read lastTransitionedMediaId before replacing it.
         if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
@@ -2484,15 +2568,29 @@ class MusicService :
             reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
             player.mediaItemCount - player.currentMediaItemIndex <= 5 &&
             currentQueue.hasNextPage() &&
-            player.repeatMode != REPEAT_MODE_ALL
+            player.repeatMode != REPEAT_MODE_ALL &&
+            radioTopUpJob?.isActive != true
         ) {
-            scope.launch(SilentHandler) {
+            radioTopUpJob = scope.launch(SilentHandler) {
+                val queuedIds = (0 until player.mediaItemCount).mapTo(HashSet()) { player.getMediaItemAt(it).mediaId }
+                val queue = currentQueue
                 val mediaItems =
                     withContext(Dispatchers.IO) {
-                        currentQueue
-                            .nextPage()
-                            .filterExplicit(cachedHideExplicit)
-                            .filterVideoSongs(cachedHideVideoSongs)
+                        radioHistory.select(
+                            isEligible = { item ->
+                                item.mediaId !in queuedIds && item.metadata?.let(blocklist::blocks) != true
+                            },
+                            loadPage = {
+                                if (!queue.hasNextPage()) {
+                                    null
+                                } else {
+                                    runCatching { queue.nextPage() }
+                                        .getOrNull()
+                                        ?.filterExplicit(cachedHideExplicit)
+                                        ?.filterVideoSongs(cachedHideVideoSongs)
+                                }
+                            },
+                        )
                     }
                 if (player.playbackState != STATE_IDLE && mediaItems.isNotEmpty()) {
                     player.addMediaItems(mediaItems)
@@ -2508,9 +2606,27 @@ class MusicService :
         }
     }
 
+    private var pendingSeek: Pair<String, Long>? = null
+    private var blockedSkipStreak = 0
+    private var radioTopUpJob: Job? = null
+
+    /** Seeks to [positionMs] once [mediaId] is the playing item and ready, e.g. after taking over a song from another phone. */
+    fun seekWhenReady(
+        mediaId: String,
+        positionMs: Long,
+    ) {
+        pendingSeek = mediaId to positionMs
+    }
+
     override fun onPlaybackStateChanged(
         @Player.State playbackState: Int,
     ) {
+        pendingSeek?.let { (mediaId, positionMs) ->
+            if (playbackState == Player.STATE_READY && player.currentMediaItem?.mediaId == mediaId) {
+                pendingSeek = null
+                player.seekTo(positionMs)
+            }
+        }
         updateInitialBufferRecovery(playbackState)
 
         if (playbackState == Player.STATE_ENDED) {
@@ -3904,6 +4020,9 @@ class MusicService :
 
     override fun onDestroy() {
         isRunning = false
+        deviceConnectServer?.stop()
+        deviceConnectServer = null
+        MusicVideoMode.stop()
 
         if (!::player.isInitialized) {
             try {
@@ -3969,7 +4088,7 @@ class MusicService :
         }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        if (dataStore.get(StopMusicOnTaskClearKey, false)) {
+        if (dataStore.get(StopMusicOnTaskClearKey, true)) {
             stopOnTaskClear()
         } else {
             super.onTaskRemoved(rootIntent)

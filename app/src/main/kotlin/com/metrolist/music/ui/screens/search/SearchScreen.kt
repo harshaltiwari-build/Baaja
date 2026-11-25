@@ -288,6 +288,15 @@ fun SearchScreen(
                 onFocusChanged = { isFieldFocused = it },
                 modifier = Modifier.weight(1f),
                 trailing = {
+                    // While typing, the big "Identify a song" button is hidden, so the field offers the same action.
+                    if (isTyping) {
+                        BaajaPlainIconButton(
+                            icon = R.drawable.mic,
+                            contentDescription = stringResource(R.string.baaja_home_identify_song),
+                            onClick = { navController.navigate("recognition?autoStart=true") },
+                            iconSize = 20.dp,
+                        )
+                    }
                     BaajaPlainIconButton(
                         icon =
                             when (searchSource) {

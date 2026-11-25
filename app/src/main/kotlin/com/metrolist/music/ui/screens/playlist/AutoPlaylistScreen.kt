@@ -861,6 +861,14 @@ fun AutoPlaylistScreen(
                         )
                     }
                 } else if (!isSearching) {
+                    if (playlistType == PlaylistType.DOWNLOAD) {
+                        IconButton(onClick = { navController.navigate("downloads") }) {
+                            Icon(
+                                painter = painterResource(R.drawable.download),
+                                contentDescription = stringResource(R.string.baaja_downloads_title),
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = { isSearching = true },
                     ) {

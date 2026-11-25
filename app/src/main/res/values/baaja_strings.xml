@@ -776,4 +776,166 @@
     <string name="baaja_not_interested">Not interested</string>
     <string name="baaja_not_interested_desc">Suggest less like this on Home and in mixes</string>
     <string name="baaja_not_interested_done">Got it, you\'ll see less like this</string>
+
+    <!-- Seek and pause options -->
+    <plurals name="baaja_seek_duration_title">
+        <item quantity="one">Seek duration: %d second</item>
+        <item quantity="other">Seek duration: %d seconds</item>
+    </plurals>
+    <string name="baaja_seek_duration_desc">How far a double-tap on the artwork jumps</string>
+    <string name="baaja_seek_addup_desc">Repeated double-taps add up the seek duration each time</string>
+    <string name="baaja_keep_paused_title">Keep paused when changing songs</string>
+    <string name="baaja_keep_paused_desc">Skipping while paused won\'t start playback</string>
+    <string name="baaja_lyrics_text_size">Lyrics text size: %d%%</string>
+    <string name="baaja_lyrics_line_spacing">Lyrics line spacing: %d%%</string>
+
+
+    <!-- Blocklists and hide from Home -->
+    <string name="baaja_block_artist">Block %1$s</string>
+    <string name="baaja_block_artist_desc">Keep this artist off Home and skip their songs</string>
+    <string name="baaja_block_artist_done">%1$s blocked. Undo in Settings › Privacy</string>
+    <string name="baaja_hide_from_home">Hide from Home</string>
+    <string name="baaja_hide_from_home_desc">Restore it any time in Settings › Privacy</string>
+    <string name="baaja_hidden_from_home">Hid %1$s from Home</string>
+    <string name="baaja_blocklists">Blocklists</string>
+    <string name="baaja_blocked_artists">Blocked artists</string>
+    <string name="baaja_hidden_from_home_list">Hidden from Home</string>
+    <string name="baaja_restore">Restore</string>
+    <string name="baaja_blocklist_empty">None</string>
+    <plurals name="baaja_blocklist_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+
+    <!-- Playlist import from other services -->
+    <string name="baaja_import_link_hint">YouTube Music, Spotify, Apple Music or Deezer link</string>
+    <string name="baaja_import_invalid_link">That doesn\'t look like a YouTube Music, Spotify, Apple Music or Deezer playlist link.</string>
+
+    <!-- Content filters -->
+    <string name="baaja_hide_podcasts">Hide podcasts</string>
+    <string name="baaja_hide_podcasts_desc">Keep podcasts and episodes out of Home, search and the radio</string>
+    <string name="baaja_hide_non_musical">Hide non-musical videos</string>
+    <string name="baaja_hide_non_musical_desc">Keep songs and official music videos; hide vlogs, trailers and other videos</string>
+    <string name="baaja_hide_short_songs">Hide short songs</string>
+    <string name="baaja_hide_short_songs_desc">Hide previews and clips shorter than %d seconds</string>
+    <string name="baaja_block_ai_artists">Block AI-generated artists</string>
+    <string name="baaja_block_ai_artists_desc">Hide channels on the AiSList community list (CC BY-NC 4.0). Updates daily and works offline</string>
+
+    <!-- Home sections -->
+    <string name="baaja_home_sections">Home sections</string>
+    <string name="baaja_home_sections_desc">Choose which sections show on Home</string>
+    <string name="baaja_home_youtube_shelves">YouTube Music shelves</string>
+
+    <!-- Lyrics preview -->
+    <string name="baaja_lyrics_preview_active">Every song tells a story</string>
+    <string name="baaja_lyrics_preview_next">and this one sounds like you</string>
+
+    <!-- Settings search -->
+    <string name="baaja_settings_search_hint">Search settings</string>
+    <string name="baaja_settings_search_results">Results</string>
+    <string name="baaja_settings_search_empty">No settings match that</string>
+
+    <!-- App icon -->
+    <string name="baaja_app_icon">App icon</string>
+    <string name="baaja_app_icon_note">Your launcher may take a few seconds to show the new icon, and may move it to the app drawer.</string>
+    <string name="baaja_app_icon_original">Original</string>
+    <string name="baaja_app_icon_ink">Ink</string>
+    <string name="baaja_app_icon_light">Light</string>
+    <string name="baaja_app_icon_sunset">Sunset</string>
+    <string name="baaja_app_icon_ocean">Ocean</string>
+
+    <!-- Playlist import naming -->
+    <string name="baaja_import_title">Import playlist</string>
+    <string name="baaja_import_tile_title">Import playlist</string>
+    <string name="baaja_import_tile_desc">YouTube, Spotify and more</string>
+    <string name="baaja_import_hint_body">Imported playlists are local copies. Changes you make here aren\'t synced back to the original service.</string>
+
+    <!-- Downloads manager -->
+    <string name="baaja_downloads_title">Manage downloads</string>
+    <string name="baaja_downloads_desc">Pause, resume, retry or cancel downloads in progress</string>
+    <plurals name="baaja_downloads_in_progress">
+        <item quantity="one">%d download in progress</item>
+        <item quantity="other">%d downloads in progress</item>
+    </plurals>
+    <plurals name="baaja_downloads_completed">
+        <item quantity="one">%d song downloaded</item>
+        <item quantity="other">%d songs downloaded</item>
+    </plurals>
+    <string name="baaja_downloads_none_active">Nothing is downloading right now</string>
+    <string name="baaja_downloads_pause_all">Pause all</string>
+    <string name="baaja_downloads_resume_all">Resume all</string>
+    <string name="baaja_downloads_cancel_all">Cancel all</string>
+    <string name="baaja_downloads_failed">Failed</string>
+    <string name="baaja_downloads_paused">Paused</string>
+    <string name="baaja_downloads_waiting">Waiting</string>
+    <string name="baaja_downloads_percent">%d%%</string>
+    <string name="baaja_downloads_retry">Retry</string>
+    <string name="baaja_downloads_cancel">Cancel download</string>
+
+    <!-- Music video mode -->
+    <string name="baaja_video_song">Song</string>
+    <string name="baaja_video_video">Video</string>
+    <string name="baaja_video_title">Music video</string>
+    <string name="baaja_video_back_to_song">Back to song</string>
+    <string name="baaja_video_pip">Picture-in-picture</string>
+    <string name="baaja_video_none">This song doesn\'t have a music video</string>
+    <string name="baaja_video_failed">Couldn\'t play the music video</string>
+
+    <!-- Device Connect -->
+    <string name="baaja_dc_title">Device Connect</string>
+    <string name="baaja_dc_desc">Control Baaja on another phone or tablet on your Wi-Fi</string>
+    <string name="baaja_dc_allow">Let other devices control this phone</string>
+    <string name="baaja_dc_allow_desc">Phones on the same Wi-Fi can play, pause and skip here after entering the code below</string>
+    <string name="baaja_dc_code_label">Pairing code</string>
+    <string name="baaja_dc_new_code">New code</string>
+    <string name="baaja_dc_other_devices">Other devices</string>
+    <string name="baaja_dc_searching">Looking for Baaja on your Wi-Fi… On the other device, open Device Connect and turn on \"Let other devices control this phone\".</string>
+    <string name="baaja_dc_enter_code">Enter the code shown on %1$s</string>
+    <string name="baaja_dc_connect">Connect</string>
+    <string name="baaja_dc_connecting">Connecting…</string>
+    <string name="baaja_dc_wrong_code">That code didn\'t match. Check the code on the other device and try again.</string>
+    <string name="baaja_dc_failed">Couldn\'t reach that device. Make sure both are on the same Wi-Fi.</string>
+    <string name="baaja_dc_controlling">Controlling %1$s</string>
+    <string name="baaja_dc_nothing_playing">Nothing is playing on that device</string>
+    <string name="baaja_dc_play_here">Play on this phone</string>
+    <string name="baaja_dc_disconnect">Disconnect</string>
+
+    <!-- Music video settings -->
+    <string name="baaja_video_enabled">Music videos</string>
+    <string name="baaja_video_enabled_desc">Show the Song | Video switch in the player for songs with an official music video</string>
+    <string name="baaja_video_quality">Video quality</string>
+    <string name="baaja_video_quality_desc">Up to %1$dp. Higher uses more data</string>
+    <string name="baaja_video_autostart">Start in Video</string>
+    <string name="baaja_video_autostart_desc">Open songs that have a music video in Video automatically</string>
+    <!-- Settings organisation -->
+    <string name="baaja_settings_group_listening">Listening</string>
+    <string name="baaja_settings_group_music">Your music</string>
+    <string name="baaja_settings_group_app">App</string>
+    <string name="baaja_settings_sound">Sound</string>
+    <string name="baaja_settings_sound_desc">Quality, crossfade, volume, equalizer</string>
+    <string name="baaja_settings_player_desc">Seeking, output, Bluetooth, behaviour</string>
+    <string name="baaja_settings_player_extras">Player extras</string>
+    <string name="baaja_settings_seeking">Seeking</string>
+    <string name="baaja_settings_behaviour">Behaviour</string>
+    <string name="baaja_settings_videos_desc">On or off, quality, start in Video</string>
+    <string name="baaja_settings_queue">Queue and radio</string>
+    <string name="baaja_settings_queue_desc">Shuffle, duplicates, similar songs</string>
+    <string name="baaja_settings_sleep">Sleep and alarms</string>
+    <string name="baaja_settings_sleep_desc">Sleep timer, fade out, alarms</string>
+    <string name="baaja_settings_recommendations">Recommendations</string>
+    <string name="baaja_settings_recommendations_desc">Languages, artists, Home, region</string>
+    <string name="baaja_settings_filters">Filters and blocks</string>
+    <string name="baaja_settings_filters_desc">Explicit, podcasts, AI, blocked artists</string>
+    <string name="baaja_settings_lyrics_desc">Size, spacing, scrolling, romanization</string>
+    <string name="baaja_settings_library">Library and playlists</string>
+    <string name="baaja_settings_library_desc">Tabs, grid, auto playlists</string>
+    <string name="baaja_settings_appearance_desc">App icon, player look, navigation</string>
+    <string name="baaja_settings_downloads_storage">Downloads and storage</string>
+    <string name="baaja_settings_downloads_storage_desc">Download quality, cache, clean up</string>
+    <string name="baaja_settings_backup_desc">Backups and playlist imports</string>
+    <string name="baaja_settings_devices_title">Devices</string>
+    <string name="baaja_settings_devices_desc">Device Connect, Listen Together, car</string>
+    <string name="baaja_settings_privacy_desc">History and screenshots</string>
+    <string name="baaja_settings_about">About Baaja</string>
+    <string name="baaja_settings_about_desc">Version %1$s · updates, changelog, links</string>
 </resources>

@@ -256,8 +256,8 @@ internal fun BaajaLibraryCollections(
                 add(
                     SmallTile(
                         R.drawable.playlist_add,
-                        stringResource(R.string.baaja_yti_tile_title),
-                        stringResource(R.string.baaja_yti_tile_desc),
+                        stringResource(R.string.baaja_import_tile_title),
+                        stringResource(R.string.baaja_import_tile_desc),
                         BaajaLibraryRoutes.IMPORT_YOUTUBE,
                         BaajaTileColors.peach(),
                     ),
@@ -298,7 +298,7 @@ internal fun BaajaLibraryCollections(
                 if (showDownloaded) {
                     val database = LocalDatabase.current
                     val hideExplicit by rememberPreference(HideExplicitKey, defaultValue = true)
-                    val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = true)
+                    val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = false)
                     val downloadedCount by remember(database, hideExplicit, hideVideoSongs) {
                         database.downloadedSongsCount(hideExplicit, hideVideoSongs)
                     }.collectAsStateWithLifecycle(initialValue = 0)

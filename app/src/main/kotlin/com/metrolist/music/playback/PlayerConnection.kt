@@ -35,6 +35,7 @@ import com.metrolist.music.models.toMediaMetadata
 import com.metrolist.music.playback.MusicService.MusicBinder
 import com.metrolist.music.playback.queues.Queue
 import com.metrolist.music.utils.dataStore
+import com.metrolist.music.constants.KeepPausedOnSongChangeKey
 import com.metrolist.music.utils.get
 import com.metrolist.music.utils.reportException
 import kotlinx.coroutines.CoroutineScope
@@ -441,11 +442,12 @@ class PlayerConnection(
                 castHandler.skipToNext()
                 return
             }
+            val resume = shouldResumeOnSongChange()
             player.seekToNext()
             if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
                 player.prepare()
             }
-            player.playWhenReady = true
+            player.playWhenReady = resume
             onSkipNext?.invoke()
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in seekToNext")
@@ -453,6 +455,9 @@ class PlayerConnection(
     }
 
     var onRestartSong: (() -> Unit)? = null
+
+    private fun shouldResumeOnSongChange(): Boolean =
+        player.playWhenReady || !appContext.dataStore.get(KeepPausedOnSongChangeKey, false)
 
     fun seekToPrevious() {
         try {
@@ -465,12 +470,13 @@ class PlayerConnection(
 
             // Logic to mimic standard seekToPrevious behavior but with explicit callbacks
             // If we are more than 3 seconds in, just restart the song
+            val resume = shouldResumeOnSongChange()
             if (player.currentPosition > 3000 || !player.hasPreviousMediaItem()) {
                 player.seekTo(0)
                 if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
                     player.prepare()
                 }
-                player.playWhenReady = true
+                player.playWhenReady = resume
                 onRestartSong?.invoke()
             } else {
                 // Otherwise go to previous media item
@@ -478,7 +484,7 @@ class PlayerConnection(
                 if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
                     player.prepare()
                 }
-                player.playWhenReady = true
+                player.playWhenReady = resume
                 onSkipPrevious?.invoke()
             }
         } catch (e: Exception) {

@@ -124,6 +124,8 @@ fun YouTubeSongMenu(
     }
 
     val notInterestedItem = rememberNotInterestedItem(song.id, onDismiss)
+    val mainArtist = song.artists.firstOrNull { !it.id.isNullOrBlank() }
+    val blockArtistItem = rememberBlockArtistItem(song.id, mainArtist?.id, mainArtist?.name, onDismiss)
 
     var showChoosePlaylistDialog by rememberSaveable {  
         mutableStateOf(false)  
@@ -702,6 +704,7 @@ fun YouTubeSongMenu(
                         )
                     }
                     notInterestedItem?.let(::add)
+                    blockArtistItem?.let(::add)
                     add(
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.details)) },

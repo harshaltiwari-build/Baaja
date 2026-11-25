@@ -69,54 +69,31 @@ import com.metrolist.music.ui.component.IconButton
 import com.metrolist.music.ui.component.Material3SettingsGroup
 import com.metrolist.music.ui.component.Material3SettingsItem
 import com.metrolist.music.ui.utils.backToMain
+import com.metrolist.music.utils.BlockAiArtistsKey
+import com.metrolist.music.utils.HidePodcastsKey
 import com.metrolist.music.utils.rememberEnumPreference
 import com.metrolist.music.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContentSettings(
-    navController: NavController
+    navController: NavController,
+    section: ContentSection = ContentSection.RECOMMENDATIONS,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
     val (contentLanguage, onContentLanguageChange) = rememberPreference(key = ContentLanguageKey, defaultValue = "system")
     val (contentCountry, onContentCountryChange) = rememberPreference(key = ContentCountryKey, defaultValue = "system")
     val (hideExplicit, onHideExplicitChange) = rememberPreference(key = HideExplicitKey, defaultValue = true)
-    val (hideVideoSongs, onHideVideoSongsChange) = rememberPreference(key = HideVideoSongsKey, defaultValue = true)
+    val (hideVideoSongs, onHideVideoSongsChange) = rememberPreference(key = HideVideoSongsKey, defaultValue = false)
     val (hideYoutubeShorts, onHideYoutubeShortsChange) = rememberPreference(key = HideYoutubeShortsKey, defaultValue = true)
+    val (hidePodcasts, onHidePodcastsChange) = rememberPreference(HidePodcastsKey, defaultValue = false)
+    val (blockAiArtists, onBlockAiArtistsChange) = rememberPreference(BlockAiArtistsKey, defaultValue = false)
     val (musicLanguagesRaw, onMusicLanguagesChange) = rememberPreference(key = BaajaMusicLanguagesKey, defaultValue = "")
     val (pickedArtistsRaw, onPickedArtistsChange) = rememberPreference(key = BaajaPickedArtistsKey, defaultValue = "")
     var showMusicLanguagesDialog by remember { mutableStateOf(false) }
     var showArtistsDialog by remember { mutableStateOf(false) }
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
-    val (showMostStatsPlaylists, onShowMostStatsPlaylistsChange) =
-        rememberPreference(key = ShowMostStatsPlaylistsKey, defaultValue = true)
-    val (addToPlaylistPosition, onAddToPlaylistPositionChange) = rememberEnumPreference(
-        AddToPlaylistPositionKey,
-        AddToPlaylistPosition.BEGINNING,
-    )
-
-    LaunchedEffect(showMostStatsPlaylists) {
-        if (!showMostStatsPlaylists) {
-            database.withTransaction {
-                clearPlaylist(com.metrolist.music.db.entities.PlaylistEntity.WEEKLY_MOST_PLAYLIST_ID)
-                clearPlaylist(com.metrolist.music.db.entities.PlaylistEntity.MONTHLY_MOST_PLAYLIST_ID)
-                delete(
-                    com.metrolist.music.db.entities.PlaylistEntity(
-                        id = com.metrolist.music.db.entities.PlaylistEntity.WEEKLY_MOST_PLAYLIST_ID,
-                        name = "",
-                    ),
-                )
-                delete(
-                    com.metrolist.music.db.entities.PlaylistEntity(
-                        id = com.metrolist.music.db.entities.PlaylistEntity.MONTHLY_MOST_PLAYLIST_ID,
-                        name = "",
-                    ),
-                )
-            }
-        }
-    }
-
     var showRegionDialog by rememberSaveable {
         mutableStateOf(false)
     }
@@ -226,35 +203,6 @@ fun ContentSettings(
         )
     }
 
-    var showAddToPlaylistPositionDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    if (showAddToPlaylistPositionDialog) {
-        EnumDialog(
-            onDismiss = { showAddToPlaylistPositionDialog = false },
-            onSelect = {
-                onAddToPlaylistPositionChange(it)
-                showAddToPlaylistPositionDialog = false
-            },
-            title = stringResource(R.string.add_to_playlist_position),
-            current = addToPlaylistPosition,
-            values = AddToPlaylistPosition.entries,
-            valueText = {
-                when (it) {
-                    AddToPlaylistPosition.BEGINNING -> stringResource(R.string.playlist_position_beginning)
-                    AddToPlaylistPosition.END -> stringResource(R.string.playlist_position_end)
-                }
-            },
-            valueDescription = {
-                when (it) {
-                    AddToPlaylistPosition.BEGINNING -> stringResource(R.string.playlist_position_beginning_desc)
-                    AddToPlaylistPosition.END -> stringResource(R.string.playlist_position_end_desc)
-                }
-            },
-        )
-    }
-
     if (showMusicLanguagesDialog) {
         var draft by remember { mutableStateOf(decodeLanguages(musicLanguagesRaw)) }
         com.metrolist.music.ui.screens.onboarding.BaajaFullScreenDialog(
@@ -305,9 +253,9 @@ fun ContentSettings(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        Material3SettingsGroup(
-            title = stringResource(R.string.general),
-            items = listOf(
+        if (section == ContentSection.RECOMMENDATIONS) {
+            Material3SettingsGroup(
+                items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.region_and_language)) },
@@ -335,6 +283,30 @@ fun ContentSettings(
                     description = { Text(stringResource(R.string.baaja_favourite_artists_count, decodeArtists(pickedArtistsRaw).size)) },
                     onClick = { showArtistsDialog = true }
                 ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.home_outlined),
+                    title = { Text(stringResource(R.string.set_quick_picks)) },
+                    description = {
+                        Text(
+                            when (quickPicks) {
+                                QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
+                                QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
+                            }
+                        )
+                    },
+                    onClick = { showQuickPicksDialog = true }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.grid_view),
+                    title = { Text(stringResource(R.string.baaja_home_sections)) },
+                    description = { Text(stringResource(R.string.baaja_home_sections_desc)) },
+                    onClick = { navController.navigate("settings/content/home_sections") },
+                ),
+                )
+            )
+        } else {
+            Material3SettingsGroup(
+                items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.explicit),
                     title = { Text(stringResource(R.string.hide_explicit)) },
@@ -394,98 +366,37 @@ fun ContentSettings(
                         )
                     },
                     onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
+                ),
+                switchItem(
+                    icon = R.drawable.mic,
+                    title = stringResource(R.string.baaja_hide_podcasts),
+                    description = stringResource(R.string.baaja_hide_podcasts_desc),
+                    checked = hidePodcasts,
+                    onChange = onHidePodcastsChange,
+                ),
+                switchItem(
+                    icon = R.drawable.block,
+                    title = stringResource(R.string.baaja_block_ai_artists),
+                    description = stringResource(R.string.baaja_block_ai_artists_desc),
+                    checked = blockAiArtists,
+                    onChange = onBlockAiArtistsChange,
+                ),
                 )
             )
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.playlists),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.playlist_add),
-                    title = { Text(stringResource(R.string.add_to_playlist_position)) },
-                    description = {
-                        Text(
-                            when (addToPlaylistPosition) {
-                                AddToPlaylistPosition.BEGINNING -> stringResource(R.string.playlist_position_beginning)
-                                AddToPlaylistPosition.END -> stringResource(R.string.playlist_position_end)
-                            }
-                        )
-                    },
-                    onClick = { showAddToPlaylistPositionDialog = true },
-                )
-            ),
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.lyrics),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.language_korean_latin),
-                    title = { Text(stringResource(R.string.lyrics_romanization)) },
-                    onClick = { navController.navigate("settings/content/romanization") }
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.stats),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.stats),
-                    title = { Text(stringResource(R.string.show_most_stats_playlists)) },
-                    description = { Text(stringResource(R.string.show_most_stats_playlists_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = showMostStatsPlaylists,
-                            onCheckedChange = onShowMostStatsPlaylistsChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (showMostStatsPlaylists) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onShowMostStatsPlaylistsChange(!showMostStatsPlaylists) }
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.misc),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.home_outlined),
-                    title = { Text(stringResource(R.string.set_quick_picks)) },
-                    description = {
-                        Text(
-                            when (quickPicks) {
-                                QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
-                                QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
-                            }
-                        )
-                    },
-                    onClick = { showQuickPicksDialog = true }
-                )
-            )
-        )
+            Spacer(modifier = Modifier.height(27.dp))
+            BlocklistSettingsGroup()
+        }
         Spacer(modifier = Modifier.height(16.dp))
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.content)) },
+        title = {
+            Text(
+                stringResource(
+                    if (section == ContentSection.RECOMMENDATIONS) R.string.baaja_settings_recommendations else R.string.baaja_settings_filters,
+                ),
+            )
+        },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,
@@ -498,4 +409,10 @@ fun ContentSettings(
             }
         }
     )
+}
+
+/** Content options are split in two pages: what gets recommended, and what gets filtered out. */
+enum class ContentSection {
+    RECOMMENDATIONS,
+    FILTERS,
 }

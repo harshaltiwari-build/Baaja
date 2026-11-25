@@ -51,7 +51,7 @@ class CachePlaylistViewModel
             combine(
                 database.cachePlaylistSongs(),
                 context.dataStore.data.map { it[HideExplicitKey] ?: true }.distinctUntilChanged(),
-                context.dataStore.data.map { it[HideVideoSongsKey] ?: true }.distinctUntilChanged(),
+                context.dataStore.data.map { it[HideVideoSongsKey] ?: false }.distinctUntilChanged(),
                 ::Inputs,
             ).mapLatest { (flagged, hideExplicit, hideVideoSongs) ->
                 val partition =

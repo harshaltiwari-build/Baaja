@@ -132,6 +132,8 @@ fun PlayerMenu(
 
     val librarySong by database.song(mediaMetadata.id).collectAsStateWithLifecycle(initialValue = null)
     val notInterestedItem = rememberNotInterestedItem(mediaMetadata.id, onDismiss)
+    val mainArtist = mediaMetadata.artists.firstOrNull { !it.id.isNullOrBlank() }
+    val blockArtistItem = rememberBlockArtistItem(mediaMetadata.id, mainArtist?.id, mainArtist?.name, onDismiss)
     val coroutineScope = rememberCoroutineScope()
     val downloadUtil = LocalDownloadUtil.current
 
@@ -599,7 +601,10 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     buildList {
-                        if (librarySong?.song?.isLocal != true) notInterestedItem?.let(::add)
+                        if (librarySong?.song?.isLocal != true) {
+                            notInterestedItem?.let(::add)
+                            blockArtistItem?.let(::add)
+                        }
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.baaja_player_behind_the_song)) },

@@ -46,6 +46,11 @@ import androidx.navigation.NavController
 import com.metrolist.music.BuildConfig
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.R
+import com.metrolist.music.ui.screens.onboarding.SettingsChevron
+import com.metrolist.music.constants.MusicVideoAutoStartKey
+import com.metrolist.music.constants.MusicVideoQualities
+import com.metrolist.music.constants.MusicVideoQualityKey
+import com.metrolist.music.constants.MusicVideosEnabledKey
 import com.metrolist.music.constants.AudioNormalizationKey
 import com.metrolist.music.constants.AudioOutputDeviceKey
 import com.metrolist.music.constants.AudioQuality
@@ -66,6 +71,8 @@ import com.metrolist.music.constants.PreventDuplicateTracksInQueueKey
 import com.metrolist.music.constants.RememberShuffleAndRepeatKey
 import com.metrolist.music.constants.ResumeOnBluetoothConnectKey
 import com.metrolist.music.constants.SeekExtraSeconds
+import com.metrolist.music.constants.SeekDurationSecondsKey
+import com.metrolist.music.constants.KeepPausedOnSongChangeKey
 import com.metrolist.music.constants.ShowLyricPreviewOnPlayerKey
 import com.metrolist.music.constants.ShufflePlaylistFirstKey
 import com.metrolist.music.constants.SkipSilenceInstantKey
@@ -167,7 +174,7 @@ internal fun switchItem(
 )
 
 @Composable
-private fun audioQualityLabel(quality: AudioQuality): String =
+internal fun audioQualityLabel(quality: AudioQuality): String =
     when (quality) {
         AudioQuality.AUTO -> stringResource(R.string.audio_quality_auto)
         AudioQuality.HIGH -> stringResource(R.string.audio_quality_high)
@@ -175,7 +182,7 @@ private fun audioQualityLabel(quality: AudioQuality): String =
     }
 
 @Composable
-private fun AudioQualityDialog(
+internal fun AudioQualityDialog(
     title: String,
     current: AudioQuality,
     autoLabel: String,
@@ -193,7 +200,7 @@ private fun AudioQualityDialog(
 }
 
 @Composable
-private fun transitionLabel(style: TransitionStyle): String =
+internal fun transitionLabel(style: TransitionStyle): String =
     stringResource(
         when (style) {
             TransitionStyle.OFF -> R.string.baaja_clean_transition_off
@@ -203,7 +210,7 @@ private fun transitionLabel(style: TransitionStyle): String =
     )
 
 @Composable
-private fun transitionDescription(style: TransitionStyle): String =
+internal fun transitionDescription(style: TransitionStyle): String =
     stringResource(
         when (style) {
             TransitionStyle.OFF -> R.string.baaja_clean_transition_off_desc
@@ -224,8 +231,6 @@ fun PlaybackSettings(navController: NavController) {
     val (skipSilenceInstant, onSkipSilenceInstantChange) = rememberPreference(SkipSilenceInstantKey, defaultValue = false)
     val (audioNormalization, onAudioNormalizationChange) = rememberPreference(AudioNormalizationKey, defaultValue = true)
     val (loudnessLevel, onLoudnessLevelChange) = rememberEnumPreference(LoudnessLevelKey, defaultValue = LoudnessLevel.BALANCED)
-    val (seekExtraSeconds, onSeekExtraSeconds) = rememberPreference(SeekExtraSeconds, defaultValue = false)
-    val (historyDuration, onHistoryDurationChange) = rememberPreference(HistoryDuration, defaultValue = 30f)
 
     var showAudioQualityDialog by remember { mutableStateOf(false) }
     var showMobileQualityDialog by remember { mutableStateOf(false) }
@@ -282,9 +287,8 @@ fun PlaybackSettings(navController: NavController) {
         )
     }
 
-    SettingsSubPage(stringResource(R.string.baaja_clean_menu_playback_title), navController) {
+    SettingsSubPage(stringResource(R.string.baaja_settings_sound), navController) {
         Material3SettingsGroup(
-            title = stringResource(R.string.baaja_clean_menu_playback_title),
             items = buildList {
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.graphic_eq),
@@ -302,12 +306,6 @@ fun PlaybackSettings(navController: NavController) {
                         )
                     },
                     onClick = { showMobileQualityDialog = true },
-                ))
-                add(Material3SettingsItem(
-                    icon = painterResource(R.drawable.download),
-                    title = { Text(stringResource(R.string.audio_quality_download)) },
-                    description = { Text(audioQualityLabel(downloadAudioQuality)) },
-                    onClick = { showDownloadQualityDialog = true },
                 ))
                 add(Material3SettingsItem(
                     icon = painterResource(R.drawable.linear_scale),
@@ -363,26 +361,11 @@ fun PlaybackSettings(navController: NavController) {
                         onClick = { showLoudnessLevelDialog = true },
                     ))
                 }
-                add(switchItem(
-                    icon = R.drawable.arrow_forward,
-                    title = stringResource(R.string.seek_seconds_addup),
-                    description = stringResource(R.string.baaja_clean_seek_desc),
-                    checked = seekExtraSeconds,
-                    onChange = onSeekExtraSeconds,
-                ))
                 add(Material3SettingsItem(
-                    icon = painterResource(R.drawable.history),
-                    title = { Text(stringResource(R.string.baaja_clean_count_play_title, historyDuration.roundToInt())) },
-                    description = {
-                        Column {
-                            Text(stringResource(R.string.baaja_clean_count_play_desc))
-                            Slider(
-                                value = historyDuration,
-                                onValueChange = { onHistoryDurationChange(it.roundToInt().toFloat()) },
-                                valueRange = 1f..100f,
-                            )
-                        }
-                    },
+                    icon = painterResource(R.drawable.equalizer),
+                    title = { Text(stringResource(R.string.baaja_clean_sound_equalizer)) },
+                    trailingContent = { SettingsChevron() },
+                    onClick = { navController.navigate("equalizer") },
                 ))
             },
         )
@@ -391,6 +374,14 @@ fun PlaybackSettings(navController: NavController) {
 
 @Composable
 fun PlayerPageSettings(navController: NavController) {
+    val (seekExtraSeconds, onSeekExtraSeconds) = rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val (seekDurationSeconds, onSeekDurationChange) = rememberPreference(SeekDurationSecondsKey, defaultValue = 5)
+    val (keepPausedOnSongChange, onKeepPausedOnSongChange) = rememberPreference(KeepPausedOnSongChangeKey, defaultValue = false)
+    val (historyDuration, onHistoryDurationChange) = rememberPreference(HistoryDuration, defaultValue = 30f)
+    val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(StopMusicOnTaskClearKey, defaultValue = true)
+    val (pauseOnMute, onPauseOnMuteChange) = rememberPreference(PauseOnMute, defaultValue = false)
+    val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) = rememberPreference(ResumeOnBluetoothConnectKey, defaultValue = false)
+    val (keepScreenOn, onKeepScreenOnChange) = rememberPreference(KeepScreenOn, defaultValue = false)
     val (showLyricPreview, onShowLyricPreviewChange) = rememberPreference(ShowLyricPreviewOnPlayerKey, defaultValue = true)
     val (sponsorBlockEnabled, onSponsorBlockEnabledChange) = rememberPreference(SponsorBlockEnabledKey, defaultValue = false)
     val (enableGoogleCast, onEnableGoogleCastChange) = rememberPreference(EnableGoogleCastKey, defaultValue = true)
@@ -424,7 +415,7 @@ fun PlayerPageSettings(navController: NavController) {
 
     SettingsSubPage(stringResource(R.string.baaja_clean_menu_player_title), navController) {
         Material3SettingsGroup(
-            title = stringResource(R.string.baaja_clean_menu_player_title),
+            title = stringResource(R.string.baaja_settings_player_extras),
             items = buildList {
                 add(switchItem(
                     icon = R.drawable.lyrics,
@@ -473,6 +464,140 @@ fun PlayerPageSettings(navController: NavController) {
                 ))
             },
         )
+        Spacer(Modifier.height(27.dp))
+        Material3SettingsGroup(
+            title = stringResource(R.string.baaja_settings_seeking),
+            items = buildList {
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.arrow_forward),
+                    title = { Text(pluralStringResource(R.plurals.baaja_seek_duration_title, seekDurationSeconds, seekDurationSeconds)) },
+                    description = {
+                        Column {
+                            Text(stringResource(R.string.baaja_seek_duration_desc))
+                            Slider(
+                                value = seekDurationSeconds.toFloat(),
+                                onValueChange = { onSeekDurationChange(it.roundToInt()) },
+                                valueRange = 5f..60f,
+                                steps = 10,
+                            )
+                        }
+                    },
+                ))
+                add(switchItem(
+                    icon = R.drawable.arrow_forward,
+                    title = stringResource(R.string.seek_seconds_addup),
+                    description = stringResource(R.string.baaja_seek_addup_desc),
+                    checked = seekExtraSeconds,
+                    onChange = onSeekExtraSeconds,
+                ))
+                add(switchItem(
+                    icon = R.drawable.pause,
+                    title = stringResource(R.string.baaja_keep_paused_title),
+                    description = stringResource(R.string.baaja_keep_paused_desc),
+                    checked = keepPausedOnSongChange,
+                    onChange = onKeepPausedOnSongChange,
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.history),
+                    title = { Text(stringResource(R.string.baaja_clean_count_play_title, historyDuration.roundToInt())) },
+                    description = {
+                        Column {
+                            Text(stringResource(R.string.baaja_clean_count_play_desc))
+                            Slider(
+                                value = historyDuration,
+                                onValueChange = { onHistoryDurationChange(it.roundToInt().toFloat()) },
+                                valueRange = 1f..100f,
+                            )
+                        }
+                    },
+                ))
+            },
+        )
+        Spacer(modifier = Modifier.height(27.dp))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.baaja_settings_behaviour),
+            items = listOf(
+                switchItem(
+                    icon = R.drawable.clear_all,
+                    title = stringResource(R.string.stop_music_on_task_clear),
+                    description = null,
+                    checked = stopMusicOnTaskClear,
+                    onChange = onStopMusicOnTaskClearChange,
+                ),
+                switchItem(
+                    icon = R.drawable.volume_off_pause,
+                    title = stringResource(R.string.pause_music_when_media_is_muted),
+                    description = null,
+                    checked = pauseOnMute,
+                    onChange = onPauseOnMuteChange,
+                ),
+                switchItem(
+                    icon = R.drawable.bluetooth,
+                    title = stringResource(R.string.resume_on_bluetooth_connect),
+                    description = null,
+                    checked = resumeOnBluetoothConnect,
+                    onChange = onResumeOnBluetoothConnectChange,
+                ),
+                switchItem(
+                    icon = R.drawable.screenshot,
+                    title = stringResource(R.string.keep_screen_on_when_player_is_expanded),
+                    description = null,
+                    checked = keepScreenOn,
+                    onChange = onKeepScreenOnChange,
+                ),
+            ),
+        )
+    }
+}
+
+/** "Music videos": everything about playing a song's video in the player. */
+@Composable
+fun MusicVideoSettings(navController: NavController) {
+    val (musicVideosEnabled, onMusicVideosEnabledChange) = rememberPreference(MusicVideosEnabledKey, defaultValue = true)
+    val (musicVideoQuality, onMusicVideoQualityChange) = rememberPreference(MusicVideoQualityKey, defaultValue = 720)
+    val (musicVideoAutoStart, onMusicVideoAutoStartChange) = rememberPreference(MusicVideoAutoStartKey, defaultValue = false)
+    var showVideoQualityDialog by remember { mutableStateOf(false) }
+    if (showVideoQualityDialog) {
+        EnumDialog(
+            onDismiss = { showVideoQualityDialog = false },
+            onSelect = {
+                onMusicVideoQualityChange(it)
+                showVideoQualityDialog = false
+            },
+            title = stringResource(R.string.baaja_video_quality),
+            current = musicVideoQuality,
+            values = MusicVideoQualities,
+            valueText = { "${it}p" },
+        )
+    }
+    SettingsSubPage(stringResource(R.string.baaja_video_title), navController) {
+        Material3SettingsGroup(
+            items = buildList {
+                add(switchItem(
+                    icon = R.drawable.slow_motion_video,
+                    title = stringResource(R.string.baaja_video_enabled),
+                    description = stringResource(R.string.baaja_video_enabled_desc),
+                    checked = musicVideosEnabled,
+                    onChange = onMusicVideosEnabledChange,
+                ))
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.slow_motion_video),
+                    title = { Text(stringResource(R.string.baaja_video_quality)) },
+                    description = { Text(stringResource(R.string.baaja_video_quality_desc, musicVideoQuality)) },
+                    enabled = musicVideosEnabled,
+                    onClick = { showVideoQualityDialog = true },
+                ))
+                add(switchItem(
+                    icon = R.drawable.play,
+                    title = stringResource(R.string.baaja_video_autostart),
+                    description = stringResource(R.string.baaja_video_autostart_desc),
+                    checked = musicVideoAutoStart,
+                    onChange = onMusicVideoAutoStartChange,
+                    enabled = musicVideosEnabled,
+                ))
+            },
+        )
     }
 }
 
@@ -485,14 +610,8 @@ fun QueueSettings(navController: NavController) {
     val (rememberShuffleAndRepeat, onRememberShuffleAndRepeatChange) = rememberPreference(RememberShuffleAndRepeatKey, defaultValue = true)
     val (preventDuplicateTracksInQueue, onPreventDuplicateTracksInQueueChange) = rememberPreference(PreventDuplicateTracksInQueueKey, defaultValue = false)
     val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) = rememberPreference(AutoSkipNextOnErrorKey, defaultValue = false)
-    val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(StopMusicOnTaskClearKey, defaultValue = false)
-    val (pauseOnMute, onPauseOnMuteChange) = rememberPreference(PauseOnMute, defaultValue = false)
-    val (resumeOnBluetoothConnect, onResumeOnBluetoothConnectChange) = rememberPreference(ResumeOnBluetoothConnectKey, defaultValue = false)
-    val (keepScreenOn, onKeepScreenOnChange) = rememberPreference(KeepScreenOn, defaultValue = false)
-
-    SettingsSubPage(stringResource(R.string.baaja_clean_menu_queue_title), navController) {
+    SettingsSubPage(stringResource(R.string.baaja_settings_queue), navController) {
         Material3SettingsGroup(
-            title = stringResource(R.string.queue),
             items = buildList {
                 add(switchItem(
                     icon = R.drawable.queue_music,
@@ -539,41 +658,6 @@ fun QueueSettings(navController: NavController) {
             },
         )
 
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.misc),
-            items = listOf(
-                switchItem(
-                    icon = R.drawable.clear_all,
-                    title = stringResource(R.string.stop_music_on_task_clear),
-                    description = null,
-                    checked = stopMusicOnTaskClear,
-                    onChange = onStopMusicOnTaskClearChange,
-                ),
-                switchItem(
-                    icon = R.drawable.volume_off_pause,
-                    title = stringResource(R.string.pause_music_when_media_is_muted),
-                    description = null,
-                    checked = pauseOnMute,
-                    onChange = onPauseOnMuteChange,
-                ),
-                switchItem(
-                    icon = R.drawable.bluetooth,
-                    title = stringResource(R.string.resume_on_bluetooth_connect),
-                    description = null,
-                    checked = resumeOnBluetoothConnect,
-                    onChange = onResumeOnBluetoothConnectChange,
-                ),
-                switchItem(
-                    icon = R.drawable.screenshot,
-                    title = stringResource(R.string.keep_screen_on_when_player_is_expanded),
-                    description = null,
-                    checked = keepScreenOn,
-                    onChange = onKeepScreenOnChange,
-                ),
-            ),
-        )
     }
 }
 
@@ -611,7 +695,7 @@ fun TimersSettings(navController: NavController) {
         )
     }
 
-    SettingsSubPage(stringResource(R.string.baaja_clean_menu_timers_title), navController) {
+    SettingsSubPage(stringResource(R.string.baaja_settings_sleep), navController) {
         Material3SettingsGroup(
             title = stringResource(R.string.sleep_timer),
             items = listOf(

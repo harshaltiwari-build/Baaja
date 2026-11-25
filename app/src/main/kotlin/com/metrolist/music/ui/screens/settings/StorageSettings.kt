@@ -49,7 +49,10 @@ import com.metrolist.music.LocalDatabase
 import com.metrolist.music.LocalPlayerAwareWindowInsets
 import com.metrolist.music.LocalPlayerConnection
 import com.metrolist.music.R
+import com.metrolist.music.utils.rememberEnumPreference
+import com.metrolist.music.constants.AudioQuality
 import com.metrolist.music.constants.AutoDownloadOnLikeKey
+import com.metrolist.music.constants.DownloadAudioQualityKey
 import com.metrolist.music.constants.EnableSongCacheKey
 import com.metrolist.music.constants.SmartDownloadsCountKey
 import com.metrolist.music.constants.SmartDownloadsWifiOnlyKey
@@ -99,6 +102,17 @@ fun StorageSettings(
     )
 
     val (autoDownloadOnLike, onAutoDownloadOnLikeChange) = rememberPreference(AutoDownloadOnLikeKey, defaultValue = false)
+    val (downloadAudioQuality, onDownloadAudioQualityChange) = rememberEnumPreference(DownloadAudioQualityKey, defaultValue = AudioQuality.AUTO)
+    var showDownloadQualityDialog by remember { mutableStateOf(false) }
+    if (showDownloadQualityDialog) {
+        AudioQualityDialog(
+            title = stringResource(R.string.audio_quality_download),
+            current = downloadAudioQuality,
+            autoLabel = stringResource(R.string.audio_quality_auto),
+            onSelect = { onDownloadAudioQualityChange(it); showDownloadQualityDialog = false },
+            onDismiss = { showDownloadQualityDialog = false },
+        )
+    }
     val (smartDownloadsCount, onSmartDownloadsCountChange) = rememberPreference(SmartDownloadsCountKey, defaultValue = 0)
     val (smartDownloadsWifiOnly, onSmartDownloadsWifiOnlyChange) = rememberPreference(SmartDownloadsWifiOnlyKey, defaultValue = true)
     var showSmartDownloadsDialog by remember { mutableStateOf(false) }
@@ -318,11 +332,23 @@ fun StorageSettings(
             items =
                 buildList {
                     add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.download),
+                        title = { Text(stringResource(R.string.audio_quality_download)) },
+                        description = { Text(audioQualityLabel(downloadAudioQuality)) },
+                        onClick = { showDownloadQualityDialog = true },
+                    ))
+                    add(Material3SettingsItem(
                         icon = painterResource(R.drawable.storage),
                         title = { Text(stringResource(R.string.downloaded_songs)) },
                         description = {
                             Text(text = Formatter.formatShortFileSize(context, downloadCacheSize))
                         },
+                    ))
+                    add(Material3SettingsItem(
+                        icon = painterResource(R.drawable.download),
+                        title = { Text(stringResource(R.string.baaja_downloads_title)) },
+                        description = { Text(stringResource(R.string.baaja_downloads_desc)) },
+                        onClick = { navController.navigate("downloads") },
                     ))
                     add(Material3SettingsItem(
                         icon = painterResource(R.drawable.offline),
@@ -452,7 +478,7 @@ fun StorageSettings(
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.storage)) },
+        title = { Text(stringResource(R.string.baaja_settings_downloads_storage)) },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,

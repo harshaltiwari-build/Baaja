@@ -39,7 +39,7 @@ constructor(
     init {
         viewModelScope.launch {
             val hideExplicit = context.dataStore.get(HideExplicitKey, true)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
             val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
             YouTube
                 .browse(browseId, params)

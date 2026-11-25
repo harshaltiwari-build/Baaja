@@ -37,3 +37,9 @@ val SmartDownloadsDismissedKey = stringSetPreferencesKey("baajaSmartDownloadsDis
 
 /** Epoch millis of the last completed Smart downloads sync. */
 val SmartDownloadsLastRunKey = longPreferencesKey("baajaSmartDownloadsLastRun")
+
+/** Seconds a double-tap on the artwork seeks by (default 5). */
+val SeekDurationSecondsKey = intPreferencesKey("baajaSeekDurationSeconds")
+
+/** Skipping to the next or previous song keeps playback paused if it was paused (default off). */
+val KeepPausedOnSongChangeKey = booleanPreferencesKey("baajaKeepPausedOnSongChange")

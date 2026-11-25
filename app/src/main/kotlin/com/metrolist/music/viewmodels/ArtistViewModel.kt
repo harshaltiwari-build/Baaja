@@ -82,7 +82,7 @@ class ArtistViewModel @Inject constructor(
         locallyBookmarked || (apiState == true)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val librarySongs = context.dataStore.data
-        .map { (it[HideExplicitKey] ?: true) to (it[HideVideoSongsKey] ?: true) }
+        .map { (it[HideExplicitKey] ?: true) to (it[HideVideoSongsKey] ?: false) }
         .distinctUntilChanged()
         .flatMapLatest { (hideExplicit, hideVideoSongs) ->
             database.artistSongsPreview(artistId).map { it.filterExplicit(hideExplicit).filterVideoSongsLocal(hideVideoSongs) }
@@ -105,7 +105,7 @@ class ArtistViewModel @Inject constructor(
                 .map {
                     Triple(
                         it[HideExplicitKey] ?: true,
-                        it[HideVideoSongsKey] ?: true,
+                        it[HideVideoSongsKey] ?: false,
                         it[HideYoutubeShortsKey] ?: true
                     )
                 }
@@ -123,7 +123,7 @@ class ArtistViewModel @Inject constructor(
                 val cachedDto = withContext(Dispatchers.IO) { deserializeArtistPage(cachedJson) }
                 val page = cachedDto.toArtistPage()
                 val hideExplicit = context.dataStore.get(HideExplicitKey, true)
-                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+                val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
                 val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
 
                 val filteredSections = page.sections
@@ -143,7 +143,7 @@ class ArtistViewModel @Inject constructor(
     fun fetchArtistsFromYTM() {
         viewModelScope.launch {
             val hideExplicit = context.dataStore.get(HideExplicitKey, true)
-            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, true)
+            val hideVideoSongs = context.dataStore.get(HideVideoSongsKey, false)
             val hideYoutubeShorts = context.dataStore.get(HideYoutubeShortsKey, true)
             YouTube.artist(artistId)
                 .onSuccess { page ->

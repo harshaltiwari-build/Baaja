@@ -5,6 +5,8 @@
 
 package com.metrolist.music.ui.screens
 
+import com.metrolist.music.ui.component.SnackbarHost
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
@@ -49,7 +51,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
@@ -93,6 +97,7 @@ import com.metrolist.innertube.models.PlaylistItem
 import com.metrolist.innertube.models.PodcastItem
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
+import com.metrolist.innertube.pages.HomePage
 import com.metrolist.innertube.models.YTItem
 import com.metrolist.innertube.utils.completed
 import com.metrolist.innertube.utils.parseCookieString
@@ -156,6 +161,9 @@ import com.metrolist.music.ui.component.shimmer.TextPlaceholder
 import com.metrolist.music.ui.menu.AlbumMenu
 import com.metrolist.music.ui.menu.ArtistMenu
 import com.metrolist.music.ui.menu.SongMenu
+import com.metrolist.music.ui.screens.settings.HiddenHomeSectionsKey
+import com.metrolist.music.ui.screens.settings.HomeSectionToggle
+import com.metrolist.music.ui.menu.HideFromHomeMenuGroup
 import com.metrolist.music.ui.menu.YouTubeAlbumMenu
 import com.metrolist.music.ui.menu.YouTubeArtistMenu
 import com.metrolist.music.ui.menu.YouTubePlaylistMenu
@@ -190,6 +198,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import com.metrolist.music.utils.ContentBlocklist
+import com.metrolist.music.utils.contentBlocklist
+import com.metrolist.music.utils.hideFromHome
+import com.metrolist.music.utils.restoreToHome
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.min
@@ -551,22 +563,88 @@ fun HomeScreen(
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
 
-    val quickPicks by viewModel.quickPicks.collectAsStateWithLifecycle()
-    val forgottenFavorites by viewModel.forgottenFavorites.collectAsStateWithLifecycle()
-    val keepListening by viewModel.keepListening.collectAsStateWithLifecycle()
-    val similarRecommendations by viewModel.similarRecommendations.collectAsStateWithLifecycle()
+    val homeContext = LocalContext.current
+    val blocklist by remember(homeContext) { homeContext.contentBlocklist }
+        .collectAsStateWithLifecycle(ContentBlocklist())
+    val homeScope = rememberCoroutineScope()
+    val homeSnackbarHostState = remember { SnackbarHostState() }
+
+    val quickPicksRaw by viewModel.quickPicks.collectAsStateWithLifecycle()
+    val forgottenFavoritesRaw by viewModel.forgottenFavorites.collectAsStateWithLifecycle()
+    val keepListeningRaw by viewModel.keepListening.collectAsStateWithLifecycle()
+    val similarRecommendationsRaw by viewModel.similarRecommendations.collectAsStateWithLifecycle()
     val accountPlaylists by viewModel.accountPlaylists.collectAsStateWithLifecycle()
-    val homePage by viewModel.homePage.collectAsStateWithLifecycle()
+    val homePageRaw by viewModel.homePage.collectAsStateWithLifecycle()
     val explorePage by viewModel.explorePage.collectAsStateWithLifecycle()
     val dailyDiscover by viewModel.dailyDiscover.collectAsStateWithLifecycle()
-    val communityPlaylists by viewModel.communityPlaylists.collectAsStateWithLifecycle()
+    val communityPlaylistsRaw by viewModel.communityPlaylists.collectAsStateWithLifecycle()
+
+    // Hidden items and blocked artists come off Home here, so every shelf below sees the same filtered lists.
+    fun Song.hiddenOnHome() = blocklist.hidesOnHome(id, artists.map { it.id to it.name })
+    val quickPicks = remember(quickPicksRaw, blocklist) { quickPicksRaw?.filterNot { it.hiddenOnHome() } }
+    val forgottenFavorites =
+        remember(forgottenFavoritesRaw, blocklist) { forgottenFavoritesRaw?.filterNot { it.hiddenOnHome() } }
+    val keepListening =
+        remember(keepListeningRaw, blocklist) {
+            keepListeningRaw?.filterNot { item ->
+                if (item is Song) item.hiddenOnHome() else blocklist.hidesOnHome(item.id, emptyList())
+            }
+        }
+    val similarRecommendations =
+        remember(similarRecommendationsRaw, blocklist) {
+            similarRecommendationsRaw
+                ?.map { it.copy(items = blocklist.filterHome(it.items)) }
+                ?.filter { it.items.isNotEmpty() }
+        }
+    // As in Metrolist: when YouTube offers its own personal Quick picks, they replace the local-history ones.
+    val homePage =
+        remember(homePageRaw, blocklist) {
+            homePageRaw?.let { page ->
+                if (blocklist.isEmpty) {
+                    page
+                } else {
+                    page.copy(
+                        sections =
+                            page.sections
+                                .map { it.copy(items = blocklist.filterHome(it.items)) }
+                                .filter { it.items.isNotEmpty() },
+                    )
+                }
+            }
+        }
+    val hasYouTubeQuickPicks = homePage?.sections?.any { it.isYouTubeQuickPicks() } == true
+    val communityPlaylists =
+        remember(communityPlaylistsRaw, blocklist) {
+            communityPlaylistsRaw?.filterNot { blocklist.hidesOnHome(it.playlist) }
+                ?.map { it.copy(songs = blocklist.filterHome(it.songs)) }
+        }
+    val hideFromHome: (String, String) -> Unit = { id, title ->
+        menuState.dismiss()
+        val appContext = homeContext.applicationContext
+        homeScope.launch {
+            appContext.hideFromHome(id, title)
+            val result =
+                homeSnackbarHostState.showSnackbar(
+                    message = appContext.getString(R.string.baaja_hidden_from_home, title),
+                    actionLabel = appContext.getString(R.string.undo),
+                    duration = SnackbarDuration.Short,
+                )
+            if (result == SnackbarResult.ActionPerformed) appContext.restoreToHome(id)
+        }
+    }
     val popularArtists by viewModel.popularArtists.collectAsStateWithLifecycle()
     val artistNameAliases = LocalArtistNameAliases.current
 
     val allLocalItems by viewModel.allLocalItems.collectAsStateWithLifecycle()
     val allYtItems by viewModel.allYtItems.collectAsStateWithLifecycle()
-    val speedDialItems by viewModel.speedDialItems.collectAsStateWithLifecycle()
+    val speedDialItemsAll by viewModel.speedDialItems.collectAsStateWithLifecycle()
     val pinnedSpeedDialItems by viewModel.pinnedSpeedDialItems.collectAsStateWithLifecycle()
+    // Your own pins always stay; only the suggested tiles drop blocked artists and hidden items.
+    val speedDialItems =
+        remember(speedDialItemsAll, pinnedSpeedDialItems, blocklist) {
+            val pinnedIds = pinnedSpeedDialItems.mapTo(HashSet()) { it.id }
+            speedDialItemsAll.filterNot { it.id !in pinnedIds && blocklist.hidesOnHome(it) }
+        }
     val selectedChip by viewModel.selectedChip.collectAsStateWithLifecycle()
 
     // Official podcast API data
@@ -710,6 +788,7 @@ fun HomeScreen(
                                         HapticFeedbackType.LongPress,
                                     )
                                     menuState.show {
+                                        HideFromHomeMenuGroup { hideFromHome(it.id, it.song.title) }
                                         SongMenu(
                                             originalSong = it,
                                             onDismiss = menuState::dismiss,
@@ -738,6 +817,7 @@ fun HomeScreen(
                                 onLongClick = {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     menuState.show {
+                                        HideFromHomeMenuGroup { hideFromHome(it.id, it.album.title) }
                                         AlbumMenu(
                                             originalAlbum = it,
                                             onDismiss = menuState::dismiss,
@@ -763,6 +843,7 @@ fun HomeScreen(
                                         HapticFeedbackType.LongPress,
                                     )
                                     menuState.show {
+                                        HideFromHomeMenuGroup { hideFromHome(it.id, it.artist.name) }
                                         ArtistMenu(
                                             originalArtist = it,
                                             coroutineScope = scope,
@@ -841,6 +922,7 @@ fun HomeScreen(
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             menuState.show {
+                                HideFromHomeMenuGroup { hideFromHome(item.id, item.title) }
                                 when (item) {
                                     is SongItem -> {
                                         YouTubeSongMenu(
@@ -892,8 +974,10 @@ fun HomeScreen(
         )
     }
 
+    val hiddenHomeSections by rememberPreference(HiddenHomeSectionsKey, defaultValue = emptySet())
     val homeSections =
         remember(
+            hiddenHomeSections,
             selectedChip,
             speedDialItems,
             quickPicks,
@@ -904,6 +988,7 @@ fun HomeScreen(
             communityPlaylists,
             similarRecommendations,
             homePage?.sections,
+            hasYouTubeQuickPicks,
             explorePage?.moodAndGenres,
             isLoggedIn,
         ) {
@@ -911,7 +996,7 @@ fun HomeScreen(
             val chipActive = selectedChip != null
 
             if (!chipActive && speedDialItems.isNotEmpty()) list.add(HomeSection.SpeedDial)
-            if (!chipActive && quickPicks?.isNotEmpty() == true) list.add(HomeSection.QuickPicks)
+            if (!chipActive && quickPicks?.isNotEmpty() == true && !hasYouTubeQuickPicks) list.add(HomeSection.QuickPicks)
             if (!chipActive && communityPlaylists?.isNotEmpty() == true) list.add(HomeSection.FromTheCommunity)
             if (!chipActive && keepListening?.isNotEmpty() == true) list.add(HomeSection.KeepListening)
             if (!chipActive && accountPlaylists?.isNotEmpty() == true) list.add(HomeSection.AccountPlaylists)
@@ -948,15 +1033,18 @@ fun HomeScreen(
                     is HomeSection.HomePageSection -> if (isLoggedIn && !chipActive) 95 else 20 - section.index
                     else -> defaultOrder[section] ?: 0
                 }
+            }.filterNot { section ->
+                section.toggleId { i -> homePage?.sections?.getOrNull(i)?.isYouTubeQuickPicks() == true } in hiddenHomeSections
             }
         }
 
     val (pickedArtistsRaw) = rememberPreference(BaajaPickedArtistsKey, "")
     val pickedArtists = remember(pickedArtistsRaw) { decodeArtists(pickedArtistsRaw) }
     // History decides how much of Home is personalised by picks (see TasteStage).
-    val historySongs by remember(database) {
+    val historySongsAll by remember(database) {
         database.mostPlayedSongs(fromTimeStamp = LocalDateTime.now().minusWeeks(8), limit = 24)
     }.collectAsStateWithLifecycle(emptyList())
+    val historySongs = remember(historySongsAll, blocklist) { historySongsAll.filterNot { it.hiddenOnHome() } }
     // Signed in with Google: the account's own YouTube Music history, liked songs and followed artists
     // shape Home from the very first launch, before Baaja has recorded any plays.
     var accountSongs by remember { mutableStateOf<List<SongItem>>(emptyList()) }
@@ -1015,9 +1103,10 @@ fun HomeScreen(
             }
         }
     val historyArtists =
-        remember(popularArtists, accountArtists) {
+        remember(popularArtists, accountArtists, blocklist) {
             (accountArtists + popularArtists.orEmpty().map { BaajaArtist(it.id, it.title, it.thumbnailUrl) })
                 .distinctBy { it.id }
+                .filterNot { blocklist.isArtistBlocked(it.id, it.name) }
                 .take(6)
         }
     val tasteStage =
@@ -1028,7 +1117,7 @@ fun HomeScreen(
             else -> TasteStage.PICKS
         }
     val tasteArtists =
-        remember(tasteStage, historyArtists, pickedArtists, accountArtists) {
+        remember(tasteStage, historyArtists, pickedArtists, accountArtists, blocklist) {
             when (tasteStage) {
                 TasteStage.PICKS -> pickedArtists
                 TasteStage.MIXED ->
@@ -1040,7 +1129,8 @@ fun HomeScreen(
                         }
                     }.distinctBy { it.id }
                 TasteStage.HISTORY -> (historyArtists + pickedArtists).distinctBy { it.id }
-            }.take(8)
+            }.filterNot { blocklist.isArtistBlocked(it.id, it.name) }
+                .take(8)
         }
     var tasteSongs by remember { mutableStateOf<Map<String, List<SongItem>>>(emptyMap()) }
     var tasteAlbums by remember { mutableStateOf<Map<String, List<AlbumItem>>>(emptyMap()) }
@@ -1079,15 +1169,19 @@ fun HomeScreen(
         tasteSongs = fetched.filter { it.second.isNotEmpty() }.associate { it.first to it.second }
         tasteAlbums = fetched.filter { it.third.isNotEmpty() }.associate { it.first to it.third }
     }
+    val tasteSongsShown =
+        remember(tasteSongs, blocklist) {
+            if (blocklist.isEmpty) tasteSongs else tasteSongs.mapValues { blocklist.filterHome(it.value) }.filterValues { it.isNotEmpty() }
+        }
     val mixArtists =
-        remember(tasteArtists, tasteSongs, tasteThumbs) {
+        remember(tasteArtists, tasteSongsShown, tasteThumbs) {
             tasteArtists
-                .filter { tasteSongs.containsKey(it.id) }
+                .filter { tasteSongsShown.containsKey(it.id) }
                 .map { artist -> if (artist.thumbnail.isNullOrBlank()) artist.copy(thumbnail = tasteThumbs[artist.id]) else artist }
         }
     val tasteMix =
-        remember(mixArtists, tasteSongs) {
-            val lists = mixArtists.mapNotNull { tasteSongs[it.id] }
+        remember(mixArtists, tasteSongsShown) {
+            val lists = mixArtists.mapNotNull { tasteSongsShown[it.id] }
             val mixed = mutableListOf<SongItem>()
             for (i in 0 until 20) lists.forEach { list -> list.getOrNull(i)?.let(mixed::add) }
             mixed.distinctBy { it.id }.take(100)
@@ -1095,7 +1189,7 @@ fun HomeScreen(
     val tasteActive = pickedArtists.isNotEmpty() || historySongs.isNotEmpty() || accountArtists.isNotEmpty()
 
     val tasteUi: (LazyListScope.() -> Unit)? =
-        if (tasteMix.isNotEmpty()) {
+        if (tasteMix.isNotEmpty() && HomeSectionToggle.MADE_FOR_YOU.id !in hiddenHomeSections) {
         val fromPicks = stringResource(R.string.baaja_home_tag_picks)
         val fromHistory = stringResource(R.string.baaja_home_tag_history)
         val newText = stringResource(R.string.baaja_home_new)
@@ -1109,7 +1203,7 @@ fun HomeScreen(
         fun songCards(songs: List<SongItem>) =
             songs.map { TasteCard("s_${it.id}", it.title, it.artists.joinToString { a -> a.name }, it.thumbnail) }
         val accountShelf =
-            accountSongs.takeIf { it.isNotEmpty() }?.let { songs ->
+            blocklist.filterHome(accountSongs).takeIf { it.isNotEmpty() }?.let { songs ->
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_jump_back_in),
                     label = null,
@@ -1130,10 +1224,10 @@ fun HomeScreen(
                     },
                 )
             }
-        val topHistory = historyArtists.firstOrNull { tasteSongs.containsKey(it.id) }
+        val topHistory = historyArtists.firstOrNull { tasteSongsShown.containsKey(it.id) }
         val becauseHistory =
             topHistory?.let { artist ->
-                val songs = tasteSongs[artist.id].orEmpty()
+                val songs = tasteSongsShown[artist.id].orEmpty()
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_because_listened, artist.name),
                     label = null,
@@ -1142,8 +1236,8 @@ fun HomeScreen(
                 )
             }
         val becausePicks =
-            pickedArtists.filter { tasteSongs.containsKey(it.id) }.take(2).map { artist ->
-                val songs = tasteSongs[artist.id].orEmpty()
+            pickedArtists.filter { tasteSongsShown.containsKey(it.id) }.take(2).map { artist ->
+                val songs = tasteSongsShown[artist.id].orEmpty()
                 TasteShelf(
                     title = stringResource(R.string.baaja_home_because, artist.name),
                     label = null,
@@ -1164,7 +1258,7 @@ fun HomeScreen(
         val discoverSongs =
             pickedArtists
                 .filter { it.id !in historyIds }
-                .flatMap { tasteSongs[it.id].orEmpty().take(3) }
+                .flatMap { tasteSongsShown[it.id].orEmpty().take(3) }
                 .distinctBy { it.id }
         val discoverShelf =
             discoverSongs.takeIf { it.isNotEmpty() }?.let { songs ->
@@ -1182,7 +1276,7 @@ fun HomeScreen(
                     artist = artist,
                     badge = if (isNew) newText else null,
                     tagline = stringResource(if (isNew) R.string.baaja_home_mix_tagline_history else R.string.baaja_home_mix_tagline),
-                    onClick = { playSongs(artist.name, tasteSongs[artist.id].orEmpty()) },
+                    onClick = { playSongs(artist.name, tasteSongsShown[artist.id].orEmpty()) },
                 )
             }
         val tasteTints = listOf(BaajaTileColors.lilac(), BaajaTileColors.peach(), BaajaTileColors.liked(), BaajaTileColors.mint())
@@ -1244,6 +1338,7 @@ fun HomeScreen(
         forgottenFavoritesLazyGridState.scrollToItem(0)
     }
 
+    Box(Modifier.fillMaxSize()) {
     PullToRefreshBox(
         state = pullRefreshState,
         isRefreshing = isRefreshing,
@@ -1651,6 +1746,11 @@ fun HomeScreen(
                 var tasteShown = false
                 // Signed in, Baaja's own rows follow YouTube's shelves instead of sitting above them.
                 val youTubeFirst = isLoggedIn && selectedChip == null && !homePage?.sections.isNullOrEmpty()
+                // With Speed dial switched off, Baaja's own rows take its place at the top.
+                if (!youTubeFirst && HomeSection.SpeedDial !in homeSections) {
+                    tasteShown = true
+                    tasteUi?.invoke(this)
+                }
                 homeSections.forEach { section ->
                     if (youTubeFirst && !tasteShown && section != HomeSection.SpeedDial && section !is HomeSection.HomePageSection) {
                         tasteShown = true
@@ -1914,6 +2014,7 @@ fun HomeScreen(
                                                                                             HapticFeedbackType.LongPress,
                                                                                         )
                                                                                         menuState.show {
+                                                                                            HideFromHomeMenuGroup { hideFromHome(item.id, item.title) }
                                                                                             when (item) {
                                                                                                 is SongItem -> {
                                                                                                     YouTubeSongMenu(
@@ -2050,6 +2151,7 @@ fun HomeScreen(
                                                         itemTitle = song!!.title,
                                                         onClick = {
                                                             menuState.show {
+                                                                HideFromHomeMenuGroup { hideFromHome(song!!.id, song!!.song.title) }
                                                                 SongMenu(
                                                                     originalSong = song!!,
                                                                     onDismiss = menuState::dismiss,
@@ -2085,6 +2187,7 @@ fun HomeScreen(
                                                             onLongClick = {
                                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                                 menuState.show {
+                                                                    HideFromHomeMenuGroup { hideFromHome(song!!.id, song!!.song.title) }
                                                                     SongMenu(
                                                                         originalSong = song!!,
                                                                         onDismiss = menuState::dismiss,
@@ -2299,6 +2402,7 @@ fun HomeScreen(
                                                         onClick = {
                                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                             menuState.show {
+                                                                HideFromHomeMenuGroup { hideFromHome(song!!.id, song!!.song.title) }
                                                                 SongMenu(
                                                                     originalSong = song!!,
                                                                     onDismiss = menuState::dismiss,
@@ -2334,6 +2438,7 @@ fun HomeScreen(
                                                             onLongClick = {
                                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                                 menuState.show {
+                                                                    HideFromHomeMenuGroup { hideFromHome(song!!.id, song!!.song.title) }
                                                                     SongMenu(
                                                                         originalSong = song!!,
                                                                         onDismiss = menuState::dismiss,
@@ -2528,6 +2633,7 @@ fun HomeScreen(
                                                             itemTitle = song.title,
                                                             onClick = {
                                                                 menuState.show {
+                                                                    HideFromHomeMenuGroup { hideFromHome(song.id, song.title) }
                                                                     YouTubeSongMenu(
                                                                         song = song,
                                                                         onDismiss = menuState::dismiss,
@@ -2560,6 +2666,7 @@ fun HomeScreen(
                                                                 onLongClick = {
                                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                                     menuState.show {
+                                                                        HideFromHomeMenuGroup { hideFromHome(song.id, song.title) }
                                                                         YouTubeSongMenu(
                                                                             song = song,
                                                                             onDismiss = menuState::dismiss,
@@ -2690,6 +2797,15 @@ fun HomeScreen(
 
         }
     }
+    // Home's own host: the app-wide one sits above a full-height bottom bar and is drawn off-screen.
+    SnackbarHost(
+        hostState = homeSnackbarHostState,
+        modifier =
+            Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Bottom)),
+    )
+    }
 }
 
 private val HomeSongRowHeight = 84.dp
@@ -2714,3 +2830,19 @@ internal fun newReleaseAlbums(
         .mapNotNull { albumsByArtist[it]?.firstOrNull() }
         .distinctBy { it.id }
         .take(6)
+
+private fun HomePage.Section.isYouTubeQuickPicks(): Boolean = endpoint?.browseId?.startsWith("FEmusic_quickpicks") == true
+
+/**
+ * The Home sections setting that switches this section on or off. YouTube's own Quick picks shelf
+ * replaces the local one, so it follows the Quick picks switch rather than "YouTube shelves".
+ */
+private fun HomeSection.toggleId(isYouTubeQuickPicks: (Int) -> Boolean): String =
+    when (this) {
+        is HomeSection.SimilarRecommendation -> HomeSectionToggle.SIMILAR.id
+        is HomeSection.HomePageSection ->
+            if (isYouTubeQuickPicks(index)) HomeSectionToggle.QUICK_PICKS.id else HomeSectionToggle.YOUTUBE_SHELVES.id
+        HomeSection.DailyDiscover -> HomeSectionToggle.MADE_FOR_YOU.id
+        HomeSection.AccountPlaylists -> HomeSectionToggle.YOUTUBE_SHELVES.id
+        else -> id
+    }

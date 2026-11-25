@@ -61,7 +61,7 @@ constructor(
                     Triple(
                         it[PlaylistSongSortTypeKey].toEnum(PlaylistSongSortType.CUSTOM),
                         it[PlaylistSongSortDescendingKey] ?: true,
-                        it[HideVideoSongsKey] ?: true
+                        it[HideVideoSongsKey] ?: false
                     )
                 }.distinctUntilChanged(),
         ) { songs, (sortType, sortDescending, hideVideoSongs) ->
